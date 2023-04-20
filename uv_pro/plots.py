@@ -297,6 +297,7 @@ def plot_2x2(dataset, num_spectra=0):
              fontsize=8)
 
     baselined_time_traces = dataset.time_traces.sum(1) - dataset.baseline
+
     # Use if classic outlier detection is being used (outlier threshold 0-1, normalized time traces)
     upper_bound = dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline
     lower_bound = -dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline

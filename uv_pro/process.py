@@ -256,24 +256,24 @@ class Dataset:
         # Subtract baseline from summed time traces to get baselined time trace
         baselined_time_traces = time_traces.sum(1) - self.baseline
 
-        def find_baseline_outliers_envelope():
-            # New method to filter outliers using an envelope
-            upper_outlier_bound = self.baseline + self.outlier_threshold
-            lower_outlier_bound = self.baseline - self.outlier_threshold
-            for i, _ in time_traces.sum(1).items():
-                if time_traces.sum(1)[i] > upper_outlier_bound[i] or time_traces.sum(1)[i] < lower_outlier_bound[i]:
-                    baseline_outliers.add(i)
+        # def find_baseline_outliers_envelope():
+        #     # New method to filter outliers using an envelope
+        #     upper_outlier_bound = self.baseline + self.outlier_threshold
+        #     lower_outlier_bound = self.baseline - self.outlier_threshold
+        #     for i, _ in time_traces.sum(1).items():
+        #         if time_traces.sum(1)[i] > upper_outlier_bound[i] or time_traces.sum(1)[i] < lower_outlier_bound[i]:
+        #             baseline_outliers.add(i)
 
-            return baseline_outliers
+        #     return baseline_outliers
 
-        def find_baseline_outliers_classic():
-            # Classic method to filter outliers using the normalized baselined time traces.
-            # Slow for large Datasets, but works.
-            for i, _ in baselined_time_traces.items():
-                if abs(baselined_time_traces[i] / baselined_time_traces.max()) > self.outlier_threshold:
-                    baseline_outliers.add(i)
+        # def find_baseline_outliers_classic():
+        #     # Classic method to filter outliers using the normalized baselined time traces.
+        #     # Slow for large Datasets, but works.
+        #     for i, _ in baselined_time_traces.items():
+        #         if abs(baselined_time_traces[i] / baselined_time_traces.max()) > self.outlier_threshold:
+        #             baseline_outliers.add(i)
 
-            return baseline_outliers
+        #     return baseline_outliers
 
         def find_baseline_outliers():
             # New faster method to check for outliers using sort_values()
