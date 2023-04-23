@@ -9,7 +9,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../uv_pro"))
+sys.path.insert(0, os.path.abspath(".."))
 
 project = 'uv_pro'
 copyright = '2023, David Hebert'
@@ -20,12 +20,13 @@ release = '0.1.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-	# "autoapi.extension",
-	# "autoclasstoc",
-	"sphinx.ext.napoleon",
-	"sphinx.ext.autodoc",
-	"sphinx.ext.intersphinx",
-	"sphinx.ext.viewcode"
+    # "autoapi.extension",
+    # "autoclasstoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.autosectionlabel"
 ]
 
 napoleon_include_init_with_doc = True

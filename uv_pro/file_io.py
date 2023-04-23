@@ -1,6 +1,4 @@
 '''
-UV-Vis File IO
-==============
 Contains methods importing and exporting UV-Vis data files. Supports .csv files
 and Agilent 845x UV-Vis Chemstation binary files (.KD).
 

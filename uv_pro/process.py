@@ -1,6 +1,4 @@
 '''
-UV-Vis Data Processor
-=====================
 Tools for processing UV-Vis data files (.KD or .csv formats) exported from
 the Agilent 845x UV-Vis Chemstation software.
 
@@ -27,7 +25,7 @@ class Dataset:
         Either ``"seconds"`` or ``"index"``. Denotes how ``trim`` will be
         interpretted during data trimming. A :class:`Dataset` created from a
         .KD file will default to ``"seconds"``. A :class:`Dataset` created from
-        .csv files will default to ``"indexes"`` unless a ``cycle_time`` was
+        .csv files will default to ``"index"`` unless a ``cycle_time`` was
         provided.
     all_spectra : list of :class:`pandas.DataFrame` objects
         All of the raw spectra in the :class:`Dataset`.
@@ -90,7 +88,7 @@ class Dataset:
             default is 10.
         baseline_tolerance : float, optional
             Set the exit criteria for the baseline algorithm. Try values between
-            0.001 and 10000. The default is 10. See :func:`pybaselines.whittaker.asls()`
+            0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
             for more information.
         low_signal_window : "narrow" or "wide", optional
             Set the width of the low signal detection window (see
@@ -206,13 +204,13 @@ class Dataset:
         How It Works
         ------------
         First, the time traces in :attr:`time_traces` are summed to give a
-        summed time trace with improved signal to noise, and low signal
-        outliers are removed (spectra taken when the cuvette has been removed
+        **summed time trace** with improved signal to noise, and **low signal
+        outliers** are removed (spectra taken when the cuvette has been removed
         from the spectrometer). From the remaining spectra, a smoothed
         baseline is found (see :func:`pybaselines.whittaker.asls()`). The baseline
-        is subtracted from the summed time trace to create a baselined time trace.
-        The baselined time trace is normalized and spectra with absorbance above
-        the ``outlier_threshold`` are recorded as :attr:`outliers`.
+        is subtracted from the **summed time trace** to create a **baselined time
+        trace**. The **baselined time trace** is normalized and spectra with absorbance
+        above the ``outlier_threshold`` are recorded as :attr:`outliers`.
 
         Returns
         -------

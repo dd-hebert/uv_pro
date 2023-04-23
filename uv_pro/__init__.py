@@ -16,6 +16,8 @@ Or you can run uv_pro using runpy with::
 See the documentation or the cli.py docstring from more information on the
 optional command line arguments.
 
+github: https://github.com/dd-hebert/uv_pro
+
 '''
 
 __author__ = 'David Hebert'

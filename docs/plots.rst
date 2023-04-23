@@ -1,5 +1,5 @@
-plots.py
-========
+uv_pro.plots
+============
 
 .. automodule:: uv_pro.plots
    :members:

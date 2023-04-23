@@ -1,9 +1,6 @@
 '''
-Command Line Interface
-======================
-A script for running ``uv_pro`` from the command line. Serves as a command
-line entry point. With the ``uv_pro`` package installed, this script can be
-called directly from the command line with uvp::
+Run ``uv_pro`` from the command line. With the ``uv_pro`` package installed,
+this script can be called directly from the command line with::
 
     uvp -p "myfile.KD"
 
@@ -12,6 +9,16 @@ Command Line Arguments
 -p, --path : string, required
     The path to the UV-Vis data, either a .KD file or a folder (.csv format).
     Should be wrapped in double quotes "".
+-r, --root_dir : string, optional
+    Set a root directory for where data files are located so you don't have to
+    type a full file path every time. For example, if all your UV-Vis data is
+    stored inside some directory ``C:\\mydata\\UV-Vis Data\\``, you can set this
+    as the root directory so that the path given with ``-p`` is assumed to be
+    located inside the root directory.
+-grd, --get_root_dir : flag, optional
+    Print the current root directory to the console.
+-crd, --clear_root_dir : flag, optional
+    Clear the current root directory.
 -v : flag, optional
     Enable view only mode. No data processing is performed and a plot of
     the data set is shown. Default is False.
@@ -37,6 +44,20 @@ Command Line Arguments
     are plotted or exported. Example: if :attr:`uv_pro.process.Dataset.trimmed_spectra`
     contains 100 spectra and ``slice_spectra`` is 10, then every tenth spectrum
     will be plotted.
+-lam, --baseline_lambda : float, optional
+    Set the smoothness of the baseline when cleaning data. Higher values
+    give smoother baselines. Try values between 0.001 and 10000. The
+    default is 10. See :func:`pybaselines.whittaker.asls()` for more information.
+-tol, --baseline_tolerance : float, optional
+    Set the exit criteria for the baseline algorithm. Try values between
+    0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
+    for more information.
+-lsw, --low_signal_window : ``"narrow"`` or ``"wide"``, optional
+    Set the width of the low signal outlier detection window (see
+    :meth:`uv_pro.process.Dataset.find_outliers()`). Set to ``"wide"`` to label
+    points directly neighboring low signal outliers as low signal outliers also.
+    Default is ``"narrow"``, meaning only low signal outliers themselves are
+    labelled. Set to ``"wide"`` if low signals are interfering with the baseline.
 
 Examples
 --------
@@ -45,13 +66,18 @@ Examples
     # Open myfile.KD in view-only mode.
     uvp -p "C:\\Desktop\\myfile.KD" -v
 
-    # Open myfile.KD, show 10 spectra from 50 to 250 seconds with outlier
-    # threshold of 0.2.
-    uvp -p "C:\\Desktop\\myfile.KD" -t 50 250 -ot 0.2 -sl 10
+    # Set a root directory.
+    uvp -r "C:\\Desktop"
+    # Now "C:\\Desktop" can be omitted from the given path.
 
-    # Open .csv files in mydatafolder, set the cycle time to 5 seconds and
-    # show 10 spectra from 50 to 250 seconds with outlier threshold of 0.2
-    uvp -p "C:\\Desktop\\mydatafolder" -t 50 250 -ct 5 -ot 0.2 -sl 10
+    # Open "C:\\Desktop\\myfile.KD", show 10 spectra from 50 to 250 seconds
+    # with outlier threshold of 0.2.
+    uvp -p "myfile.KD" -t 50 250 -ot 0.2 -sl 10
+
+    # Open .csv files in "C:\\Desktop\\mydatafolder", set the cycle time to 5
+    # seconds and show 10 spectra from 50 to 250 seconds with outlier threshold
+    # of 0.2
+    uvp -p "mydatafolder" -t 50 250 -ct 5 -ot 0.2 -sl 10
 
 '''
 
@@ -65,32 +91,46 @@ from uv_pro.file_io import export_csv
 
 def main():
     '''
-    Handles the args ``-qq``, ``-r``, and ``-grd`` before starting the
-    processing routine :func:`~uv_pro.cli.proc()`.
+    Handles the args ``-qq``, ``-crd``, ``-r``, and ``-grd`` before starting
+    the processing routine :func:`~uv_pro.cli.proc()`.
 
     '''
 
     __args = get_args()
 
     # Testing mode [-qq]
+    # Only works from inside the repo \...\uv_pro\uv_pro\.
     if __args.test_mode is True:
-        test_data = r'C:\Users\David\Python\uv_pro\test data\test_data.KD'
+        test_data = os.path.normpath(
+            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data3.KD'))
+
         __args.path = test_data
+
         proc(__args)
+
     else:
+        parent_directory = os.path.abspath(os.path.join(__file__, os.pardir))
+        root_pickle = os.path.normpath(
+            os.path.join(parent_directory, 'root_directory.pickle'))
+
         # Save new root directory [-r]
         if __args.root_dir is not None:
             if os.path.exists(os.path.normpath(__args.root_dir)):
-                with open('pickled_root', 'wb') as f:
+                with open(root_pickle, 'wb') as f:
                     pickle.dump(__args.root_dir, f)
                 print(f'New root directory: {__args.root_dir}')
             else:
                 print('Error: Directory does not exist.')
 
-        # Load root directory
-        if os.path.exists('pickled_root'):
-            with open('pickled_root', 'rb') as f:
-                __root = pickle.load(f)
+        # Handle loading or clearing root directory
+        if os.path.exists(root_pickle):
+            if __args.clear_root_dir is True:  # [-crd]
+                os.remove(root_pickle)
+                __root = None
+                print('Cleared root directory.')
+            else:  # Load root directory
+                with open(root_pickle, 'rb') as f:
+                    __root = pickle.load(f)
         else:
             __root = None
 
@@ -188,8 +228,10 @@ def get_args():
     help_msg = {
         'path': '''Process UV-Vis data at the given path.
                     Either a .KD file or a folder (.csv format).''',
-        'root_dir': '''Set the root directory to scan for .KD files.''',
+        'root_dir': '''Set a root directory where data files are located so you
+                       don't have to type a full path every time.''',
         'get_root_dir': '''Print the root directory to the console.''',
+        'clear_root_dir': '''Clear the current root directory.''',
         'view': '''View only mode (no data processing).''',
         'trim': '''2 args: trim data from __ to __.
                     Uses indices if no cycle time provided (.csv).
@@ -199,7 +241,7 @@ def get_args():
         'outlier_threshold':  '''Set the threshold (0-1) for outlier detection. Default: 0.1.
                                  Values closer to 0 result in higher sensitivity (more outliers).
                                  Values closer to 1 result in lower sensitivity (fewer outliers).''',
-        'slice_spectra': 'Set the number of spectra to show. Default: 0 (show all).',
+        'slice_spectra': 'Set the number of slices to plot. Default: 0 (show all).',
         'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
         'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
         'low_signal_window': 'Set the width of the low signal outlier detection window.',
@@ -225,6 +267,12 @@ def get_args():
                         action='store_true',
                         default=False,
                         help=help_msg['get_root_dir'])
+
+    parser.add_argument('-crd',
+                        '--clear_root_dir',
+                        action='store_true',
+                        default=False,
+                        help=help_msg['clear_root_dir'])
 
     parser.add_argument('-v',
                         '--view',

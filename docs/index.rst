@@ -11,8 +11,9 @@ uv_pro Documentation
    :caption: Contents:
 
    installation
+   quickstart
+   cli
    modules
-
 
 Indices and tables
 ==================

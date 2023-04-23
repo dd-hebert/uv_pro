@@ -1,6 +1,4 @@
 '''
-UV-Vis Plots
-============
 Functions for plotting and visualizing uv_pro Datasets.
 
 '''
@@ -225,7 +223,7 @@ def plot_2x2(dataset, num_spectra=0):
     :attr:`~uv_pro.process.Dataset.trimmed_spectra`,
     :attr:`~uv_pro.process.Dataset.time_traces`, and
     :attr:`~uv_pro.process.Dataset.baseline` with
-    :attr:`~uv_pro.process.Dataset.outliers>` highlighted.
+    :attr:`~uv_pro.process.Dataset.outliers` highlighted.
 
     Parameters
     ----------
