@@ -30,8 +30,8 @@ Command Line Arguments
 The path to the UV-Vis data, either a .KD file or a folder (.csv format). Should be wrapped in double quotes "".
 
 ```
-uvp -p "C:\\Desktop\\MyData\\myexperiment.KD" # Import from a .KD file
-uvp -p "C:\\Desktop\\MyData\\mydatafolder" # Import from .csv files
+uvp -p "C:\path\to\your\data.KD" # Import from a .KD file
+uvp -p "C:\path\to\folder\mydatafolder" # Import from .csv files
 ```
 
 #### ``-r``, ``-–root_dir`` : "string" (optional)
