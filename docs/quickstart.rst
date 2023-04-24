@@ -189,3 +189,17 @@ only an issue when working with smaller datasets containing fewer spectra.
 .. _pybaselines.whittaker: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html
 .. _pybaselines.whittaker.asls: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares
 __ pybaselines.whittaker.asls_
+
+Examples
+--------
+Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep only spectra
+from 50 seconds to 250 seconds, and show 10 slices::
+
+    uvp -p "C:\\Desktop\\myfile.KD" -t 50 250 -ot 0.2 -sl 10
+
+
+Import the data from the .csv files in ``mydatafolder``, trim the data to keep only spectra from 20 
+seconds to 2000 seconds, set the cycle time to 5 seconds, set the outlier detection to 0.2, and show 
+15 slices::
+
+    uvp -p "C:\\Desktop\\mydatafolder" -t 20 2000 -ct 5 -ot 0.2 -sl 15
