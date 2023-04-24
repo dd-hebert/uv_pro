@@ -118,7 +118,7 @@ Set the smoothness of the baseline when cleaning data. Higher values give smooth
 Set the exit criteria for the baseline algorithm. Try values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker.asls() for more information.
 
 ### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
-Set the width of the low signal outlier detection window (see uv_pro.process.Dataset.find_outliers()). Set to "wide" to label points directly neighboring low signal outliers as low signal outliers also. Default is "narrow", meaning only low signal outliers themselves are labelled. Set to "wide" if low signals are interfering with the baseline.
+Set the width of the low signal outlier detection window. Set to "wide" and points directly neighboring low signal outliers will be labelled as outliers also. Default is "narrow", meaning only low signal outliers themselves are labelled. Set to "wide" if low signals are interfering with the baseline.
 
 ### ``-h``, ``--help`` : flag
 Use ``-h`` to get help with command line arguments.
