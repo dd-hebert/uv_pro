@@ -1,15 +1,13 @@
 Installation
 ============
+``uv_pro`` can be installed directly from the repo using pip::
 
-``uv_pro`` can be installed from `The Python Package Index <https://pypi.org/>`_.
-
-You can install ``uv_pro`` with pip using::
-
-    pip install uv_pro
+    pip install git+https://github.com/dd-hebert/uv_pro.git
 
 
 Uninstall
 ---------
-You can uninstall ``uv_pro`` at any time with::
+To uninstall ``uv_pro`` and remove all files associated with it, run the following commands::
 
+    uvp -crd
     pip uninstall uv_pro
