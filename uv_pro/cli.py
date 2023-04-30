@@ -58,6 +58,11 @@ Command Line Arguments
     points directly neighboring low signal outliers as low signal outliers also.
     Default is ``"narrow"``, meaning only low signal outliers themselves are
     labelled. Set to ``"wide"`` if low signals are interfering with the baseline.
+-tr, --tree : flag, optional
+    Print the ``root_directory`` file tree to the console.
+-fp, --file_picker : flag, optional
+    Interactively pick a .KD file from the console. The file is opened in view
+    only mode.
 
 Examples
 --------
@@ -87,6 +92,7 @@ import pickle
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
 from uv_pro.file_io import export_csv
+from uv_pro.file_picker import FilePicker
 
 
 def main():
@@ -137,6 +143,15 @@ def main():
         # Print root directory [-gdr]
         if __args.get_root_dir is True:
             print(f'root directory: {__root}')
+
+        # File picker [-fp]
+        if __args.file_picker is True:
+            if __root is not None:
+                __args.path = FilePicker(__root).pick_file()
+                __args.view = True
+
+        if __args.tree is True:
+            FilePicker(__root).tree()
 
         # Run proc script
         if __args.path is not None:
@@ -245,6 +260,8 @@ def get_args():
         'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
         'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
         'low_signal_window': 'Set the width of the low signal outlier detection window.',
+        'tree': 'Show the root directory file tree.',
+        'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
         'test_mode': 'For testing purposes.'
                 }
 
@@ -335,6 +352,18 @@ def get_args():
                         default='narrow',
                         metavar='',
                         help=help_msg['low_signal_window'])
+
+    parser.add_argument('-tr',
+                        '--tree',
+                        action='store_true',
+                        default=False,
+                        help=help_msg['tree'])
+
+    parser.add_argument('-fp',
+                        '--file_picker',
+                        action='store_true',
+                        default=False,
+                        help=help_msg['file_picker'])
 
     parser.add_argument('-qq',
                         '--test_mode',

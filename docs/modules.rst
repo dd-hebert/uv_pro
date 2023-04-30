@@ -5,5 +5,6 @@ API Reference
    :maxdepth: 4
 
    file_io
-   process
+   file_picker
    plots
+   process
