@@ -96,6 +96,12 @@ Set the exit criteria for the baseline algorithm. Try values between 0.001 and 1
 #### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
 Set the width of the low signal outlier detection window. Set to "wide" and points directly neighboring low signal outliers will be labelled as outliers also. Default is "narrow", meaning only low signal outliers themselves are labelled. Set to "wide" if low signals are interfering with the baseline.
 
+#### ``-tr``, ``--tree`` : flag, optional
+Print the ``root_directory`` file tree to the console.
+
+#### ``-fp``, ``--file_picker`` : flag, optional
+Interactively pick a .KD file from the console. The file is opened in view only mode.
+
 #### ``-h``, ``--help`` : flag
 Use ``-h`` to get help with command line arguments.
 
