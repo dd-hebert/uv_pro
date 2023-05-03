@@ -222,7 +222,7 @@ def proc(__args):
             while user_input.lower() not in ['y', 'n']:
                 user_input = input('\nY/N: ')
             if user_input.lower() == 'y':
-                export_csv(data, data.cleaned_spectra, __args.slice_spectra)
+                export_csv(data, data.trimmed_spectra, __args.slice_spectra)
             elif user_input.lower() == 'n':
                 pass
 
