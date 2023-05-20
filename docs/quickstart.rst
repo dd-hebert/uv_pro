@@ -6,9 +6,9 @@ processing UV-Vis data is a terminal and a file path.
 
 
 Process UV-Vis Data From a .KD File
-----------------------------------------------
-Say you have a .KD file called ``mydata.KD`` located in ``C:\mystuff\UV-Vis Data\``.
-To process this file, open a terminal and enter the following command::
+-----------------------------------
+If you have a .KD file called ``mydata.KD`` located in ``C:\mystuff\UV-Vis Data\``,
+you can process this file by opening a terminal and entering the following command::
 
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD"
 
@@ -24,7 +24,7 @@ Alternatively, you could open a terminal session inside ``C:\mystuff\UV-Vis Data
 
 
 Process UV-Vis Data From .csv Files
-----------------------------------------------
+-----------------------------------
 .. Note::
     This feature is intended for processing complete datasets, where *all* the spectra from an
     experiment have been exported from the Agilent UV-Vis Chemstation software. Though it will
@@ -53,7 +53,7 @@ See `Trim Your Data`_ for more details.
 
 
 Trim Your Data
--------------------------
+--------------
 You can ``trim`` your data to keep only a portion between a given interval. For example, if in
 an experiment you collected 1000 spectra, but you only wish you keep the a portion of the spectra,
 you can ``trim`` the data with ``-t`` or ``--trim``:
