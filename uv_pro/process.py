@@ -361,10 +361,9 @@ class Dataset:
         -----------------
         mode : string
             Specify whether time (seconds) or indexes are used when trimming data.
-            In general, when trimming a :class:`Dataset` from a .KD file time
-            (seconds) will be used. For trimming a :class:`Dataset` from .csv
-            files, indexes will be used unless a :attr:`cycle_time` has been provided
-            (see :meth:`__init__()`). Default value is set by :attr:`units`.
+            By default, indexes are used. For trimming a :class:`Dataset` from .csv
+            files, seconds can only be used if a :attr:`cycle_time` has been provided
+            (see :meth:`__init__()`).
 
         Returns
         -------
