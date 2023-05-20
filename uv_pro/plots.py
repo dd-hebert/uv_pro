@@ -45,7 +45,6 @@ def plot_spectra(dataset, spectra, num_spectra=0):
                      spectra[i]['Absorbance (AU)'])
 
     plt.xlim(200, 1100)
-    plt.ylim(-0.2, 3)
     print('Close plot window to continue...', end='\n')
     plt.show()
 

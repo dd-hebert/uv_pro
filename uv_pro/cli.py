@@ -2,19 +2,22 @@
 Run ``uv_pro`` from the command line. With the ``uv_pro`` package installed,
 this script can be called directly from the command line with::
 
-    uvp -p "myfile.KD"
+    uvp -p myfile.KD
 
 Command Line Arguments
 ----------------------
 -p, --path : string, required
     The path to the UV-Vis data, either a .KD file or a folder (.csv format).
-    Should be wrapped in double quotes "".
+    Paths containing spaces may need to be wrapped in double quotes "". The
+    program will first look for the given path inside the current working
+    directory, if not found it will then look at the absolute path and inside
+    the root directory (if a root directory has been set).
 -r, --root_dir : string, optional
     Set a root directory for where data files are located so you don't have to
     type a full file path every time. For example, if all your UV-Vis data is
-    stored inside some directory ``C:\\mydata\\UV-Vis Data\\``, you can set this
-    as the root directory so that the path given with ``-p`` is assumed to be
-    located inside the root directory.
+    stored inside some main directory ``C:\\mydata\\UV-Vis Data\\``, you can
+    set this as the root directory so that the path given with ``-p`` is
+    assumed to be located inside the root directory.
 -grd, --get_root_dir : flag, optional
     Print the current root directory to the console.
 -crd, --clear_root_dir : flag, optional
@@ -63,26 +66,28 @@ Command Line Arguments
 -fp, --file_picker : flag, optional
     Interactively pick a .KD file from the console. The file is opened in view
     only mode.
+-sec, --use_seconds : flag, optional
+    Use time (seconds) when trimming data instead of spectrum # (indices).
 
 Examples
 --------
 ::
 
     # Open myfile.KD in view-only mode.
-    uvp -p "C:\\Desktop\\myfile.KD" -v
+    uvp -p C:\\Desktop\\myfile.KD -v
 
     # Set a root directory.
-    uvp -r "C:\\Desktop"
-    # Now "C:\\Desktop" can be omitted from the given path.
+    uvp -r C:\\Desktop
+    # Now C:\\Desktop can be omitted from the given path.
 
-    # Open "C:\\Desktop\\myfile.KD", show 10 spectra from 50 to 250 seconds
+    # Open C:\\Desktop\\myfile.KD, show 10 spectra from 50 to 250 seconds
     # with outlier threshold of 0.2.
-    uvp -p "myfile.KD" -t 50 250 -ot 0.2 -sl 10
+    uvp -p myfile.KD -t 50 250 -ot 0.2 -sl 10
 
-    # Open .csv files in "C:\\Desktop\\mydatafolder", set the cycle time to 5
+    # Open .csv files in C:\\Desktop\\mydatafolder, set the cycle time to 5
     # seconds and show 10 spectra from 50 to 250 seconds with outlier threshold
     # of 0.2
-    uvp -p "mydatafolder" -t 50 250 -ct 5 -ot 0.2 -sl 10
+    uvp -p mydatafolder -t 50 250 -ct 5 -ot 0.2 -sl 10
 
 '''
 
@@ -99,6 +104,15 @@ def main():
     '''
     Handles the args ``-qq``, ``-crd``, ``-r``, and ``-grd`` before starting
     the processing routine :func:`~uv_pro.cli.proc()`.
+
+    Raises
+    ------
+    FileNotFoundError
+        Raised if the given file path cannot be found.
+
+    Returns
+    -------
+    None.
 
     '''
 
@@ -153,14 +167,23 @@ def main():
         if __args.tree is True:
             FilePicker(__root).tree()
 
-        # Run proc script
+        # Path handling and run proc script
         if __args.path is not None:
-            if __root is not None:
+            '''
+            First check if the given path exists in the current working directory
+            or by absolute path. The absolute path will be checked if the given
+            path is in a different drive than the current working directory.
+            '''
+            if os.path.exists(os.path.join(os.getcwd(), __args.path)):
+                __args.path = os.path.join(os.getcwd(), __args.path)
+                proc(__args)
+            # Secondly, check for given path inside root directory.
+            elif __root is not None and os.path.exists(os.path.join(__root, __args.path)):
                 __args.path = os.path.join(__root, __args.path)
                 proc(__args)
             else:
-                proc(__args)
-
+                raise FileNotFoundError(
+                    f'No such file or directory could be found: "{__args.path}"')
 
 def proc(__args):
     '''
@@ -193,7 +216,8 @@ def proc(__args):
                        outlier_threshold=__args.outlier_threshold,
                        baseline_lambda=__args.baseline_lambda,
                        baseline_tolerance=__args.baseline_tolerance,
-                       low_signal_window=__args.low_signal_window
+                       low_signal_window=__args.low_signal_window,
+                       use_seconds=__args.use_seconds
                        )
 
         print('\nPlotting data...')
@@ -262,6 +286,7 @@ def get_args():
         'low_signal_window': 'Set the width of the low signal outlier detection window.',
         'tree': 'Show the root directory file tree.',
         'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
+        'use_seconds': 'Use seconds instead of spectrum # when trimming data.',
         'test_mode': 'For testing purposes.'
                 }
 
@@ -364,6 +389,12 @@ def get_args():
                         action='store_true',
                         default=False,
                         help=help_msg['file_picker'])
+
+    parser.add_argument('-sec',
+                        '--use_seconds',
+                        action='store_true',
+                        default=False,
+                        help=help_msg['use_seconds'])
 
     parser.add_argument('-qq',
                         '--test_mode',

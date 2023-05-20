@@ -23,10 +23,9 @@ class Dataset:
         :class:`Dataset` was created from.
     units : string
         Either ``"seconds"`` or ``"index"``. Denotes how ``trim`` will be
-        interpretted during data trimming. A :class:`Dataset` created from a
-        .KD file will default to ``"seconds"``. A :class:`Dataset` created from
-        .csv files will default to ``"index"`` unless a ``cycle_time`` was
-        provided.
+        interpretted during data trimming. Default is "index". A :class:`Dataset`
+        created from .csv files will require the ``cycle_time`` to be provided
+        in order to use ``"seconds"`` to trim data.
     all_spectra : list of :class:`pandas.DataFrame` objects
         All of the raw spectra in the :class:`Dataset`.
     time_traces : :class:`pandas.DataFrame`
@@ -44,9 +43,9 @@ class Dataset:
 
     '''
 
-    def __init__(self, path, cycle_time=None, trim=None, view_only=False,
+    def __init__(self, path, cycle_time=None, trim=None, use_seconds=False,
                  outlier_threshold=0.1, baseline_lambda=10, baseline_tolerance=0.1,
-                 low_signal_window='narrow'):
+                 low_signal_window='narrow', view_only=False):
         '''
         Initializes a dataset, imports the specified data at ``path`` and
         processes the data to remove bad spectra (e.g. spectra collected when
@@ -74,9 +73,8 @@ class Dataset:
             to select. The second value ``trim[1]`` is the index or time (in
             seconds) of the last spectrum to import. Default value is None (no
             trimming).
-        view_only : True or False, optional
-            Indicate whether data processing (cleaning and trimming) should be
-            performed. Default is False (cleaning and trimming are performed).
+        use_seconds : True or False, optional
+            Use time (seconds) instead of spectrum # when trimming data.
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 result in higher
@@ -96,6 +94,9 @@ class Dataset:
             before and after the low signal outlier(s) are also considered
             outliers. The default is ``"narrow"``, meaning only the low signal
             outlier(s) are considered outliers.
+        view_only : True or False, optional
+            Indicate whether data processing (cleaning and trimming) should be
+            performed. Default is False (cleaning and trimming are performed).
 
         Returns
         -------
@@ -112,17 +113,18 @@ class Dataset:
         self.baseline_lambda = baseline_lambda  # float
         self.baseline_tolerance = baseline_tolerance  # float
 
-        # Get data, set units and cycle time
-        if self.name.endswith('.KD'):
+        if use_seconds is True:
             self.units = 'seconds'
+        else:
+            self.units = 'index'
+
+        # Get data and cycle time
+        if self.name.endswith('.KD'):
             self.all_spectra, self.cycle_time = from_kd(self.path)  # List of pd DataFrames
         else:
             if self.cycle_time is None:
-                # If no cycle time given, use indexes.
-                self.units = 'index'
                 self.cycle_time = 1
-            else:
-                self.units = 'seconds'
+                self.units = 'index'
             self.all_spectra = from_csv(self.path)  # List of pd DataFrames
 
         print(f'{len(self.all_spectra)} spectra successfully imported from: {self.name}.', end='\n')
