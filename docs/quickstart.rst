@@ -14,6 +14,10 @@ To process this file, open a terminal and enter the following command::
 
 The file will automatically be imported, processed, and plotted.
 
+Alternatively, you could open a terminal session inside ``C:\mystuff\UV-Vis Data\`` and use::
+
+    uvp -p mydata.KD
+
 .. Note::
     When processing data from a .KD file, the experiment's cycle time is automatically
     imported.
@@ -34,6 +38,10 @@ entering the following command::
 
 The files will automatically be imported, processed, and plotted.
 
+Alternatively, you could open a terminal session inside ``C:\mystuff\UV-Vis Data\`` and use::
+
+    uvp -p mydatafolder
+
 If you know the cycle time for the experiment, you can specify it with ``-ct`` or
 ``--cycle_time``::
 
@@ -46,18 +54,17 @@ See `Trim Your Data`_ for more details.
 
 Trim Your Data
 -------------------------
-You can ``trim`` your data to keep only a portion between a given interval. For example, if you
-have an experiment which went for 10000 seconds, but you only wish you keep the spectra from
-100 seconds to 1000 seconds, you can ``trim`` the data with ``-t`` or ``--trim``:
+You can ``trim`` your data to keep only a portion between a given interval. For example, if in
+an experiment you collected 1000 spectra, but you only wish you keep the a portion of the spectra,
+you can ``trim`` the data with ``-t`` or ``--trim``:
 
 - For a :class:`~uv_pro.process.Dataset` created from a .KD file::
 
-    # Trim data, keeping the spectra from 100 to 1000 seconds.
+    # Trim data, keeping the 100th through the 1000th spectra.
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -t 100 1000
 
-.. Note::
-    The :attr:`~uv_pro.process.Dataset.units` of a :class:`~uv_pro.process.Dataset` created from a .KD file 
-    are ``"seconds"`` by default.
+    # Trim data, keeping the spectra from 100 to 1000 seconds.
+    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -t 100 1000 -sec
 
 - For a :class:`~uv_pro.process.Dataset` created from .csv files::
 
@@ -66,7 +73,7 @@ have an experiment which went for 10000 seconds, but you only wish you keep the 
     # Using indices because no cycle time was given.
 
     # Trim data, keeping the spectra from 50 to 250 seconds.
-    uvp -p "C:\mystuff\UV-Vis Data\mydatafolder" -ct 5 -t 50 250
+    uvp -p "C:\mystuff\UV-Vis Data\mydatafolder" -ct 5 -t 50 250 -sec
     # Note for .csv data a cycle time is needed to use seconds.
 
 .. Important::
@@ -74,10 +81,13 @@ have an experiment which went for 10000 seconds, but you only wish you keep the 
     will be ``"index"`` by default. To use ``"seconds"``, you must provide a ``cycle_time``.
 
 The behavior of ``trim`` is determined by a :class:`~uv_pro.process.Dataset`'s
-:attr:`~uv_pro.process.Dataset.units`. If :attr:`~uv_pro.process.Dataset.units` is ``"seconds"``, then
-``trim`` will take the given values as time (seconds). Otherwise if :attr:`~uv_pro.process.Dataset.units`
-is ``"index"``, then ``trim`` will take the given values as indices.
+:attr:`~uv_pro.process.Dataset.units`. By default, :attr:`~uv_pro.process.Dataset.units`
+is ``"index"``, and ``trim`` will take the given values as indices (spectrum #).
+Otherwise, if :attr:`~uv_pro.process.Dataset.units` is ``"seconds"``, then ``trim`` will take the
+given values as time (seconds).
 
+.. Note::
+    Use the ``-sec`` argument to set :attr:`~uv_pro.process.Dataset.units` to ``"seconds"`` and trim using time.
 
 Removing Outliers
 ----------------------------
@@ -147,8 +157,8 @@ The :func:`baseline_tolerance <uv_pro.process.Dataset.__init__>` specifies the e
 can be set using the ``-tol`` or ``--baseline_tolerance`` argument at the terminal::
 
     # Set the baseline tolerance.
-    uvp -p "mydata.KD" -tol 0.01
-    uvp -p "mydata.KD" --baseline_tolerance 10
+    uvp -p mydata.KD -tol 0.01
+    uvp -p mydata.KD --baseline_tolerance 10
 
 Try ``-tol`` values between 0.001 and 10000. The default is 0.1.
 See pybaselines.whittaker_ for more in-depth information.
@@ -164,8 +174,8 @@ The presence of negative peaks in your data will significantly affect the data c
 You can set the size of the window using the ``-lsw`` or ``--low_signal_window`` argument at the terminal::
 
     # Set the low signal outlier window size.
-    uvp -p "mydata.KD" -lsw "wide"
-    uvp -p "mydata.KD" --low_signal_window "narrow"  # default
+    uvp -p mydata.KD -lsw "wide"
+    uvp -p mydata.KD --low_signal_window "narrow"  # default
 
 The default size is ``"narrow"``, meaning only the spectra with low total absorbance are considered
 low signal outliers. If the size is set to ``"wide"``, then the spectra immediately neighboring low signal
@@ -197,11 +207,11 @@ Examples
 Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep only spectra
 from 50 seconds to 250 seconds, and show 10 slices::
 
-    uvp -p "C:\\Desktop\\myfile.KD" -t 50 250 -ot 0.2 -sl 10
+    uvp -p C:\Desktop\myfile.KD -t 50 250 -ot 0.2 -sl 10
 
 
 Import the data from the .csv files in ``mydatafolder``, trim the data to keep only spectra from 20 
 seconds to 2000 seconds, set the cycle time to 5 seconds, set the outlier detection to 0.2, and show 
 15 slices::
 
-    uvp -p "C:\\Desktop\\mydatafolder" -t 20 2000 -ct 5 -ot 0.2 -sl 15
+    uvp -p C:\Desktop\mydatafolder -t 20 2000 -ct 5 -ot 0.2 -sl 15
