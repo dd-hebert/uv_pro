@@ -24,10 +24,13 @@ uvp -p path\to\your\data.KD
 uvp -p path\to\folder\mydatafolder
 ```
 
+**Tip:** You can use short paths by setting the **root directory** or opening a terminal session inside the same folder your data files are located.
+
+
 Command Line Arguments
 ----------------------
 #### ``-p``, ``--path`` : string, required
-The path to the UV-Vis data, either a .KD file or a folder (.csv format).
+The path to the UV-Vis data, either a .KD file or a folder (.csv format). You can use a path relative to the current working directory, an absolute path, or a path relative to the root directory (if one has been set).
 
 ___
 
@@ -61,7 +64,7 @@ Set the root directory so you don’t have to type full length file paths. For e
 **Without root directory:**
 ```
 # Must type full file path
-uvp -p C:\mydata\UV-Vis Data\mydata.KD
+uvp -p "C:\mydata\UV-Vis Data\mydata.KD"
 ```
 
 Without a root directory, you must type the full path to the data. 
@@ -69,7 +72,7 @@ Without a root directory, you must type the full path to the data.
 **With root directory:**
 ```
 # Set the root directory
-uvp -r C:\mydata\UV-Vis Data
+uvp -r "C:\mydata\UV-Vis Data"
 
 # Only need short file path
 uvp -p mydata.KD
@@ -77,21 +80,24 @@ uvp -p mydata.KD
 
 With a root directory set, the root directory portion of the path can be omitted. The root directory is saved between runs as a file ``root_directory.pickle``.
 
+#### ``-sec``, ``--use_seconds`` : flag, optional
+Set to use seconds instead of spectrum # when trimming data.
+
 #### ``-sl``, ``--slice_spectra`` : integer, optional
 The number of slices to plot and export. The default is 0, where *all* spectra are plotted and exported. Example: if the dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported.
 
 #### ``-t``, ``--trim`` : 2 integers, optional
-Use ``-t`` to select a specific portion of a dataset of spectra `first last`. The ``first`` value is the *index* or *time* (in seconds) of the first spectrum to select. The ``last`` value is the *index* or *time* (in seconds) of the last spectrum to import. The units depend on whether or not a cycle time has been provided. When working with .KD files, cycles time are automatically detected. Set to `None` for no trimming. 
+Use ``-t`` to select a specific portion of spectra. The first integer is the first spectrum to select and the second integer is the last spectrum to select. By default, trim uses spectrum # (indices). If ``-sec`` is also given, then trim will use seconds (time).
 
 ```
-# Trim from 50 seconds to 250 seconds
+# Trim from spectrum 50 to spectrum 250
 uvp -p C:\\Desktop\\MyData\\myfile.KD -t 50 250
 
-# Trim from spectrum 50 to spectrum 250
-uvp -p C:\\Desktop\\MyData\\mydatafolder -t 50 250
+# Trim from 50 seconds to 250 seconds
+uvp -p C:\\Desktop\\MyData\\myfile.KD -t 50 250 -sec
 
 # Trim from 50 seconds to 250 seconds
-uvp -p C:\\Desktop\\MyData\\mydatafolder -ct 2 -t 50 250
+uvp -p C:\\Desktop\\MyData\\mydatafolder -ct 2 -t 50 250 -sec
 # Datasets created from .csv files require a cycle time to use seconds
 ```
 
@@ -106,14 +112,14 @@ Enable view only mode. No data processing is performed and a plot of the data se
 
 Examples
 --------
-Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep only spectra from 50 seconds to 250 seconds, and show 10 slices:
+Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep the 50th spectrum to the 250th spectrum, and show 10 slices:
 ```
 uvp -p C:\\Desktop\\myfile.KD -t 50 250 -ot 0.2 -sl 10
 ```
 
 Import the data from the .csv files in ``mydatafolder``, trim the data to keep only spectra from 20 seconds to 2000 seconds, set the cycle time to 5 seconds, set the outlier detection to 0.2, and show 15 slices:
 ```
-uvp -p C:\\Desktop\\mydatafolder -t 20 2000 -ct 5 -ot 0.2 -sl 15
+uvp -p C:\\Desktop\\mydatafolder -t 20 2000 -sec -ct 5 -ot 0.2 -sl 15
 ```
 
 Uninstall
