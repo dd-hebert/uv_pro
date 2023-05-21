@@ -30,7 +30,8 @@ Command Line Arguments
     ``first last``. The first value ``trim[0]`` is the index or time
     (in seconds) of the first spectrum to select. The second value
     ``trim[1]`` is the index or time (in seconds) of the last spectrum
-    to import. Default is None (no trimming).
+    to import. Default is None (no trimming). Trimming uses spectrum #'s (indices).
+    To trim using time (seconds), the -sec must also be given.
 -ct, --cycle_time : int, optional
     Set the cycle time in seconds from the experiment. Only required if using
     time (seconds) to trim datasets imported from .csv files. The cycle time
@@ -271,10 +272,11 @@ def get_args():
                        don't have to type a full path every time.''',
         'get_root_dir': '''Print the root directory to the console.''',
         'clear_root_dir': '''Clear the current root directory.''',
-        'view': '''View only mode (no data processing).''',
+        'view': '''Enable view only mode (no data processing).''',
         'trim': '''2 args: trim data from __ to __.
-                    Uses indices if no cycle time provided (.csv).
-                    Uses time (seconds) is a cycle time is provided.''',
+                    By default, trimming uses spectrum #'s (indices). You can trim using time (seconds)
+                    by adding the -sec argument. Datasets from .csv files can only be trimmed
+                    using time if a cycle time has also been provided.''',
         'cycle_time': '''Set the cycle time (in seconds) for the experiment.
                           Cycle time is automatically detected when using a .KD file.''',
         'outlier_threshold':  '''Set the threshold (0-1) for outlier detection. Default: 0.1.
@@ -283,10 +285,11 @@ def get_args():
         'slice_spectra': 'Set the number of slices to plot. Default: 0 (show all).',
         'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
         'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
-        'low_signal_window': 'Set the width of the low signal outlier detection window.',
+        'low_signal_window': '''"narrow" or "wide". Set the width of the low signal outlier detection window.
+                                Default: "narrow"''',
         'tree': 'Show the root directory file tree.',
         'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
-        'use_seconds': 'Use seconds instead of spectrum # when trimming data.',
+        'use_seconds': "Use seconds instead of spectrum #'s when trimming data.",
         'test_mode': 'For testing purposes.'
                 }
 
