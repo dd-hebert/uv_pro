@@ -12,6 +12,7 @@ uv_pro Documentation
 
    installation
    quickstart
+   filepaths
    cli
    modules
 
