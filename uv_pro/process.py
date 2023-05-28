@@ -1,8 +1,8 @@
-'''
+"""
 Tools for processing UV-Vis data files (.KD or .csv formats) exported from
 the Agilent 845x UV-Vis Chemstation software.
 
-'''
+"""
 
 import os
 import pandas as pd
@@ -13,7 +13,7 @@ from uv_pro.file_io import from_csv
 
 
 class Dataset:
-    '''
+    """
     A Dataset object. Contains methods to process UV-Vis data.
 
     Attributes
@@ -41,15 +41,16 @@ class Dataset:
     trimmed_spectra : list of :class:`pandas.DataFrame` objects
         The trimmed portion of the :class:`Dataset`'s :attr:`cleaned_spectra`.
 
-    '''
+    """
 
     def __init__(self, path, cycle_time=None, trim=None, use_seconds=False,
                  outlier_threshold=0.1, baseline_lambda=10, baseline_tolerance=0.1,
                  low_signal_window='narrow', view_only=False):
-        '''
-        Initializes a dataset, imports the specified data at ``path`` and
-        processes the data to remove bad spectra (e.g. spectra collected when
-        mixing the solution).
+        """
+        Initialize a :class:`~uv_pro.process.Dataset`.
+
+        Imports the specified data at ``path`` and processes it to remove bad
+        spectra (e.g. spectra collected when mixing the solution).
 
         Parameters
         ----------
@@ -74,7 +75,7 @@ class Dataset:
             seconds) of the last spectrum to import. Default value is None (no
             trimming).
         use_seconds : True or False, optional
-            Use time (seconds) instead of spectrum # when trimming data.
+            Use time (seconds) instead of spectrum #'s when trimming data.
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 result in higher
@@ -102,8 +103,7 @@ class Dataset:
         -------
         None.
 
-        '''
-
+        """
         self.path = path  # string
         self.name = os.path.basename(self.path)  # string
         self.cycle_time = cycle_time  # int
@@ -149,8 +149,8 @@ class Dataset:
                     self.trimmed_spectra = self.trim_data()
 
     def get_time_traces(self, window=(300, 1060), interval=10):
-        '''
-        Iterates through different wavelengths and builds time traces.
+        """
+        Iterate through different wavelengths and builds time traces.
 
         Time traces which have poor signal-to-noise and/or saturate the detector
         due to high intensity are removed by checking if the mean of their normalized
@@ -175,8 +175,7 @@ class Dataset:
             Returns a :class:`pandas.DataFrame` objects. containing the raw
             time traces, where each column is a different wavelength.
 
-        '''
-
+        """
         all_time_traces = {}
         min_wavelength = window[0]  # Minimum time trace wavelength (in nm)
         max_wavelength = window[1]  # Maximum time trace wavelength (in nm)
@@ -198,7 +197,9 @@ class Dataset:
         return pd.DataFrame.from_dict(all_time_traces)
 
     def find_outliers(self):
-        '''
+        """
+        Find outlier spectra.
+
         Detects outlier spectra using :attr:`time_traces`. Outliers typically
         occur when mixing or injecting solutions and result in big spikes or
         dips in the absorbance.
@@ -219,8 +220,7 @@ class Dataset:
         outliers : list
             A list containing the indices of outlier spectra.
 
-        '''
-
+        """
         outliers = []
         low_signal_outliers = set()
         baseline_outliers = set()
@@ -291,7 +291,9 @@ class Dataset:
         return np.flip(np.sort(outliers))
 
     def clean_data_simple(self, wavelength, tolerance):
-        '''
+        """
+        Clean data by removing outliers.
+
         A simple method to clean :attr:`all_spectra` using the rolling median of a time
         trace at ``wavelength``. If a point of the time trace is greater than its rolling
         median + ``tolerance``, that point (spectrum) is rejected.
@@ -315,8 +317,7 @@ class Dataset:
             spectra which fell within the given ``tolerance``. Ideally, most
             outlier spectra will be removed.
 
-        '''
-
+        """
         cleaned_spectra = []
         time_trace = self.time_traces[f'{wavelength} (nm)']
         rolling_median = pd.Series(self.time_traces[f'{wavelength} (nm)']).rolling(3).median()
@@ -330,9 +331,8 @@ class Dataset:
         return cleaned_spectra
 
     def clean_data(self):
-        '''
-        Generates a list of cleaned spectra by popping outliers from
-        :attr:`all_spectra`.
+        """
+        Generate a list of cleaned spectra by popping outliers from :attr:`all_spectra`.
 
         Returns
         -------
@@ -340,8 +340,7 @@ class Dataset:
             Returns a list of :class:`pandas.DataFrame` objects containing the
             cleaned spectra (with outlier spectra removed).
 
-        '''
-
+        """
         cleaned_spectra = []
 
         for i, _ in enumerate(self.all_spectra):
@@ -353,7 +352,9 @@ class Dataset:
         return cleaned_spectra
 
     def trim_data(self, **kwargs):
-        '''
+        """
+        Trim the data to select a specific portion.
+
         Trims the data by removing spectra before ``trim[0]`` and after
         ``trim[1]``.
 
@@ -371,8 +372,7 @@ class Dataset:
             Returns a list of :class:`pandas.DataFrame` objects containing the
             chosen spectra between ``trim[0]`` and ``trim[1]``.
 
-        '''
-
+        """
         trimmed_spectra = []
         start = self.trim[0]
         end = self.trim[1]

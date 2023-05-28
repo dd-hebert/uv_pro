@@ -1,4 +1,4 @@
-'''
+"""
 Run ``uv_pro`` from the command line. With the ``uv_pro`` package installed,
 this script can be called directly from the command line with::
 
@@ -12,10 +12,10 @@ Command Line Arguments
     program will first look for the given path inside the current working
     directory, if not found it will then look at the absolute path and inside
     the root directory (if a root directory has been set).
--r, --root_dir : string, optional
+-rd, --root_dir : string, optional
     Set a root directory for where data files are located so you don't have to
     type a full file path every time. For example, if all your UV-Vis data is
-    stored inside some main directory ``C:\\mydata\\UV-Vis Data\\``, you can
+    stored inside some main directory ``C:/mydata/UV-Vis Data/``, you can
     set this as the root directory so that the path given with ``-p`` is
     assumed to be located inside the root directory.
 -grd, --get_root_dir : flag, optional
@@ -75,22 +75,22 @@ Examples
 ::
 
     # Open myfile.KD in view-only mode.
-    uvp -p C:\\Desktop\\myfile.KD -v
+    uvp -p C:/Desktop/myfile.KD -v
 
     # Set a root directory.
-    uvp -r C:\\Desktop
-    # Now C:\\Desktop can be omitted from the given path.
+    uvp -rd C:/Desktop
+    # Now C:/Desktop can be omitted from the given path.
 
-    # Open C:\\Desktop\\myfile.KD, show 10 spectra from 50 to 250 seconds
+    # Open C:/Desktop/myfile.KD, show 10 spectra from 50 to 250 seconds
     # with outlier threshold of 0.2.
-    uvp -p myfile.KD -t 50 250 -ot 0.2 -sl 10
+    uvp -p myfile.KD -t 50 250 -sec -ot 0.2 -sl 10
 
-    # Open .csv files in C:\\Desktop\\mydatafolder, set the cycle time to 5
+    # Open .csv files in C:/Desktop/mydatafolder, set the cycle time to 5
     # seconds and show 10 spectra from 50 to 250 seconds with outlier threshold
     # of 0.2
-    uvp -p mydatafolder -t 50 250 -ct 5 -ot 0.2 -sl 10
+    uvp -p mydatafolder -t 50 250 -ct 5 -sec -ot 0.2 -sl 10
 
-'''
+"""
 
 import argparse
 import os
@@ -102,9 +102,11 @@ from uv_pro.file_picker import FilePicker
 
 
 def main():
-    '''
-    Handles the args ``-qq``, ``-crd``, ``-r``, and ``-grd`` before starting
-    the processing routine :func:`~uv_pro.cli.proc()`.
+    """
+    Prehandles command line args.
+
+    Handles the args ``-qq``, ``-crd``, ``-r``, ``-grd``, ``-tr``, and ``-fp``
+    before starting the processing routine :func:`~uv_pro.cli.proc()`.
 
     Raises
     ------
@@ -115,8 +117,7 @@ def main():
     -------
     None.
 
-    '''
-
+    """
     __args = get_args()
 
     # Testing mode [-qq]
@@ -134,7 +135,7 @@ def main():
         root_pickle = os.path.normpath(
             os.path.join(parent_directory, 'root_directory.pickle'))
 
-        # Save new root directory [-r]
+        # Save new root directory [-rd]
         if __args.root_dir is not None:
             if os.path.exists(os.path.normpath(__args.root_dir)):
                 with open(root_pickle, 'wb') as f:
@@ -165,16 +166,16 @@ def main():
                 __args.path = FilePicker(__root).pick_file()
                 __args.view = True
 
-        if __args.tree is True:
+        if __args.tree is True:  # [-tr]
             FilePicker(__root).tree()
 
         # Path handling and run proc script
         if __args.path is not None:
-            '''
+            """
             First check if the given path exists in the current working directory
             or by absolute path. The absolute path will be checked if the given
             path is in a different drive than the current working directory.
-            '''
+            """
             if os.path.exists(os.path.join(os.getcwd(), __args.path)):
                 __args.path = os.path.join(os.getcwd(), __args.path)
                 proc(__args)
@@ -187,8 +188,10 @@ def main():
                     f'No such file or directory could be found: "{__args.path}"')
 
 def proc(__args):
-    '''
-    Process data. Initializes a :class:`~uv_pro.process.Dataset` with the
+    """
+    Process data.
+
+    Initializes a :class:`~uv_pro.process.Dataset` with the
     given ``__args``, plots the result, and prompts the user
     for exporting.
 
@@ -201,8 +204,7 @@ def proc(__args):
     -------
     None.
 
-    '''
-
+    """
     if __args.view is True:
         data = Dataset(__args.path, view_only=True)
 
@@ -230,16 +232,16 @@ def proc(__args):
             uvplt.plot_spectra(data, data.all_spectra)
 
         def prompt_for_export():
-            '''
-            Ask the user if they wish to export the processed data. Accepts
-            a Y or N response.
+            """
+            Ask the user if they wish to export the processed data.
+
+            Accepts a Y or N response.
 
             Returns
             -------
             None. Calls :func:`~uv_pro.file_io.export_csv`.
 
-            '''
-
+            """
             # Ask user if data should be exported
             user_input = input('\nExport cleaned spectra? (Y/N): ')
 
@@ -255,15 +257,14 @@ def proc(__args):
 
 
 def get_args():
-    '''
-    Setup ``ArgumentParser`` and parse command line arguments.
+    """
+    Create an ``ArgumentParser`` and parse command line arguments.
 
     Returns
     -------
     parser : :class:`argparse.ArgumentParser`
 
-    '''
-
+    """
     parser = argparse.ArgumentParser(description='Process UV-Vis Data Files')
     help_msg = {
         'path': '''Process UV-Vis data at the given path.

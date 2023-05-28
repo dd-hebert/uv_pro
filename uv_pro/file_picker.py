@@ -1,14 +1,12 @@
-'''
-Simple utilities to pick and view files and directories from the console.
-
-'''
+"""Simple utilities to pick and view files and directories from the console."""
 import os
 
 
 class FilePicker:
-    '''
-    A FilePicker object. Contains methods to pick and view files and
-    directories from the console.
+    """
+    A FilePicker object.
+
+    Contains methods to pick and view files and directories from the console.
 
     Attributes
     ----------
@@ -16,10 +14,10 @@ class FilePicker:
         A list of tuples containing a subfolder name ``file_list[x][0]`` and
         a list of files in each subfolder ``file_list[x][1]``.
 
-    '''
+    """
 
     def __init__(self, root):
-        '''
+        """
         Create a FilePicker object.
 
         Parameters
@@ -31,7 +29,7 @@ class FilePicker:
         -------
         None.
 
-        '''
+        """
         self.file_list = []
         self.root = root
 
@@ -60,7 +58,7 @@ class FilePicker:
             self.file_list.pop(-1)
 
     def pick_file(self):
-        '''
+        """
         Pick a file interactively from the console to open in view only mode.
 
         Returns
@@ -68,7 +66,7 @@ class FilePicker:
         file_path : string
             The path to the chosen file (relative to the ``root directory``).
 
-        '''
+        """
         # Print list of folders in root directory
         quit_func = False
         print(f'\n{self.root}')
@@ -125,14 +123,14 @@ class FilePicker:
                 return file_path
 
     def tree(self):
-        '''
-        Prints the ``root directory`` file tree to the console.
+        """
+        Print the ``root directory`` file tree to the console.
 
         Returns
         -------
         None. Prints a file tree.
 
-        '''
+        """
         print(self.root)
         for index, entry in enumerate(self.file_list):
             if index < len(self.file_list) - 1:

@@ -1,13 +1,10 @@
-'''
-Functions for plotting and visualizing uv_pro Datasets.
-
-'''
+"""Functions for plotting and visualizing uv_pro Datasets."""
 
 import matplotlib.pyplot as plt
 
 
 def plot_spectra(dataset, spectra, num_spectra=0):
-    '''
+    """
     Show a simple plot of a single or multiple spectra.
 
     Parameters
@@ -26,8 +23,7 @@ def plot_spectra(dataset, spectra, num_spectra=0):
     -------
     None. Shows a plot.
 
-    '''
-
+    """
     _, ax = plt.subplots()
     ax.set(xlabel='Wavelength (nm)',
            ylabel='Absorbance (AU)')
@@ -50,8 +46,8 @@ def plot_spectra(dataset, spectra, num_spectra=0):
 
 
 def plot_time_traces(dataset):
-    '''
-    Plots the :attr:`~uv_pro.process.Dataset.time_traces` of a ``dataset``.
+    """
+    Plot the :attr:`~uv_pro.process.Dataset.time_traces` of a ``dataset``.
 
     Parameters
     ----------
@@ -63,8 +59,7 @@ def plot_time_traces(dataset):
     -------
     None. Shows a plot.
 
-    '''
-
+    """
     _, ax = plt.subplots()
     ax.set(xlabel='Time (s)',
            ylabel='Absorbance (AU)')
@@ -79,8 +74,10 @@ def plot_time_traces(dataset):
 
 
 def plot_1x2(dataset, num_spectra=0):
-    '''
-    Shows a 1-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra` and
+    """
+    Show the 1-by-2 plot.
+
+    Show a 1-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra` and
     :attr:`~uv_pro.process.Dataset.trimmed_spectra` in ``dataset``.
 
     Parameters
@@ -97,8 +94,7 @@ def plot_1x2(dataset, num_spectra=0):
     -------
     None. Shows a plot.
 
-    '''
-
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
     ax1.set(xlabel='Wavelength (nm)',
@@ -142,8 +138,10 @@ def plot_1x2(dataset, num_spectra=0):
 
 
 def plot_1x3(dataset, num_spectra=0):
-    '''
-    Shows a 1-by-3 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
+    """
+    Show the 1-by-3 plot.
+
+    Show a 1-by-3 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
     :attr:`~uv_pro.process.Dataset.trimmed_spectra`, and
     :attr:`~uv_pro.process.Dataset.time_traces` in ``dataset``.
 
@@ -160,8 +158,7 @@ def plot_1x3(dataset, num_spectra=0):
     -------
     None. Shows a plot.
 
-    '''
-
+    """
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(16, 4), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
     ax1.set(xlabel='Wavelength (nm)',
@@ -217,8 +214,10 @@ def plot_1x3(dataset, num_spectra=0):
 
 
 def plot_2x2(dataset, num_spectra=0):
-    '''
-    Shows a 2-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
+    """
+    Show the 2-by-2 plot.
+
+    Show a 2-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
     :attr:`~uv_pro.process.Dataset.trimmed_spectra`,
     :attr:`~uv_pro.process.Dataset.time_traces`, and
     :attr:`~uv_pro.process.Dataset.baseline` with
@@ -237,8 +236,7 @@ def plot_2x2(dataset, num_spectra=0):
     -------
     None. Shows a plot.
 
-    '''
-
+    """
     fig, ([ax1, ax2], [ax3, ax4]) = plt.subplots(2, 2, figsize=(16, 8), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
     ax1.set(xlabel='Wavelength (nm)',

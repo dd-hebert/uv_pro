@@ -1,4 +1,4 @@
-'''
+"""
 uv_pro
 ======
 A tool for processing UV-Vis data files (.KD or .csv formats) exported from the
@@ -18,7 +18,6 @@ optional command line arguments.
 
 github: https://github.com/dd-hebert/uv_pro
 
-'''
-
+"""
 __author__ = 'David Hebert'
-__version__ = '0.1.2'
+__version__ = '0.1.3'

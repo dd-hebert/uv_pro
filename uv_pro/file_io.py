@@ -1,8 +1,9 @@
-'''
-Contains methods importing and exporting UV-Vis data files. Supports .csv files
-and Agilent 845x UV-Vis Chemstation binary files (.KD).
+"""
+Contains methods importing and exporting UV-Vis data files.
 
-'''
+Supports .csv files and Agilent 845x UV-Vis Chemstation binary files (.KD).
+
+"""
 
 import os
 import struct
@@ -10,8 +11,11 @@ import pandas as pd
 
 
 def from_csv(path):
-    '''
-    Reads .csv files and imports spectra found in ``path``.
+    """
+    Read .csv files at ``path``.
+
+    Read .csv files and import spectra found in ``path`` into a list of
+    :class:`pandas.DataFrame` objects.
 
     Parameters
     ----------
@@ -29,8 +33,7 @@ def from_csv(path):
         Returns a list of :class:`pandas.DataFrame` objects containing all the
         spectra found in ``path``.
 
-    '''
-
+    """
     spectra = []
     file_list = []
     directory = os.listdir(os.path.normpath(path))
@@ -73,8 +76,10 @@ def from_csv(path):
 
 
 def from_kd(path):
-    '''
-    Reads a .KD file and extracts the spectra into a list of :class:`pandas.DataFrame`
+    """
+    Parse a .KD file at ``path``.
+
+    Read a .KD file and extract the spectra into a list of :class:`pandas.DataFrame`
     objects. Also reads the cycle time from the .KD file.
 
     Important
@@ -92,8 +97,7 @@ def from_kd(path):
         Returns a list of :class:`pandas.DataFrame` objects containing all the
         spectra in the .KD file and the cycle time (in seconds) for the experiment.
 
-    '''
-
+    """
     spectrum_locations = [0]
     spectra = []
     wavelength = list(range(190, 1101))  # Spectrometer records from 190-1100 nm
@@ -146,8 +150,10 @@ def from_kd(path):
 
 
 def export_csv(dataset, spectra, num_spectra=0):
-    '''
-    Exports ``spectra`` as .csv to a folder named ``dataset.name`` inside
+    """
+    Export ``spectra`` as .csv format.
+
+    ``spectra`` are exported to a folder named ``dataset.name`` inside
     ``dataset.path``.
 
     Parameters
@@ -166,8 +172,7 @@ def export_csv(dataset, spectra, num_spectra=0):
     -------
     None.
 
-    '''
-
+    """
     # If path is a file, create output folder in {dataset.path} named
     # {dataset.name} without file extension.
     if os.path.isfile(dataset.path) is True:

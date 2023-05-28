@@ -1,15 +1,10 @@
-'''
-Default entry point if running the package using::
-
-    python -m uv_pro
-
-'''
+"""Default entry point if running the package using ``python -m uv_pro``."""
 import sys
 import uv_pro.cli
 
 
 def main():
-    '''Run uv_pro from cli script entry point.'''
+    """Run uv_pro from cli script entry point."""
     return uv_pro.cli.main()
 
 
