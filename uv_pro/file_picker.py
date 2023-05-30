@@ -70,15 +70,17 @@ class FilePicker:
         # Print list of folders in root directory
         quit_func = False
         print(f'\n{self.root}')
+        max_digits = len(str(len(self.file_list)))
         for index, entry in enumerate(self.file_list):
-            if index < len(self.file_list) - 1:
-                print(f'[{index + 1}]\t{entry[0]}')
-            else:
-                print(f'[{index + 1}]\t{entry[0]}')
+            extra_spacing = max_digits - len(str(index + 1))
+            spacing = ' ' * (4 + extra_spacing)
+            print(f'[{index + 1}]{spacing}{entry[0]}')
 
         # Get user folder choice
         user_folder = input('\nSelect a folder: ')
-        while user_folder.isnumeric() is False or int(user_folder) > len(self.file_list):
+        accepted_range = range(1, len(self.file_list) + 1)
+
+        while user_folder.isnumeric() is False or int(user_folder) not in accepted_range:
             if user_folder in ['q', 'Q']:
                 quit_func = True
                 break
@@ -90,16 +92,21 @@ class FilePicker:
             folder_name = self.file_list[folder_index][0]
 
             # Print list of files in user selected folder
-            print(f'\n\t    {folder_name}:')
+            max_digits = len(str(len(self.file_list[folder_index][1])))
+            spacing = ' ' * (6 + max_digits)
+            print(f'\n{spacing}{folder_name}:')
             for index, file in enumerate(self.file_list[folder_index][1]):
+                extra_spacing = max_digits - len(str(index + 1))
+                spacing = ' ' * (4 + extra_spacing)
                 if index < len(self.file_list[folder_index][1]) - 1:
-                    print(f'[{index + 1}]\t    ├───{file}\t')
+                    print(f'[{index + 1}]{spacing}├───{file}\t')
                 else:
-                    print(f'[{index + 1}]\t    └───{file}\t')
+                    print(f'[{index + 1}]{spacing}└───{file}\t')
 
             # Get user file choice
             user_file = input('\nSelect a file: ')
-            while user_file.isnumeric() is False or int(user_file) > len(self.file_list[folder_index][1]):
+            accepted_range = range(1, len(self.file_list[folder_index][1]) + 1)
+            while user_file.isnumeric() is False or int(user_file) not in accepted_range:
                 if user_file in ['q', 'Q']:
                     quit_func = True
                     break
