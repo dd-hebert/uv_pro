@@ -163,11 +163,11 @@ def main():
         # File picker [-fp]
         if __args.file_picker is True:
             if __root is not None:
-                __args.path = FilePicker(__root).pick_file()
+                __args.path = FilePicker(__root, '.KD').pick_file()
                 __args.view = True
 
         if __args.tree is True:  # [-tr]
-            FilePicker(__root).tree()
+            FilePicker(__root, '.KD').tree()
 
         # Path handling and run proc script
         if __args.path is not None:
