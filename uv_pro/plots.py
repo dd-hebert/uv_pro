@@ -1,4 +1,8 @@
-"""Functions for plotting and visualizing uv_pro Datasets."""
+"""
+Functions for plotting and visualizing uv_pro Datasets.
+
+@author: David Hebert
+"""
 
 import matplotlib.pyplot as plt
 
@@ -95,43 +99,14 @@ def plot_1x2(dataset, num_spectra=0):
     None. Shows a plot.
 
     """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), layout='constrained')
+    fig, (ax_raw_data, ax_processed_data) = plt.subplots(1, 2, figsize=(10, 5), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
-    ax1.set(xlabel='Wavelength (nm)',
-            ylabel='Absorbance (AU)',
-            title='Raw Data')
 
-    ax2.set(xlabel='Wavelength (nm)',
-            ylabel='Absorbance (AU)',
-            title='Processed Data')
+    # Plot raw data
+    _raw_data_subplot(ax_raw_data, dataset)
 
-    for i, _ in enumerate(dataset.all_spectra):
-        ax1.plot(dataset.all_spectra[i]['Wavelength (nm)'],
-                 dataset.all_spectra[i]['Absorbance (AU)'])
-
-    if num_spectra == 0 or num_spectra > len(dataset.trimmed_spectra):
-        for i, _ in enumerate(dataset.cleaned_spectra):
-            ax2.plot(dataset.trimmed_spectra[i]['Wavelength (nm)'],
-                     dataset.trimmed_spectra[i]['Absorbance (AU)'])
-
-        ax2.text(0.99, 0.99, 'all spectra',
-                 verticalalignment='top',
-                 horizontalalignment='right',
-                 transform=ax2.transAxes,
-                 color='gray',
-                 fontsize=8)
-
-    else:
-        for i in range(0, len(dataset.trimmed_spectra), len(dataset.trimmed_spectra) // int(num_spectra)):
-            ax2.plot(dataset.trimmed_spectra[i]['Wavelength (nm)'],
-                     dataset.trimmed_spectra[i]['Absorbance (AU)'])
-
-        ax2.text(0.99, 0.99, f'{num_spectra} spectra',
-                 verticalalignment='top',
-                 horizontalalignment='right',
-                 transform=ax2.transAxes,
-                 color='gray',
-                 fontsize=8)
+    # Plot processed data
+    _processed_data_subplot(ax_processed_data, dataset, num_spectra)
 
     print('Close plot window to continue...', end='\n')
     plt.show()
@@ -159,55 +134,17 @@ def plot_1x3(dataset, num_spectra=0):
     None. Shows a plot.
 
     """
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(16, 4), layout='constrained')
+    fig, (ax_raw_data, ax_processed_data, ax_time_traces) = plt.subplots(1, 3, figsize=(16, 4), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
-    ax1.set(xlabel='Wavelength (nm)',
-            ylabel='Absorbance (AU)',
-            title='Raw Data')
 
-    ax2.set(xlabel='Wavelength (nm)',
-            ylabel='Absorbance (AU)',
-            title='Processed Data')
+    # Plot raw data
+    _raw_data_subplot(ax_raw_data, dataset)
 
-    ax3.set(xlabel='Spectrum (time / cycle time)',
-            ylabel='Absorbance (AU)',
-            title='Time Traces')
+    # Plot processed data
+    _processed_data_subplot(ax_processed_data, dataset, num_spectra)
 
-    for i, _ in enumerate(dataset.all_spectra):
-        ax1.plot(dataset.all_spectra[i]['Wavelength (nm)'],
-                 dataset.all_spectra[i]['Absorbance (AU)'])
-
-    if num_spectra == 0 or num_spectra > len(dataset.trimmed_spectra):
-        for i, _ in enumerate(dataset.trimmed_spectra):
-            ax2.plot(dataset.trimmed_spectra[i]['Wavelength (nm)'],
-                     dataset.trimmed_spectra[i]['Absorbance (AU)'])
-
-        ax2.text(0.99, 0.99, 'showing: all spectra',
-                 verticalalignment='top',
-                 horizontalalignment='right',
-                 transform=ax2.transAxes,
-                 color='gray',
-                 fontsize=8)
-
-    else:
-        for i in range(0, len(dataset.trimmed_spectra), len(dataset.trimmed_spectra) // int(num_spectra)):
-            ax2.plot(dataset.trimmed_spectra[i]['Wavelength (nm)'],
-                     dataset.trimmed_spectra[i]['Absorbance (AU)'])
-
-        ax2.text(0.99, 0.99, f'showing: {num_spectra} spectra',
-                 verticalalignment='top',
-                 horizontalalignment='right',
-                 transform=ax2.transAxes,
-                 color='gray',
-                 fontsize=8)
-
-    ax3.plot(dataset.time_traces)
-    ax3.text(0.99, 0.99, 'saturated wavelengths excluded',
-             verticalalignment='top',
-             horizontalalignment='right',
-             transform=ax3.transAxes,
-             color='gray',
-             fontsize=8)
+    # Plot time traces
+    _time_traces_subplot(ax_time_traces, dataset)
 
     print('Close plot window to continue...', end='\n')
     plt.show()
@@ -237,87 +174,155 @@ def plot_2x2(dataset, num_spectra=0):
     None. Shows a plot.
 
     """
-    fig, ([ax1, ax2], [ax3, ax4]) = plt.subplots(2, 2, figsize=(16, 8), layout='constrained')
+    fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_combined)) = plt.subplots(2, 2, figsize=(16, 8), constrained_layout=True)
     fig.suptitle(dataset.name, fontweight='bold')
-    ax1.set(xlabel='Wavelength (nm)',
-            ylabel='Absorbance (AU)',
-            title='Raw Data')
 
-    ax2.set(xlabel='Wavelength (nm)',
-            ylabel='Absorbance (AU)',
-            title='Processed Data')
+    # Plot raw data
+    _raw_data_subplot(ax_raw_data, dataset)
 
-    ax3.set(xlabel='Spectrum (time / cycle time)',
-            ylabel='Absorbance (AU)',
-            title='Time Traces')
+    # Plot processed data
+    _processed_data_subplot(ax_processed_data, dataset, num_spectra)
 
-    ax4.set(xlabel='Spectrum (time / cycle time)',
-            ylabel='Absorbance (AU)',
-            title='Combined Time Traces & Baseline')
+    # Plot time traces
+    _time_traces_subplot(ax_time_traces, dataset)
 
-    for i, _ in enumerate(dataset.all_spectra):
-        ax1.plot(dataset.all_spectra[i]['Wavelength (nm)'],
-                 dataset.all_spectra[i]['Absorbance (AU)'])
+    # Plot combined time traces with baseline
+    _combined_time_traces_subplot(ax_combined, dataset)
 
-    if num_spectra == 0 or num_spectra > len(dataset.trimmed_spectra):
-        for i, _ in enumerate(dataset.trimmed_spectra):
-            ax2.plot(dataset.trimmed_spectra[i]['Wavelength (nm)'],
-                     dataset.trimmed_spectra[i]['Absorbance (AU)'])
-
-            ax2.text(0.99, 0.99, 'showing: all spectra',
-                     verticalalignment='top',
-                     horizontalalignment='right',
-                     transform=ax2.transAxes,
-                     color='gray',
-                     fontsize=8)
-
-    else:
-        for i in range(0, len(dataset.trimmed_spectra), len(dataset.trimmed_spectra) // int(num_spectra)):
-            ax2.plot(dataset.trimmed_spectra[i]['Wavelength (nm)'],
-                     dataset.trimmed_spectra[i]['Absorbance (AU)'])
-
-        ax2.text(0.99, 0.99, f'showing: {num_spectra} spectra',
-                 verticalalignment='top',
-                 horizontalalignment='right',
-                 transform=ax2.transAxes,
-                 color='gray',
-                 fontsize=8)
-
-    ax3.plot(dataset.time_traces)
-    ax3.text(0.99, 0.99, 'saturated wavelengths excluded',
-             verticalalignment='top',
-             horizontalalignment='right',
-             transform=ax3.transAxes,
-             color='gray',
-             fontsize=8)
-
-    baselined_time_traces = dataset.time_traces.sum(1) - dataset.baseline
-
-    # Use if classic outlier detection is being used (outlier threshold 0-1, normalized time traces)
-    upper_bound = dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline
-    lower_bound = -dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline
-
-    # Use if new outlier detection is being used (baseline +- outlier_threshold)
-    # upper_bound = dataset.baseline  + dataset.outlier_threshold
-    # lower_bound = dataset.baseline  - dataset.outlier_threshold
-
-    ax4.plot(upper_bound, color='skyblue', linestyle='solid', alpha=0.5)
-    ax4.plot(lower_bound, color='skyblue', linestyle='solid', alpha=0.5)
-    ax4.fill_between(upper_bound.index, upper_bound, y2=lower_bound, color='powderblue', alpha=0.5)
-
-    ax4.plot(dataset.baseline, color='skyblue', linestyle="dashed", alpha=0.8)
-    ax4.plot(dataset.time_traces.sum(1), color='black', linestyle="solid")
-    ax4.text(0.99, 0.99, f'lam={dataset.baseline_lambda}, tol={dataset.baseline_tolerance}',
-             verticalalignment='top',
-             horizontalalignment='right',
-             transform=ax4.transAxes,
-             color='gray',
-             fontsize=8)
-
-    ax4.scatter(dataset.outliers,
-                dataset.time_traces.sum(1)[dataset.outliers],
-                color='red',
-                marker='x')
-
-    print('Close plot window to continue...', end='\n')
+    print('Close plot window to continue...')
     plt.show()
+
+
+def _raw_data_subplot(ax, dataset):
+    """
+    Create a raw data subplot.
+
+    Parameters
+    ----------
+    ax : :class:`matplotlib.axes.Axes`
+        The axes to plot on.
+    dataset : :class:`~uv_pro.process.Dataset`
+        The :class:`~uv_pro.process.Dataset` to be plotted.
+
+    """
+    spectra = dataset.all_spectra
+
+    ax.set(xlabel='Wavelength (nm)',
+           ylabel='Absorbance (AU)',
+           title='Raw Data')
+
+    for spectrum in spectra:
+        ax.plot(spectrum['Wavelength (nm)'], spectrum['Absorbance (AU)'])
+
+
+def _processed_data_subplot(ax, dataset, num_spectra=0):
+    """
+    Create a processed data subplot.
+
+    Parameters
+    ----------
+    ax : :class:`matplotlib.axes.Axes`
+        The axes to plot on.
+    dataset : :class:`~uv_pro.process.Dataset`
+        The :class:`~uv_pro.process.Dataset` to be plotted.
+    num_spectra : int, optional
+        The number of slices to plot. The default is 0, where all spectra are
+        plotted. Example: if ``dataset.trimmed_spectra`` contains 400 spectra
+        and ``num_spectra`` is 10, then every 40th spectrum will be plotted.
+
+    """
+    spectra = dataset.trimmed_spectra
+
+    ax.set(xlabel='Wavelength (nm)',
+           ylabel='Absorbance (AU)',
+           title='Processed Data')
+
+    if num_spectra == 0 or num_spectra > len(spectra):
+        for spectrum in spectra:
+            ax.plot(spectrum['Wavelength (nm)'], spectrum['Absorbance (AU)'])
+
+        ax.text(0.99, 0.99, 'showing: all spectra',
+                verticalalignment='top',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                color='gray', fontsize=8)
+    else:
+        step = len(spectra) // num_spectra
+        for i in range(0, len(spectra), step):
+            ax.plot(spectra[i]['Wavelength (nm)'], spectra[i]['Absorbance (AU)'])
+
+        ax.text(0.99, 0.99, f'showing: {num_spectra} spectra',
+                verticalalignment='top',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                color='gray', fontsize=8)
+
+
+def _time_traces_subplot(ax, dataset):
+    """
+    Create a time traces subplot.
+
+    Parameters
+    ----------
+    ax : :class:`matplotlib.axes.Axes`
+        The axes to plot on.
+    dataset : :class:`~uv_pro.process.Dataset`
+        The :class:`~uv_pro.process.Dataset` to be plotted.
+
+    """
+    time_traces = dataset.time_traces
+
+    ax.set(xlabel='Spectrum (time / cycle time)',
+           ylabel='Absorbance (AU)',
+           title='Time Traces')
+
+    ax.plot(time_traces)
+
+    ax.text(0.99, 0.99, 'saturated wavelengths excluded',
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color='gray', fontsize=8)
+
+
+def _combined_time_traces_subplot(ax, dataset):
+    """
+    Create combined time traces subplot.
+
+    Parameters
+    ----------
+    ax : :class:`matplotlib.axes.Axes`
+        The axes to plot on.
+    dataset : :class:`~uv_pro.process.Dataset`
+        The :class:`~uv_pro.process.Dataset` to be plotted.
+
+    """
+    baseline = dataset.baseline
+    time_traces = dataset.time_traces
+    outlier_threshold = dataset.outlier_threshold
+    baseline_lambda = dataset.baseline_lambda
+    baseline_tolerance = dataset.baseline_tolerance
+    outliers = dataset.outliers
+
+    ax.set(xlabel='Spectrum (time / cycle time)',
+           ylabel='Absorbance (AU)',
+           title='Combined Time Traces & Baseline')
+
+    baselined_time_traces = time_traces.sum(1) - baseline
+
+    upper_bound = outlier_threshold * baselined_time_traces.max() + baseline
+    lower_bound = -outlier_threshold * baselined_time_traces.max() + baseline
+
+    ax.plot(upper_bound, color='skyblue', linestyle='solid', alpha=0.5)
+    ax.plot(lower_bound, color='skyblue', linestyle='solid', alpha=0.5)
+    ax.fill_between(upper_bound.index, upper_bound, y2=lower_bound, color='powderblue', alpha=0.5)
+
+    ax.plot(baseline, color='skyblue', linestyle='dashed', alpha=0.8)
+    ax.plot(time_traces.sum(1), color='black', linestyle='solid')
+    ax.text(0.99, 0.99, f'lam={baseline_lambda}, tol={baseline_tolerance}',
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color='gray', fontsize=8)
+
+    ax.scatter(outliers, time_traces.sum(1)[outliers], color='red', marker='x')

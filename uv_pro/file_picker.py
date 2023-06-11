@@ -1,4 +1,8 @@
-"""Simple utilities to pick and view files and directories from the console."""
+"""
+Simple utilities to pick and view files and directories from the console.
+
+@author: David Hebert
+"""
 import os
 
 
@@ -40,9 +44,8 @@ class FilePicker:
             (
                 os.path.relpath(path, self.root),
                 [file for file in files if os.path.splitext(file)[1].lower() == self.ext.lower()]
-                )
-            for path, subdirs, files in os.walk(self.root)
-            ]
+            )
+            for path, subdirs, files in os.walk(self.root)]
 
         self.file_list = [(folder, files) for folder, files in self.file_list if files]
 
@@ -143,7 +146,6 @@ class FilePicker:
                 continue  # Go back to folder selection
             else:
                 return print_selection(folder_name, file_choice)
-
 
     def tree(self):
         """

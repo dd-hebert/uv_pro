@@ -1,4 +1,8 @@
-"""Default entry point if running the package using ``python -m uv_pro``."""
+"""
+Default entry point if running the package using ``python -m uv_pro``.
+
+@author: David Hebert
+"""
 import sys
 import uv_pro.cli
 

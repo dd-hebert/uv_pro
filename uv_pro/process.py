@@ -1,7 +1,10 @@
 """
+Process UV-Vis Data.
+
 Tools for processing UV-Vis data files (.KD or .csv formats) exported from
 the Agilent 845x UV-Vis Chemstation software.
 
+@author: David Hebert
 """
 
 import os
@@ -118,35 +121,38 @@ class Dataset:
         else:
             self.units = 'index'
 
-        # Get data and cycle time
+        self._import_data()
+
+        print(f'{len(self.all_spectra)} spectra successfully imported from: {self.name}.', end='\n')
+
+        if not view_only:
+            self._process_data()
+
+    def _import_data(self):
         if self.name.endswith('.KD'):
-            self.all_spectra, self.cycle_time = from_kd(self.path)  # List of pd DataFrames
+            self.all_spectra, self.cycle_time = from_kd(self.path)
         else:
             if self.cycle_time is None:
                 self.cycle_time = 1
                 self.units = 'index'
-            self.all_spectra = from_csv(self.path)  # List of pd DataFrames
+            self.all_spectra = from_csv(self.path)
 
-        print(f'{len(self.all_spectra)} spectra successfully imported from: {self.name}.', end='\n')
+    def _process_data(self):
+        if len(self.all_spectra) > 2:
+            self.time_traces = self.get_time_traces()
+            print('Finding outliers...')
+            self.outliers = self.find_outliers()
+            print(f'{len(self.outliers)} outliers detected.')
 
-        # Clean and trim spectra
-        if view_only is False:
-            if len(self.all_spectra) > 2:
-                self.time_traces = self.get_time_traces()  # pd DataFrame
+            print('Cleaning data...')
+            self.cleaned_spectra = self.clean_data()
+            print('Success.')
 
-                print('Finding outliers...')
-                self.outliers = self.find_outliers()  # List
-                print(f'{len(self.outliers)} outliers detected.')
-
-                print('Cleaning data...')
-                self.cleaned_spectra = self.clean_data()  # List of pd DataFrames
-                print('Success.')
-
-                if self.trim is None:
-                    self.trimmed_spectra = self.cleaned_spectra
-                else:
-                    print('Trimming data...')
-                    self.trimmed_spectra = self.trim_data()
+            if self.trim is None:
+                self.trimmed_spectra = self.cleaned_spectra
+            else:
+                print('Trimming data...')
+                self.trimmed_spectra = self.trim_data()
 
     def get_time_traces(self, window=(300, 1060), interval=10):
         """
@@ -186,7 +192,7 @@ class Dataset:
             # Append the absorbance at specific {wavelength} to list.
             # {wavelength}-190 because the instrument measures from 190 nm.
             for _, spectrum in enumerate(self.all_spectra):
-                time_trace.append(spectrum['Absorbance (AU)'][wavelength-190])
+                time_trace.append(spectrum['Absorbance (AU)'][wavelength - 190])
 
             # Check if the median absorbance of the time trace is below 1.75 AU.
             # This excludes saturated wavelengths.
@@ -223,72 +229,106 @@ class Dataset:
         """
         outliers = []
         low_signal_outliers = set()
-        baseline_outliers = set()
-        low_signal_cutoff = len(self.time_traces.columns) * 0.1
-        sorted_time_traces = self.time_traces.sum(1).sort_values()
 
-        def find_low_signal_outliers():
-            i = 0
-            if self.low_signal_window.lower() == 'wide':
-                while sorted_time_traces[sorted_time_traces.index[i]] < low_signal_cutoff:
-                    low_signal_outliers.add(sorted_time_traces.index[i] - 1)
-                    low_signal_outliers.add(sorted_time_traces.index[i])
-                    low_signal_outliers.add(sorted_time_traces.index[i] + 1)
-                    i += 1
-            else:
-                while sorted_time_traces[sorted_time_traces.index[i]] < low_signal_cutoff:
-                    low_signal_outliers.add(sorted_time_traces.index[i])
-                    i += 1
-
-            return low_signal_outliers
-
-        low_signal_outliers = find_low_signal_outliers()
+        low_signal_outliers = self._find_low_signal_outliers()
         time_traces = self.time_traces.drop(low_signal_outliers)
         outliers.extend(low_signal_outliers)
 
-        # Smoothed baseline of the summed time traces (lam=smoothing factor, tol=exit criteria)
-        self.baseline = pd.Series(whittaker.asls(
-                time_traces.sum(1),
-                lam=self.baseline_lambda,
-                tol=self.baseline_tolerance)[0],
-            time_traces.sum(1).index)
-
-        # Subtract baseline from summed time traces to get baselined time trace
+        self._compute_baseline(time_traces)
         baselined_time_traces = time_traces.sum(1) - self.baseline
 
-        # def find_baseline_outliers_envelope():
-        #     # New method to filter outliers using an envelope
-        #     upper_outlier_bound = self.baseline + self.outlier_threshold
-        #     lower_outlier_bound = self.baseline - self.outlier_threshold
-        #     for i, _ in time_traces.sum(1).items():
-        #         if time_traces.sum(1)[i] > upper_outlier_bound[i] or time_traces.sum(1)[i] < lower_outlier_bound[i]:
-        #             baseline_outliers.add(i)
-
-        #     return baseline_outliers
-
-        # def find_baseline_outliers_classic():
-        #     # Classic method to filter outliers using the normalized baselined time traces.
-        #     # Slow for large Datasets, but works.
-        #     for i, _ in baselined_time_traces.items():
-        #         if abs(baselined_time_traces[i] / baselined_time_traces.max()) > self.outlier_threshold:
-        #             baseline_outliers.add(i)
-
-        #     return baseline_outliers
-
-        def find_baseline_outliers():
-            # New faster method to check for outliers using sort_values()
-            i = 0
-            sorted_baselined_time_traces = abs(baselined_time_traces).sort_values(ascending=False)
-            while sorted_baselined_time_traces[sorted_baselined_time_traces.index[i]] / baselined_time_traces.max() > self.outlier_threshold:
-                baseline_outliers.add(sorted_baselined_time_traces.index[i])
-                i += 1
-
-            return baseline_outliers
-
-        baseline_outliers = find_baseline_outliers()
+        baseline_outliers = self._find_baseline_outliers(baselined_time_traces)
         outliers.extend(baseline_outliers)
 
         return np.flip(np.sort(outliers))
+
+    def _find_low_signal_outliers(self):
+        """
+        Find outlier points with very low absorbance signal.
+
+        Returns
+        -------
+        low_signal_outliers : set
+            A set of indices where low signal outliers are found.
+
+        """
+        low_signal_outliers = set()
+        low_signal_cutoff = len(self.time_traces.columns) * 0.1
+        sorted_time_traces = self.time_traces.sum(1).sort_values()
+
+        i = 0
+        if self.low_signal_window.lower() == 'wide':
+            while sorted_time_traces[sorted_time_traces.index[i]] < low_signal_cutoff:
+                low_signal_outliers.add(sorted_time_traces.index[i] - 1)
+                low_signal_outliers.add(sorted_time_traces.index[i])
+                low_signal_outliers.add(sorted_time_traces.index[i] + 1)
+                i += 1
+        else:
+            while sorted_time_traces[sorted_time_traces.index[i]] < low_signal_cutoff:
+                low_signal_outliers.add(sorted_time_traces.index[i])
+                i += 1
+
+        return low_signal_outliers
+
+    def _compute_baseline(self, time_traces):
+        # Smoothed baseline of the summed time traces (lam=smoothing factor, tol=exit criteria)
+        self.baseline = pd.Series(whittaker.asls(
+            time_traces.sum(1),
+            lam=self.baseline_lambda,
+            tol=self.baseline_tolerance)[0],
+            time_traces.sum(1).index)
+
+    def _find_baseline_outliers_classic(self, baselined_time_traces):
+        """
+        Classic method to filter outliers using the normalized baselined time traces.
+
+        Slow for large Datasets, but works.
+
+        Parameters
+        ----------
+        baselined_time_traces : :class:`pandas.core.series.Series`
+            The summed time traces after subtracting the
+            :attr:`~uv_pro.process.Dataset.baseline`
+
+        Returns
+        -------
+        baseline_outliers : set
+            A set of indices where baseline outliers are located.
+
+        """
+        baseline_outliers = set()
+
+        for i, _ in baselined_time_traces.items():
+            if abs(baselined_time_traces[i] / baselined_time_traces.max()) > self.outlier_threshold:
+                baseline_outliers.add(i)
+
+        return baseline_outliers
+
+    def _find_baseline_outliers(self, baselined_time_traces):
+        """
+        Faster method to find outliers using sort_values().
+
+        Parameters
+        ----------
+        baselined_time_traces : :class:`pandas.core.series.Series`
+            The summed time traces after subtracting the
+            :attr:`~uv_pro.process.Dataset.baseline`
+
+        Returns
+        -------
+        baseline_outliers : set
+            A set of indices where baseline outliers are located.
+
+        """
+        baseline_outliers = set()
+
+        i = 0
+        sorted_baselined_time_traces = abs(baselined_time_traces).sort_values(ascending=False)
+        while sorted_baselined_time_traces[sorted_baselined_time_traces.index[i]] / baselined_time_traces.max() > self.outlier_threshold:
+            baseline_outliers.add(sorted_baselined_time_traces.index[i])
+            i += 1
+
+        return baseline_outliers
 
     def clean_data_simple(self, wavelength, tolerance):
         """

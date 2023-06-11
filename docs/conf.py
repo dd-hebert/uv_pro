@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = 'uv_pro'
 copyright = '2023, David Hebert'
 author = 'David Hebert'
-release = '0.1.3'
+release = '0.1.4'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -28,6 +28,9 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel"
 ]
+
+def setup(app):
+    app.connect('autodoc-process-docstring', cut_lines(0, 1, what=['module']))
 
 napoleon_include_init_with_doc = True
 

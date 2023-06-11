@@ -90,6 +90,7 @@ Examples
     # of 0.2
     uvp -p mydatafolder -t 50 250 -ct 5 -sec -ot 0.2 -sl 10
 
+@author: David Hebert
 """
 
 import argparse
@@ -101,11 +102,171 @@ from uv_pro.file_io import export_csv
 from uv_pro.file_picker import FilePicker
 
 
+def handle_test_mode(args):
+    r"""
+    Handle the test mode functionality.
+
+    `-qq`
+
+    Test mode only works from inside the repo \...\uv_pro\uv_pro.
+
+    Parameters
+    ----------
+    args : :class:`argparse.Namespace`
+        Parsed command-line arguments.
+
+    Returns
+    -------
+    None.
+
+    """
+    test_data = os.path.normpath(
+        os.path.join(os.path.abspath(os.pardir), 'test data\\test_data3.KD'))
+    args.path = test_data
+    proc(args)
+
+
+def get_root_pickle():
+    """
+    Return the path to the root directory pickle file.
+
+    Returns
+    -------
+    str
+        The path to the root directory pickle file.
+
+    """
+    parent_directory = os.path.abspath(os.path.join(__file__, os.pardir))
+    root_pickle = os.path.normpath(os.path.join(parent_directory, 'root_directory.pickle'))
+
+    return root_pickle
+
+
+def save_root_directory(args, root_pickle):
+    """
+    Save a new root directory.
+
+    `-rd`
+
+    Parameters
+    ----------
+    args : :class:`argparse.Namespace`
+        Parsed command-line arguments.
+    root_pickle : str
+        The path to the root directory pickle file.
+
+    Returns
+    -------
+    None.
+
+    """
+    if os.path.exists(os.path.normpath(args.root_dir)):
+        with open(root_pickle, 'wb') as f:
+            pickle.dump(args.root_dir, f)
+        print(f'New root directory: {args.root_dir}')
+    else:
+        print('Error: Directory does not exist.')
+
+
+def handle_root_directory(args, root_pickle):
+    """
+    Load or clear the root directory from the root directory pickle file.
+
+    `-grd`, `-crd`
+
+    Parameters
+    ----------
+    args : :class:`argparse.Namespace`
+        Parsed command-line arguments.
+    root_pickle : str
+        The path to the root directory pickle file.
+
+    Returns
+    -------
+    str or None
+        The root directory or None if the pickle file doesn't exist.
+
+    """
+    if os.path.exists(root_pickle):
+        if args.clear_root_dir is True:  # [-crd]
+            os.remove(root_pickle)
+            root_dir = None
+            print('Cleared root directory.')
+        else:
+            with open(root_pickle, 'rb') as f:
+                root_dir = pickle.load(f)
+    else:
+        root_dir = None
+
+    return root_dir
+
+
+def handle_file_picker(args, root_dir):
+    """
+    Handle the file picker functionality.
+
+    `-fp`
+
+    Parameters
+    ----------
+    args : :class:`argparse.Namespace`
+        Parsed command-line arguments.
+    root_dir : str or None
+        The root directory.
+
+    Returns
+    -------
+    None.
+
+    """
+    if args.file_picker is True and root_dir is not None:
+        args.path = FilePicker(root_dir, '.KD').pick_file()
+        args.view = True
+
+    if args.tree is True:  # [-tr]
+        FilePicker(root_dir, '.KD').tree()
+
+
+def handle_path(args, root_dir):
+    """
+    Path handling and runs the proc script.
+
+    Parameters
+    ----------
+    args : :class:`argparse.Namespace`
+        Parsed command-line arguments.
+    root_dir : str or None
+        The root directory.
+
+    Raises
+    ------
+    FileNotFoundError
+        Raised if the given file path cannot be found.
+
+    Returns
+    -------
+    None.
+
+    """
+    if args.path is not None:
+        current_dir = os.getcwd()
+        path_exists = os.path.exists(os.path.join(current_dir, args.path))
+
+        if path_exists:
+            args.path = os.path.join(current_dir, args.path)
+            proc(args)
+        elif root_dir is not None and os.path.exists(os.path.join(root_dir, args.path)):
+            args.path = os.path.join(root_dir, args.path)
+            proc(args)
+        else:
+            raise FileNotFoundError(f'No such file or directory could be found: "{args.path}"')
+
+
 def main():
     """
     Prehandles command line args.
 
-    Handles the args ``-qq``, ``-crd``, ``-r``, ``-grd``, ``-tr``, and ``-fp``
+    Handles the args ``-qq``, ``-crd``, ``-rd``, ``-grd``, ``-tr``, and ``-fp``
     before starting the processing routine :func:`~uv_pro.cli.proc()`.
 
     Raises
@@ -118,86 +279,43 @@ def main():
     None.
 
     """
-    __args = get_args()
+    args = get_args()
 
-    # Testing mode [-qq]
-    # Only works from inside the repo \...\uv_pro\uv_pro\.
-    if __args.test_mode is True:
-        test_data = os.path.normpath(
-            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data3.KD'))
+    # Test mode [-qq]
+    if args.test_mode is True:
+        handle_test_mode(args)
+        return
 
-        __args.path = test_data
+    root_pickle = get_root_pickle()
 
-        proc(__args)
+    if args.root_dir is not None:
+        # Root dir [-rd]
+        save_root_directory(args, root_pickle)
 
-    else:
-        parent_directory = os.path.abspath(os.path.join(__file__, os.pardir))
-        root_pickle = os.path.normpath(
-            os.path.join(parent_directory, 'root_directory.pickle'))
+    # Load or clear [-crd] root dir
+    root_dir = handle_root_directory(args, root_pickle)
 
-        # Save new root directory [-rd]
-        if __args.root_dir is not None:
-            if os.path.exists(os.path.normpath(__args.root_dir)):
-                with open(root_pickle, 'wb') as f:
-                    pickle.dump(__args.root_dir, f)
-                print(f'New root directory: {__args.root_dir}')
-            else:
-                print('Error: Directory does not exist.')
+    # Print root directory [-gdr]
+    if args.get_root_dir is True:
+        print(f'root directory: {root_dir}')
 
-        # Handle loading or clearing root directory
-        if os.path.exists(root_pickle):
-            if __args.clear_root_dir is True:  # [-crd]
-                os.remove(root_pickle)
-                __root = None
-                print('Cleared root directory.')
-            else:  # Load root directory
-                with open(root_pickle, 'rb') as f:
-                    __root = pickle.load(f)
-        else:
-            __root = None
+    # File picker [-fp] and tree [-tr]
+    handle_file_picker(args, root_dir)
 
-        # Print root directory [-gdr]
-        if __args.get_root_dir is True:
-            print(f'root directory: {__root}')
+    handle_path(args, root_dir)
 
-        # File picker [-fp]
-        if __args.file_picker is True:
-            if __root is not None:
-                __args.path = FilePicker(__root, '.KD').pick_file()
-                __args.view = True
 
-        if __args.tree is True:  # [-tr]
-            FilePicker(__root, '.KD').tree()
-
-        # Path handling and run proc script
-        if __args.path is not None:
-            """
-            First check if the given path exists in the current working directory
-            or by absolute path. The absolute path will be checked if the given
-            path is in a different drive than the current working directory.
-            """
-            if os.path.exists(os.path.join(os.getcwd(), __args.path)):
-                __args.path = os.path.join(os.getcwd(), __args.path)
-                proc(__args)
-            # Secondly, check for given path inside root directory.
-            elif __root is not None and os.path.exists(os.path.join(__root, __args.path)):
-                __args.path = os.path.join(__root, __args.path)
-                proc(__args)
-            else:
-                raise FileNotFoundError(
-                    f'No such file or directory could be found: "{__args.path}"')
-
-def proc(__args):
+def proc(args):
     """
     Process data.
 
     Initializes a :class:`~uv_pro.process.Dataset` with the
-    given ``__args``, plots the result, and prompts the user
+    given ``args``, plots the result, and prompts the user
     for exporting.
 
     Parameters
     ----------
-    __args : :class:`argparse.Namespace`
+    args : :class:`argparse.Namespace`
         Holds the arguments given at the command line.
 
     Returns
@@ -205,29 +323,29 @@ def proc(__args):
     None.
 
     """
-    if __args.view is True:
-        data = Dataset(__args.path, view_only=True)
+    if args.view is True:
+        data = Dataset(args.path, view_only=True)
 
         print('\nPlotting data...')
 
         uvplt.plot_spectra(data, data.all_spectra)
 
     else:
-        data = Dataset(__args.path,
-                       trim=__args.trim,
-                       cycle_time=__args.cycle_time,
-                       outlier_threshold=__args.outlier_threshold,
-                       baseline_lambda=__args.baseline_lambda,
-                       baseline_tolerance=__args.baseline_tolerance,
-                       low_signal_window=__args.low_signal_window,
-                       use_seconds=__args.use_seconds
+        data = Dataset(args.path,
+                       trim=args.trim,
+                       cycle_time=args.cycle_time,
+                       outlier_threshold=args.outlier_threshold,
+                       baseline_lambda=args.baseline_lambda,
+                       baseline_tolerance=args.baseline_tolerance,
+                       low_signal_window=args.low_signal_window,
+                       use_seconds=args.use_seconds
                        )
 
         print('\nPlotting data...')
 
         # Show 2x2 plot if data has been cleaned
         if len(data.all_spectra) > 2:
-            uvplt.plot_2x2(data, __args.slice_spectra)
+            uvplt.plot_2x2(data, args.slice_spectra)
         else:
             uvplt.plot_spectra(data, data.all_spectra)
 
@@ -249,7 +367,7 @@ def proc(__args):
             while user_input.lower() not in ['y', 'n']:
                 user_input = input('\nY/N: ')
             if user_input.lower() == 'y':
-                export_csv(data, data.trimmed_spectra, __args.slice_spectra)
+                export_csv(data, data.trimmed_spectra, args.slice_spectra)
             elif user_input.lower() == 'n':
                 pass
 
@@ -280,7 +398,7 @@ def get_args():
                     using time if a cycle time has also been provided.''',
         'cycle_time': '''Set the cycle time (in seconds) for the experiment.
                           Cycle time is automatically detected when using a .KD file.''',
-        'outlier_threshold':  '''Set the threshold (0-1) for outlier detection. Default: 0.1.
+        'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
                                  Values closer to 0 result in higher sensitivity (more outliers).
                                  Values closer to 1 result in lower sensitivity (fewer outliers).''',
         'slice_spectra': 'Set the number of slices to plot. Default: 0 (show all).',
@@ -291,8 +409,7 @@ def get_args():
         'tree': 'Show the root directory file tree.',
         'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
         'use_seconds': "Use seconds instead of spectrum #'s when trimming data.",
-        'test_mode': 'For testing purposes.'
-                }
+        'test_mode': 'For testing purposes.'}
 
     parser.add_argument('-p',
                         '--path',

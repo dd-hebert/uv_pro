@@ -18,6 +18,7 @@ optional command line arguments.
 
 github: https://github.com/dd-hebert/uv_pro
 
+@author: David Hebert
 """
 __author__ = 'David Hebert'
-__version__ = '0.1.3'
+__version__ = '0.1.4'

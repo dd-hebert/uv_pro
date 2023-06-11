@@ -3,6 +3,7 @@ Contains methods importing and exporting UV-Vis data files.
 
 Supports .csv files and Agilent 845x UV-Vis Chemstation binary files (.KD).
 
+@author: David Hebert
 """
 
 import os
@@ -109,41 +110,37 @@ def from_kd(path):
     cycle_time_string = (
         b'\x43\x00\x79\x00\x63\x00\x6C\x00'
         b'\x65\x00\x54\x00\x69\x00\x6D\x00'
-        b'\x65\x00\x77\x00\x00\x00\x00\x00'
-        )
+        b'\x65\x00\x77\x00\x00\x00\x00\x00')
 
     print('Reading .KD file...')
 
     with open(path, 'rb') as kd_file:
-        file_bytes = kd_file.read()  # Bytes from .KD binary file
+        file_bytes = kd_file.read()
 
-    # Find the string of bytes that precedes absorbance data in the binary file.
     finder = file_bytes.find(absorbance_data_string, spectrum_locations[-1])
 
-    # Extract absorbance data.
-    while spectrum_locations[-1] != -1:
+    while spectrum_locations[-1] != -1 and finder != -1:
         spectrum_locations.append(finder)
-        absorbance = []
+
         # Data starts 17 hex characters after the {absorbance_data_string}.
         data_start = spectrum_locations[-1] + 17
         data_end = data_start + absorbance_table_length
+        absorbance_data = file_bytes[data_start:data_end]
 
-        for i in range(data_start, data_end, 8):
-            # Little endian mode
-            absorbance.append(struct.unpack('<d', (file_bytes[i:i + 8]))[0])
+        absorbance_values = [value for value, in struct.iter_unpack('<d', absorbance_data)]
 
         spectra.append(pd.DataFrame({'Wavelength (nm)': wavelength,
-                                     'Absorbance (AU)': absorbance}))
+                                     'Absorbance (AU)': absorbance_values}))
 
-        # Find next spectrum, start looking from the end of the current spectrum.
         finder = file_bytes.find(absorbance_data_string, data_end)
 
-    spectra.pop(-1)  # Remove weird last spectrum
+    cycle_time_finder = file_bytes.find(cycle_time_string)
+    if cycle_time_finder != -1:
+        # Cycle time is 24 bytes after the {cycle_time_string}.
+        cycle_time = int(struct.unpack_from('<d', file_bytes, cycle_time_finder + 24)[0])
+    else:
+        cycle_time = 0
 
-    # Find the string of bytes that precedes the cycle time in the binary file.
-    # Cycle time is 24 bytes after the {cycle_time_string}.
-    finder = file_bytes.find(cycle_time_string) + 24
-    cycle_time = int(struct.unpack('<d', (file_bytes[finder:finder + 8]))[0])
     print(f'Setting cycle time set to: {cycle_time} seconds...')
 
     return spectra, cycle_time
