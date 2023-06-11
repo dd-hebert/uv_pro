@@ -8,6 +8,7 @@
 
 import os
 import sys
+from sphinx.ext.autodoc import cut_lines
 
 sys.path.insert(0, os.path.abspath(".."))
 

@@ -414,23 +414,10 @@ class Dataset:
 
         """
         trimmed_spectra = []
-        start = self.trim[0]
-        end = self.trim[1]
-
-        # Check if {start} is before {end}.
-        if start >= end:
-            raise Exception('Data trim start should be before the end.')
-
-        mode = kwargs.get('mode', self.units)
+        mode = self.units
 
         if mode == 'seconds':
-            # Change {start} time if less than cycle time.
-            if start < self.cycle_time:
-                start = self.cycle_time
-
-            # Fix {end} time if it is after the last spectrum.
-            if end > len(self.all_spectra) * self.cycle_time:
-                end = len(self.all_spectra) * self.cycle_time
+            start, end = self._check_trim_values_seconds()
 
             # Choose spectra from {start} time to {end_time} time.
             trimmed_spectra = self.cleaned_spectra[start // self.cycle_time:end // self.cycle_time + 1]
@@ -439,9 +426,7 @@ class Dataset:
                   f'seconds to {end} seconds...')
 
         elif mode == 'index':
-            # Fix {end} if it is after the last spectrum.
-            if end > len(self.all_spectra):
-                end = len(self.all_spectra)
+            start, end = self._check_trim_values_indexes()
 
             # Choose spectra from {start} to {end}.
             trimmed_spectra = self.cleaned_spectra[start:end + 1]
@@ -450,3 +435,33 @@ class Dataset:
                   f'to spectrum {end}...')
 
         return trimmed_spectra
+
+    def _check_trim_values_seconds(self):
+        start = self.trim[0]
+        end = self.trim[1]
+
+        # Check if {start} is before {end}.
+        if start >= end:
+            raise Exception('Data trim start should be before the end.')
+
+        if start < self.cycle_time:
+            start = self.cycle_time
+
+        # Fix {end} time if it is after the last spectrum.
+        if end > len(self.all_spectra) * self.cycle_time:
+            end = len(self.all_spectra) * self.cycle_time
+
+        return start, end
+
+    def _check_trim_values_indexes(self):
+        start = self.trim[0]
+        end = self.trim[1]
+
+        # Check if {start} is before {end}.
+        if start >= end:
+            raise Exception('Data trim start should be before the end.')
+
+        elif end > len(self.all_spectra):
+            end = len(self.all_spectra)
+
+        return start, end
