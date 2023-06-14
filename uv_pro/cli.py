@@ -99,7 +99,7 @@ import pickle
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
 from uv_pro.file_io import export_csv
-from uv_pro.file_picker import FilePicker
+from simplefilepicker.filepicker import FilePicker
 
 
 def handle_test_mode(args):
