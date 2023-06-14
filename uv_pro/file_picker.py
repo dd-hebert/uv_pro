@@ -1,8 +1,9 @@
 """
-Simple utilities to pick and view files and directories from the console.
+Simple utilities to view directories and pick files from the terminal.
 
 @author: David Hebert
 """
+
 import os
 
 
