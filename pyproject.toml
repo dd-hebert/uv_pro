@@ -46,7 +46,7 @@ dependencies = [
   "pandas>=1.5.2",
   "pybaselines>=1.0.0",
   "matplotlib>=3.6.2",
-  "git+https://github.com/dd-hebert/FilePicker.git"
+  "git+https://github.com/dd-hebert/cv_pro.git"
 ]
 
 [project.scripts]
