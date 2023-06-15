@@ -210,17 +210,6 @@ class Dataset:
         occur when mixing or injecting solutions and result in big spikes or
         dips in the absorbance.
 
-        How It Works
-        ------------
-        First, the time traces in :attr:`time_traces` are summed to give a
-        **summed time trace** with improved signal to noise, and **low signal
-        outliers** are removed (spectra taken when the cuvette has been removed
-        from the spectrometer). From the remaining spectra, a smoothed
-        baseline is found (see :func:`pybaselines.whittaker.asls()`). The baseline
-        is subtracted from the **summed time trace** to create a **baselined time
-        trace**. The **baselined time trace** is normalized and spectra with absorbance
-        above the ``outlier_threshold`` are recorded as :attr:`outliers`.
-
         Returns
         -------
         outliers : list
