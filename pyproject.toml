@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uv_pro"
-version = "0.1.5"
+version = "0.1.6"
 authors = [
   { name="David Hebert", email="david@ddhebert.com" },
 ]
@@ -50,7 +50,8 @@ dependencies = [
 ]
 
 [project.scripts]
-uvp = "uv_pro.cli:main"
+uvp = "uv_pro.scripts.cli:CLI"
+uvpmv = "uv_pro.scripts.multiview:main"
 
 [project.urls]
 "repository" = "https://github.com/dd-hebert/uv_pro"

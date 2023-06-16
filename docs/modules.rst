@@ -7,3 +7,5 @@ API Reference
    file_io
    plots
    process
+   config
+   filepicker
