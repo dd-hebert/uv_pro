@@ -50,7 +50,7 @@ dependencies = [
 ]
 
 [project.scripts]
-uvp = "uv_pro.scripts.cli:CLI"
+uvp = "uv_pro.scripts.cli:main"
 uvpmv = "uv_pro.scripts.multiview:main"
 
 [project.urls]

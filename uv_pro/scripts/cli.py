@@ -495,3 +495,6 @@ class CLI:
                     pass
 
             prompt_for_export()
+
+def main():
+    CLI()
