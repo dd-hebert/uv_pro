@@ -52,6 +52,7 @@ dependencies = [
 [project.scripts]
 uvp = "uv_pro.scripts.cli:main"
 uvpmv = "uv_pro.scripts.multiview:main"
+uvprd = "uv_pro.scripts.go_to_rootdir:main"
 
 [project.urls]
 "repository" = "https://github.com/dd-hebert/uv_pro"
