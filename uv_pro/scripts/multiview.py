@@ -38,8 +38,8 @@ def get_args():
     parser = argparse.ArgumentParser(description='Process UV-Vis Data Files')
     help_msg = {
         'search_filters': '''An arbitrary number of search filters''',
-        'and_filter': 'AND filter mode.',
-        'or_filter': 'OR filter mode.'}
+        'and_filter': '``and`` filter mode.',
+        'or_filter': '``or`` filter mode.'}
 
     parser.add_argument('-f',
                         '--search_filters',
@@ -51,11 +51,11 @@ def get_args():
 
     arg_group = parser.add_mutually_exclusive_group(required=False)
     arg_group.add_argument('-a', '--and_filter', dest='filter_mode', action='store_const',
-                           const='AND', help=help_msg['and_filter'])
+                           const='and', help=help_msg['and_filter'])
     arg_group.add_argument('-o', '--or_filter', dest='filter_mode', action='store_const',
-                           const='OR', help=help_msg['or_filter'])
+                           const='or', help=help_msg['or_filter'])
 
-    parser.set_defaults(filter_mode='OR')
+    parser.set_defaults(filter_mode='or')
 
     return parser.parse_args()
 
@@ -89,7 +89,7 @@ def filter_files(search_filters, mode='or'):
     search_filters : list
         A list of search filter strings.
     mode : str, optional
-        The filter mode, can be `and` or `or`. The default is 'or'.
+        The filter mode, can be ``'and'`` or ``'or'``. The default is ``'or'``.
 
     Returns
     -------
@@ -115,7 +115,7 @@ def filter_files(search_filters, mode='or'):
 
 def multiview(files):
     """
-    Run the `uvp` script on a list of files in parallel using ThreadPoolExecutor.
+    Run the ``uvp`` script on a list of files in parallel using ThreadPoolExecutor.
 
     Parameters
     ----------
@@ -145,7 +145,4 @@ def main():
     """
     args = get_args()
 
-    if args.filter_mode == 'AND':
-        multiview(filter_files(args.search_filters, mode='and'))
-    else:
-        multiview(filter_files(args.search_filters, mode='or'))
+    multiview(filter_files(args.search_filters, mode=args.filter_mode))

@@ -107,14 +107,14 @@ class Dataset:
         None.
 
         """
-        self.path = path  # string
-        self.name = os.path.basename(self.path)  # string
-        self.cycle_time = cycle_time  # int
-        self.trim = trim  # list-like
-        self.low_signal_window = low_signal_window  # string
-        self.outlier_threshold = outlier_threshold  # float
-        self.baseline_lambda = baseline_lambda  # float
-        self.baseline_tolerance = baseline_tolerance  # float
+        self.path = path
+        self.name = os.path.basename(self.path)
+        self.cycle_time = cycle_time
+        self.trim = trim
+        self.low_signal_window = low_signal_window
+        self.outlier_threshold = outlier_threshold
+        self.baseline_lambda = baseline_lambda
+        self.baseline_tolerance = baseline_tolerance
 
         if use_seconds is True:
             self.units = 'seconds'
@@ -380,26 +380,15 @@ class Dataset:
 
         return cleaned_spectra
 
-    def trim_data(self, **kwargs):
+    def trim_data(self):
         """
-        Trim the data to select a specific portion.
-
-        Trims the data by removing spectra before ``trim[0]`` and after
-        ``trim[1]``.
-
-        Keyword Arguments
-        -----------------
-        mode : string
-            Specify whether time (seconds) or indexes are used when trimming data.
-            By default, indexes are used. For trimming a :class:`Dataset` from .csv
-            files, seconds can only be used if a :attr:`cycle_time` has been provided
-            (see :meth:`__init__()`).
+        Trim the data to keep only a specific portion.
 
         Returns
         -------
         trimmed_spectra : list of :class:`pandas.DataFrame` objects.
-            Returns a list of :class:`pandas.DataFrame` objects containing the
-            chosen spectra between ``trim[0]`` and ``trim[1]``.
+            A list of :class:`pandas.DataFrame` objects containing the
+            spectra specified by ``self.trim``.
 
         """
         trimmed_spectra = []
@@ -417,7 +406,6 @@ class Dataset:
         elif mode == 'index':
             start, end = self._check_trim_values_indexes()
 
-            # Choose spectra from {start} to {end}.
             trimmed_spectra = self.cleaned_spectra[start:end + 1]
 
             print(f'Selecting {len(trimmed_spectra)} spectra from spectrum {start}',
@@ -429,14 +417,12 @@ class Dataset:
         start = self.trim[0]
         end = self.trim[1]
 
-        # Check if {start} is before {end}.
         if start >= end:
             raise Exception('Data trim start should be before the end.')
 
         if start < self.cycle_time:
             start = self.cycle_time
 
-        # Fix {end} time if it is after the last spectrum.
         if end > len(self.all_spectra) * self.cycle_time:
             end = len(self.all_spectra) * self.cycle_time
 
@@ -446,7 +432,6 @@ class Dataset:
         start = self.trim[0]
         end = self.trim[1]
 
-        # Check if {start} is before {end}.
         if start >= end:
             raise Exception('Data trim start should be before the end.')
 

@@ -402,12 +402,7 @@ class CLI:
 
         Handles the args ``-qq``, ``-crd``, ``-rd``, ``-grd``, ``-tr``, and ``-fp``.
         Then handles the path before starting the processing routine
-        :func:`~uv_pro.cli.proc()`.
-
-        Raises
-        ------
-        FileNotFoundError
-            Raised if the given file path cannot be found.
+        :meth:`~uv_pro.scripts.cli.CLI.proc()`.
 
         Returns
         -------

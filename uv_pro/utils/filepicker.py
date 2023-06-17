@@ -40,9 +40,9 @@ class FilePicker:
         """
         self.root = os.path.abspath(root)
         self.ext = file_ext
-        self.file_list = self.build_file_list()
+        self.file_list = self._build_file_list()
 
-    def build_file_list(self):
+    def _build_file_list(self):
         """
         Build the list of files with the specified extension in the root directory.
 

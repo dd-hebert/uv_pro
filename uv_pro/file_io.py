@@ -39,7 +39,6 @@ def from_csv(path):
     file_list = []
     directory = os.listdir(os.path.normpath(path))
 
-    # Ignore files that aren't .csv extension.
     for entry in directory:
         if os.path.isfile(os.path.join(os.path.normpath(path), entry)) and entry.endswith('.csv'):
             file_list.append(entry)
@@ -47,7 +46,6 @@ def from_csv(path):
     if len(file_list) == 0:
         raise Exception('Empty file path, no files found.')
 
-    # Get index of first and last spectrum from list of files in path.
     start_file = file_list.index(file_list[0])
     end_file = file_list.index(file_list[-1])
 
