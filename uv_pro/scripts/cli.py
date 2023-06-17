@@ -497,4 +497,5 @@ class CLI:
             prompt_for_export()
 
 def main():
+    """Run the CLI."""
     CLI()
