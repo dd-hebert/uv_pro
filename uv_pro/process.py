@@ -388,7 +388,7 @@ class Dataset:
         -------
         trimmed_spectra : list of :class:`pandas.DataFrame` objects.
             A list of :class:`pandas.DataFrame` objects containing the
-            spectra specified by ``self.trim``.
+            spectra specified by :attr:`uv_pro.process.Dataset.trim`.
 
         """
         trimmed_spectra = []

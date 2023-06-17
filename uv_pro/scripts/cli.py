@@ -366,7 +366,7 @@ class CLI:
 
     def handle_path(self, root_dir):
         """
-        Path handling and run processing routine :meth:`~uv_pro.scripts.cli.CLI.proc()`.
+        Path handling.
 
         Parameters
         ----------
@@ -383,18 +383,15 @@ class CLI:
         None.
 
         """
-        if self.args.path is not None:
-            current_dir = os.getcwd()
-            path_exists = os.path.exists(os.path.join(current_dir, self.args.path))
+        current_dir = os.getcwd()
+        path_exists = os.path.exists(os.path.join(current_dir, self.args.path))
 
-            if path_exists:
-                self.args.path = os.path.join(current_dir, self.args.path)
-                self.proc()
-            elif root_dir is not None and os.path.exists(os.path.join(root_dir, self.args.path)):
-                self.args.path = os.path.join(root_dir, self.args.path)
-                self.proc()
-            else:
-                raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
+        if path_exists:
+            self.args.path = os.path.join(current_dir, self.args.path)
+        elif root_dir is not None and os.path.exists(os.path.join(root_dir, self.args.path)):
+            self.args.path = os.path.join(root_dir, self.args.path)
+        else:
+            raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
 
     def main(self):
         """
@@ -426,7 +423,9 @@ class CLI:
 
         self.handle_file_picker(root_dir)  # [-fp] [-tr]
 
-        self.handle_path(root_dir)
+        if self.args.path is not None:
+            self.handle_path(root_dir)
+            self.proc()
 
     def proc(self):
         """

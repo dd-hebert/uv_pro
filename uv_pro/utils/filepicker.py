@@ -51,6 +51,7 @@ class FilePicker:
         None.
 
         """
+        print(f'Searching "{self.root}" for .KD files...')
         file_list = [
             (
                 os.path.relpath(path, self.root),
