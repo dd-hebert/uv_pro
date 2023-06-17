@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Configuration handler for `uv_pro`.
+Configuration handler for ``uv_pro``.
 
-@author: David
+The config file is saved as ``settings.ini`` inside ``.config/uv_pro``, which
+can be found in the user's home directory.
+
+@author: David Hebert
 """
 
 import os
@@ -83,7 +86,7 @@ class Config:
 
         """
         default_config = ConfigParser()
-        default_config['Settings'] = {"root_directory": f'{Config.directory}'}
+        default_config['Settings'] = {"root_directory": f'{os.path.expanduser("~")}'}
 
         return default_config
 
