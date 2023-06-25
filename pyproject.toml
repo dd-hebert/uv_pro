@@ -45,8 +45,7 @@ dependencies = [
   "numpy>=1.21.6",
   "pandas>=1.5.2",
   "pybaselines>=1.0.0",
-  "matplotlib>=3.6.2",
-  "simplefilepicker@git+https://github.com/dd-hebert/simple-filepicker.git"
+  "matplotlib>=3.6.2"
 ]
 
 [project.scripts]
