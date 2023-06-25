@@ -86,7 +86,7 @@ class Config:
 
         """
         default_config = ConfigParser()
-        default_config['Settings'] = {"root_directory": f'{os.path.expanduser("~")}'}
+        default_config['Settings'] = {"root_directory": Config.directory}
 
         return default_config
 
