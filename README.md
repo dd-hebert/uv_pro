@@ -24,7 +24,7 @@ uvp -p path\to\your\data.KD
 uvp -p path\to\folder\mydatafolder
 ```
 
-**Tip:** You can use short paths by setting the **root directory** or opening a terminal session inside the same folder your data files are located.
+**Tip:** You can use shorter paths by setting a **root directory** or by simply opening a terminal session inside the same folder as your data files.
 
 
 Command Line Arguments
@@ -35,13 +35,13 @@ The path to the UV-Vis data, either a .KD file or a folder (.csv format). You ca
 ___
 
 #### ``-crd``, ``-–clear_root_dir`` : flag, optional
-Clear the current root directory (deletes ``root_directory.pickle``).
+Reset the root directory back to the default location (in the user's home directory).
 
 #### ``-ct``, ``--cycle_time`` : integer, optional
-Set the cycle time in seconds from the experiment. Only required if you wish to use time (seconds) to trim datasets imported from .csv files. The cycle time is automatically detected when creating a dataset from a .KD file. The default value is 1 (same as using indices). Note: only experiments with a constant cycle time are currently supported.
+Set the cycle time in seconds from the experiment. Only required if you wish to trim datasets imported from .csv files using time units (seconds). The cycle time is automatically detected when creating a dataset from a .KD file. Note: only experiments with a constant cycle time are currently supported.
 
 #### ``-fp``, ``--file_picker`` : flag, optional
-Interactively pick a .KD file from the console. The file is opened in view only mode.
+Interactively pick a .KD file from the terminal. The file is opened in view only mode.
 
 #### ``-grd``, ``–-get_root_dir`` : flag, optional
 Print the current root directory to the console.
@@ -53,13 +53,13 @@ Use ``-h`` to get help with command line arguments.
 Set the smoothness of the baseline when cleaning data. Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See pybaselines.whittaker.asls() for more information.
 
 #### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
-Set the width of the low signal outlier detection window. Set to "wide" and points directly neighboring low signal outliers will be labelled as outliers also. Default is "narrow", meaning only low signal outliers themselves are labelled. Set to "wide" if low signals are interfering with the baseline.
+Set the width of the low signal outlier detection window. Set to "wide" and points which directly neighbor low signal outliers will also be considered outliers. Default is "narrow", meaning only low signal outliers themselves are considered outliers. Set to "wide" if low signals are interfering with the baseline.
 
 #### ``-ot``, ``--outlier_threshold`` : float between 0 and 1, optional
-The threshold by which spectra are considered outliers. Values closer to 0 result in higher sensitivity (more outliers). Values closer to 1 result in lower sensitivity (fewer outliers). The default value is 0.1.
+The threshold by which spectra are considered outliers. Values closer to 0 result in higher sensitivity (more outliers). Values closer to 1 result in lower sensitivity (fewer outliers). A value of 1 will result in no outliers. The default value is 0.1.
 
-#### ``-rd``, ``-–root_dir`` : string (optional)
-Set the root directory so you don’t have to type full length file paths. For example, if all your UV-Vis data files are stored inside a common folder, you can set it as the root directory. Then, the path you give with ``-p`` is assumed to be inside the root directory. With a root directory set, you no longer have to type it in the file path.
+#### ``-rd``, ``-–root_dir`` : string, optional
+Set the root directory so you don’t have to type full length file paths. For example, if all your UV-Vis data files are stored inside a common folder, you can set it as the root directory. Then, the path you give with ``-p`` is assumed to be inside the root directory. With a root directory set, you'll no longer have to type the root directory portion of the file path.
 
 **Without root directory:**
 ```
@@ -78,16 +78,16 @@ uvp -rd "C:\mydata\UV-Vis Data"
 uvp -p mydata.KD
 ```
 
-With a root directory set, the root directory portion of the path can be omitted. The root directory is saved between runs as a file ``root_directory.pickle``.
+With a root directory set, the root directory portion of the path can be omitted. The root directory is saved between runs in a config file.
 
 #### ``-sec``, ``--use_seconds`` : flag, optional
-Set to use seconds instead of spectrum # when trimming data.
+Use seconds instead of spectrum #'s when trimming data.
 
 #### ``-sl``, ``--slice_spectra`` : integer, optional
-The number of slices to plot and export. The default is 0, where *all* spectra are plotted and exported. Example: if the dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported.
+The number of spectrum slices to plot and export. The default is 0, where *all* spectra are plotted and exported. Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum would be plotted and exported.
 
 #### ``-t``, ``--trim`` : 2 integers, optional
-Use ``-t`` to select a specific portion of spectra. The first integer is the first spectrum to select and the second integer is the last spectrum to select. By default, trim uses spectrum # (indices). If ``-sec`` is also given, then trim will use seconds (time).
+Use ``-t`` to select a specific portion of spectra. The first integer is the first spectrum to select and the second integer is the last spectrum to select. By default, trim uses spectrum #'s (indices). If ``-sec`` is also given, then trim will use seconds (time).
 
 ```
 # Trim from spectrum 50 to spectrum 250
@@ -108,7 +108,7 @@ Set the exit criteria for the baseline algorithm. Try values between 0.001 and 1
 Print the ``root_directory`` file tree to the console.
 
 #### ``-v`` : flag, optional
-Enable view only mode. No data processing is performed and a plot of the data set is shown.
+Enable view only mode. No data processing is performed and a plot of the data is shown.
 
 Examples
 --------
@@ -124,8 +124,7 @@ uvp -p C:\\Desktop\\mydatafolder -t 20 2000 -sec -ct 5 -ot 0.2 -sl 15
 
 Uninstall
 ---------
-To uninstall ``uv_pro`` and remove all files associated with it, run the following commands:
+To uninstall ``uv_pro`` run the following command:
 ```
-uvp -crd
 pip uninstall uv_pro
 ```
