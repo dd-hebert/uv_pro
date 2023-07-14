@@ -124,7 +124,7 @@ uvp -p C:\\Desktop\\mydatafolder -t 20 2000 -sec -ct 5 -ot 0.2 -sl 15
 
 Uninstall
 ---------
-To uninstall ``uv_pro`` run the following command:
+To uninstall ``uv_pro``, run the following command:
 ```
 pip uninstall uv_pro
 ```
