@@ -38,7 +38,7 @@ ___
 Reset the root directory back to the default location (in the user's home directory).
 
 #### ``-ct``, ``--cycle_time`` : integer, optional
-Set the cycle time in seconds from the experiment. Only required if you wish to trim datasets imported from .csv files using time units (seconds). The cycle time is automatically detected when creating a dataset from a .KD file. Note: only experiments with a constant cycle time are currently supported.
+Set the cycle time in seconds from the experiment. See ``--trim`` argument for more details. Note: The cycle time is automatically detected when creating a dataset from a .KD file. Only experiments with a constant cycle time are currently supported.
 
 #### ``-fp``, ``--file_picker`` : flag, optional
 Interactively pick a .KD file from the terminal. The file is opened in view only mode.
@@ -87,7 +87,7 @@ Use seconds instead of spectrum #'s when trimming data.
 The number of spectrum slices to plot and export. The default is 0, where *all* spectra are plotted and exported. Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum would be plotted and exported.
 
 #### ``-t``, ``--trim`` : 2 integers, optional
-Use ``-t`` to select a specific portion of spectra. The first integer is the first spectrum to select and the second integer is the last spectrum to select. By default, trim uses spectrum #'s (indices). If ``-sec`` is also given, then trim will use seconds (time).
+Use ``-t`` to select a specific portion of spectra. The first integer is the first spectrum to select and the second integer is the last spectrum to select. By default, trim uses spectrum #'s (indices). If ``-sec`` is also given, then trim will use seconds (time). Note: A cycle time ``-ct`` must be provided in order to use seconds to trim a dataset created from .csv files.
 
 ```
 # Trim from spectrum 50 to spectrum 250
