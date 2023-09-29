@@ -30,7 +30,7 @@ uvp -p path\to\folder\mydatafolder
 Command Line Arguments
 ----------------------
 #### ``-p``, ``--path`` : string, required
-The path to the UV-Vis data, either a .KD file or a folder (.csv format). You can use a path relative to the current working directory, an absolute path, or a path relative to the root directory (if one has been set).
+The path to the UV-Vis data, either a .KD file or a folder (with .csv files). You have three options for specifying the path: you can use a path relative to your current working directory, an absolute path, or a path relative to the root directory (if one has been set).
 
 ___
 
@@ -78,7 +78,7 @@ uvp -rd "C:\mydata\UV-Vis Data"
 uvp -p mydata.KD
 ```
 
-With a root directory set, the root directory portion of the path can be omitted. The root directory is saved between runs in a config file.
+By setting a root directory, you can omit the root directory part of the path. The root directory is saved between runs in a config file.
 
 #### ``-sec``, ``--use_seconds`` : flag, optional
 Use seconds instead of spectrum #'s when trimming data.
