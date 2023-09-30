@@ -13,11 +13,10 @@ Command Line Arguments
     directory, if not found it will then look at the absolute path and inside
     the root directory (if a root directory has been set).
 -rd, --root_dir : string, optional
-    Set a root directory for where data files are located so you don't have to
-    type a full file path every time. For example, if all your UV-Vis data is
-    stored inside some main directory ``C:/mydata/UV-Vis Data/``, you can
-    set this as the root directory so that the path given with ``-p`` is
-    assumed to be located inside the root directory.
+    Specify a root directory to simplify file path entry. For instance, if
+    you store all your UV-Vis data files in a common folder, you can designate
+    it as the root directory. Subsequently, any path provided with ``-p`` is
+    assumed to be relative to the root directory.
 -grd, --get_root_dir : flag, optional
     Print the current root directory to the console.
 -crd, --clear_root_dir : flag, optional
