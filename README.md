@@ -59,7 +59,7 @@ Set the width of the low signal outlier detection window. Set to "wide" and poin
 The threshold by which spectra are considered outliers. Values closer to 0 result in higher sensitivity (more outliers). Values closer to 1 result in lower sensitivity (fewer outliers). A value of 1 will result in no outliers. The default value is 0.1.
 
 #### ``-rd``, ``-–root_dir`` : string, optional
-Set the root directory so you don’t have to type full length file paths. For example, if all your UV-Vis data files are stored inside a common folder, you can set it as the root directory. Then, the path you give with ``-p`` is assumed to be inside the root directory. With a root directory set, you'll no longer have to type the root directory portion of the file path.
+Specify a root directory to simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``-p`` is assumed to be relative to the root directory.
 
 **Without root directory:**
 ```
