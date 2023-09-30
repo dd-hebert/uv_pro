@@ -30,7 +30,7 @@ uvp -p path\to\folder\mydatafolder
 Command Line Arguments
 ----------------------
 #### ``-p``, ``--path`` : string, required
-The path to the UV-Vis data, either a .KD file or a folder (.csv format). You can use a path relative to the current working directory, an absolute path, or a path relative to the root directory (if one has been set).
+The path to the UV-Vis data, either a .KD file or a folder (with .csv files). You have three options for specifying the path: you can use a path relative to your current working directory, an absolute path, or a path relative to the root directory (if one has been set).
 
 ___
 
@@ -59,7 +59,7 @@ Set the width of the low signal outlier detection window. Set to "wide" and poin
 The threshold by which spectra are considered outliers. Values closer to 0 result in higher sensitivity (more outliers). Values closer to 1 result in lower sensitivity (fewer outliers). A value of 1 will result in no outliers. The default value is 0.1.
 
 #### ``-rd``, ``-–root_dir`` : string, optional
-Set the root directory so you don’t have to type full length file paths. For example, if all your UV-Vis data files are stored inside a common folder, you can set it as the root directory. Then, the path you give with ``-p`` is assumed to be inside the root directory. With a root directory set, you'll no longer have to type the root directory portion of the file path.
+Specify a root directory to simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``-p`` is assumed to be relative to the root directory.
 
 **Without root directory:**
 ```
@@ -78,7 +78,7 @@ uvp -rd "C:\mydata\UV-Vis Data"
 uvp -p mydata.KD
 ```
 
-With a root directory set, the root directory portion of the path can be omitted. The root directory is saved between runs in a config file.
+By setting a root directory, you can omit the root directory part of the path. The root directory is saved between runs in a config file.
 
 #### ``-sec``, ``--use_seconds`` : flag, optional
 Use seconds instead of spectrum #'s when trimming data.
