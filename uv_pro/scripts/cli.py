@@ -68,6 +68,15 @@ Command Line Arguments
     only mode.
 -sec, --use_seconds : flag, optional
     Use time (seconds) when trimming data instead of spectrum # (indices).
+-ttw, --time_trace_window : int int, optional
+    Set the (min, max) wavelength (in nm) window for time traces during
+    outlier detection. The default is 300 1060.
+-tti, --time_trace_interval : int, optional
+    Set the interval (in nm) for time traces. An
+    interval of 10 will create time traces from the window min to max every
+    10 nm. Smaller intervals will increase loading times. The default is 10.
+-tt, --time_traces : arbitrary number of ints, optional
+    A list of specific wavelengths (in nm) to create time traces for.
 
 Examples
 --------
@@ -97,6 +106,7 @@ import os
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
 from uv_pro.file_io import export_csv
+from uv_pro.file_io import export_time_trace
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
 
@@ -155,7 +165,13 @@ class CLI:
             'tree': 'Show the root directory file tree.',
             'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
             'use_seconds': "Use seconds instead of spectrum #'s when trimming data.",
-            'test_mode': 'For testing purposes.'}
+            'test_mode': 'For testing purposes.',
+            'time_trace_window': '''Set the (min, max) wavelength (in nm) window for time traces during
+                                    outlier detection''',
+            'time_trace_interval': '''Set the interval (in nm) for time traces. An interval of 10 will create time
+                                        traces from the window min to max every 10 nm. Smaller intervals will
+                                        increase loading times.''',
+            'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.'}
 
         parser.add_argument('-p',
                             '--path',
@@ -268,6 +284,30 @@ class CLI:
                             action='store_true',
                             default=False,
                             help=help_msg['test_mode'])
+
+        parser.add_argument('-ttw',
+                            '--time_trace_window',
+                            action='store',
+                            type=int,
+                            nargs=2,
+                            default=[300, 1060],
+                            metavar='',
+                            help=help_msg['time_trace_window'])
+
+        parser.add_argument('-tti',
+                            '--time_trace_interval',
+                            action='store',
+                            type=int,
+                            default=10,
+                            metavar='',
+                            help=help_msg['time_trace_interval'])
+
+        parser.add_argument('-tt',
+                            '--time_traces',
+                            action='store',
+                            nargs='*',
+                            default=None,
+                            help=help_msg['time_traces'])
 
         return parser.parse_args()
 
@@ -454,7 +494,10 @@ class CLI:
                            baseline_lambda=self.args.baseline_lambda,
                            baseline_tolerance=self.args.baseline_tolerance,
                            low_signal_window=self.args.low_signal_window,
-                           use_seconds=self.args.use_seconds
+                           use_seconds=self.args.use_seconds,
+                           time_trace_window=self.args.time_trace_window,
+                           time_trace_interval=self.args.time_trace_interval,
+                           wavelengths=self.args.time_traces
                            )
 
             print('\nPlotting data...')
@@ -465,29 +508,33 @@ class CLI:
             else:
                 uvplt.plot_spectra(data, data.all_spectra)
 
-            def prompt_for_export():
-                """
-                Ask the user if they wish to export the processed data.
+            def _prompt_for_export():
+                if data.specific_time_traces is not None:
+                    user_input = input('\nExport data?\n\t(1) Cleaned spectra\n\t(2) Time traces\n\t(3) Both\n\t(q) quit\n').strip().lower()
 
-                Accepts a Y or N response.
+                    while user_input not in ['1', '2', '3', 'q']:
+                        user_input = input('\n1, 2 , 3, or q: ').strip().lower()
+                    if user_input == '1':
+                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
+                    elif user_input == '2':
+                        export_time_trace(data)
+                    elif user_input == '3':
+                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
+                        export_time_trace(data)
+                    elif user_input == 'q':
+                        pass
+                else:
+                    user_input = input('\nExport cleaned spectra? (Y/N): ').strip().lower()
 
-                Returns
-                -------
-                None. Calls :func:`~uv_pro.file_io.export_csv`.
+                    # Check user input is Y or N.
+                    while user_input not in ['y', 'n']:
+                        user_input = input('\nY/N: ').strip().lower()
+                    if user_input == 'y':
+                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
+                    elif user_input == 'n':
+                        pass
 
-                """
-                # Ask user if data should be exported
-                user_input = input('\nExport cleaned spectra? (Y/N): ')
-
-                # Check user input is Y or N.
-                while user_input.lower() not in ['y', 'n']:
-                    user_input = input('\nY/N: ')
-                if user_input.lower() == 'y':
-                    export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
-                elif user_input.lower() == 'n':
-                    pass
-
-            prompt_for_export()
+            _prompt_for_export()
 
 
 def main():

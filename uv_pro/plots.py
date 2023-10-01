@@ -270,9 +270,14 @@ def _time_traces_subplot(ax, dataset):
         The :class:`~uv_pro.process.Dataset` to be plotted.
 
     """
-    time_traces = dataset.time_traces
+    if dataset.specific_time_traces is not None:
+        time_traces = dataset.specific_time_traces
+        x_axis = 'time (s)'
+    else:
+        time_traces = dataset.time_traces
+        x_axis = 'Spectrum (time / cycle time)'
 
-    ax.set(xlabel='Spectrum (time / cycle time)',
+    ax.set(xlabel=x_axis,
            ylabel='Absorbance (AU)',
            title='Time Traces')
 
@@ -305,7 +310,7 @@ def _combined_time_traces_subplot(ax, dataset):
     outliers = dataset.outliers
 
     ax.set(xlabel='Spectrum (time / cycle time)',
-           ylabel='Absorbance (AU)',
+           ylabel='Intensity (arb. units)',
            title='Combined Time Traces & Baseline')
 
     baselined_time_traces = time_traces.sum(1) - baseline
