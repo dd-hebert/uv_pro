@@ -107,6 +107,15 @@ Set the exit criteria for the baseline algorithm. Try values between 0.001 and 1
 #### ``-tr``, ``--tree`` : flag, optional
 Print the ``root_directory`` file tree to the console.
 
+#### ``-tt``, ``--time_traces`` : arbitrary number of ints, optional
+Specify wavelengths to create time traces for.
+
+#### ``-tti``, ``--time_trace_interval`` : int, optional
+Set the interval (in nm) when creating time traces for outlier detection. An interval of 20 would create time traces like: (window min, window min + 20, ... , window max - 20, window max). Smaller intervals will increase loading times. Default is 10.
+
+#### ``-ttw``, ``--time_trace_window`` : int int, optional
+Set the wavelength range (min, max) (in nm) for time traces during outlier detection. The default is (300, 1060).
+
 #### ``-v`` : flag, optional
 Enable view only mode. No data processing is performed and a plot of the data is shown.
 
