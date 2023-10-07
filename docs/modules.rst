@@ -4,7 +4,9 @@ API Reference
 .. toctree::
    :maxdepth: 4
 
-   file_io
+   export
+   import_csv
+   import_kd
    plots
    process
    config
