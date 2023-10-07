@@ -167,10 +167,11 @@ See pybaselines.whittaker_ for more in-depth information.
 low signal window [-lsw]
 ````````````````````````
 The :func:`low_signal_window <uv_pro.process.Dataset.__init__>` sets the width of the low signal detection
-window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). A low signal outlier is a spectrum with very
-low total absorbance, and usually occur because the cuvette was removed from the spectrometer. Removing low
-signal outliers is important because the baseline algorithm gives `preferential weighting to negative peaks`__.
-The presence of negative peaks in your data will significantly affect the data cleaning routine.
+window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). A low signal outlier is a spectrum which has very
+low total absorbance across all captured wavelengths, which typically occurs when the sample is removed from the
+spectrometer. Removing low signal outliers is important because the baseline algorithm gives
+`preferential weighting to negative peaks`__. The presence of negative peaks in your data will significantly affect
+the data cleaning routine.
 You can set the size of the window using the ``-lsw`` or ``--low_signal_window`` argument at the terminal::
 
     # Set the low signal outlier window size.
@@ -178,25 +179,27 @@ You can set the size of the window using the ``-lsw`` or ``--low_signal_window``
     uvp -p mydata.KD --low_signal_window "narrow"  # default
 
 The default size is ``"narrow"``, meaning only the spectra with low total absorbance are considered
-low signal outliers. If the size is set to ``"wide"``, then the spectra immediately neighboring low signal
-outlier spectra are also considered :attr:`~uv_pro.process.Dataset.outliers`. The image below illustrates
+low signal outliers. If the size is set to ``"wide"``, then the spectra immediately neighboring a low signal
+outlier are also considered :attr:`~uv_pro.process.Dataset.outliers`. The image below illustrates
 the effect of changing the size of the low signal outlier window:
 
 .. image:: C2_lsw_comparison.png
 
-Notice in the left plot, the baseline (light blue region) does not closely follow the data because of the
-problem points (circled in magenta) which do not get counted as low signal outliers (circled in green). In
-the plot on the right, the window size has been set to ``"wide"``, so the points immediately before and after
-each low signal outlier also get counted as :attr:`~uv_pro.process.Dataset.outliers`. In this case, the
-:attr:`~uv_pro.process.Dataset.baseline` follows the data much more closely. Though as you can see, many data
-points in this :class:`~uv_pro.process.Dataset` are still wrongly being counted as
-:attr:`~uv_pro.process.Dataset.outliers`. While changing the size of the low signal outlier window helped,
-the other :attr:`~uv_pro.process.Dataset.baseline` parameters need to be adjusted to get a good fit.
+In the left plot, you'll notice that the baseline (depicted as the light blue region) doesn't closely follow
+the data due to certain problematic data points, indicated by magenta circles. These points aren't considered
+low signal outliers (circled in green). In the right plot, we've adjusted the window size to ``"wide"``.
+As a result, the points immediately before and after each low signal outlier are also counted as
+:attr:`~uv_pro.process.Dataset.outliers`. Consequently, the :attr:`~uv_pro.process.Dataset.baseline` now follows
+the data more closely. However, it's worth noting that several valid data points in this
+:class:`~uv_pro.process.Dataset` are still incorrectly classified as
+:attr:`~uv_pro.process.Dataset.outliers`. While altering the size of the low signal outlier window has improved
+the situation, further adjustments to other :attr:`~uv_pro.process.Dataset.baseline` parameters are needed to
+achieve a better fit.
 
-In general, the default ``"narrow"`` window size works well if the dips in the absorbance are sharp. If the
-dips in the absorbance are more broad, a ``"wide"`` window may be necessary. A side-effect of using a wider
-window is that more spectra will be considered :attr:`~uv_pro.process.Dataset.outliers` and removed from
-the final plot. However, this is only an issue when working with smaller datasets containing fewer spectra.
+In general, the default ``"narrow"`` window size works well when the dips in the absorbance are sharp. If the
+dips are broader, a ``"wide"`` window may be necessary. Keep in mind that using a wider window has a side effect:
+more spectra will be categorized as  :attr:`~uv_pro.process.Dataset.outliers` and removed from
+the final plot. However, this is primarily a concern when working with smaller datasets that contain fewer spectra.
 
 .. _pybaselines.whittaker: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html
 .. _pybaselines.whittaker.asls: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares

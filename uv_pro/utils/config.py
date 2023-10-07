@@ -21,7 +21,7 @@ class Config:
     ----------
     filename : str
         The name of the configuration file.
-    path : str
+    directory : str
         The path to the configuration file directory.
     config : :class:`configparser.ConfigParser`
         The current configuration.
