@@ -11,8 +11,8 @@ import os
 import pandas as pd
 import numpy as np
 from pybaselines import whittaker
-from uv_pro.file_io import from_kd
-from uv_pro.file_io import from_csv
+from uv_pro.io.import_kd import KDFile
+from uv_pro.io.import_csv import import_csv
 
 
 class Dataset:
@@ -147,12 +147,15 @@ class Dataset:
 
     def _import_data(self):
         if self.name.endswith('.KD'):
-            self.all_spectra, self.cycle_time = from_kd(self.path)
+            kd_file = KDFile(self.path)
+            self.all_spectra = kd_file.spectra
+            self.spectra_times = kd_file.spectra_times
+            self.cycle_time = kd_file.cycle_time
         else:
             if self.cycle_time is None:
                 self.cycle_time = 1
                 self.units = 'index'
-            self.all_spectra = from_csv(self.path)
+            self.all_spectra = import_csv(self.path)
 
     def _process_data(self):
         if len(self.all_spectra) > 2:
@@ -230,7 +233,7 @@ class Dataset:
             Describes the window of wavelengths to construct time traces of.
             The first value ``window[0]`` gives the minimum wavelength, and
             the second value ``window[1]`` gives the maximum wavelength. The
-            default value is (300, 1060).
+            default value is (190, 1100).
 
         Returns
         -------
@@ -260,11 +263,9 @@ class Dataset:
                 all_time_traces[key] = time_trace
 
             if all_time_traces:
+                time_values = pd.Index(self.spectra_times, name='Time (s)')
                 specific_time_traces = pd.DataFrame.from_dict(all_time_traces)
-                time = pd.RangeIndex(0,
-                                     len(specific_time_traces) * self.cycle_time,
-                                     self.cycle_time)
-                specific_time_traces.set_index(time, inplace=True)
+                specific_time_traces.set_index(time_values, inplace=True)
                 return specific_time_traces
             else:
                 return None

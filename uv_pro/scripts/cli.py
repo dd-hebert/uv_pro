@@ -105,8 +105,8 @@ import argparse
 import os
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
-from uv_pro.file_io import export_csv
-from uv_pro.file_io import export_time_trace
+from uv_pro.io.export import export_csv
+from uv_pro.io.export import export_time_trace
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
 
@@ -510,29 +510,36 @@ class CLI:
 
             def _prompt_for_export():
                 if data.specific_time_traces is not None:
-                    user_input = input('\nExport data?\n\t(1) Cleaned spectra\n\t(2) Time traces\n\t(3) Both\n\t(q) quit\n').strip().lower()
+                    options = ['Cleaned spectra', 'Time traces', 'Both']
 
+                    prompt = '\nExport data?\n============\n'
+                    for i, option in enumerate(options, start=1):
+                        prompt += f'({i}) {option}\n'
+                    prompt += '(q) quit\n\nChoice: '
+
+                    user_input = input(prompt).strip().lower()
                     while user_input not in ['1', '2', '3', 'q']:
-                        user_input = input('\n1, 2 , 3, or q: ').strip().lower()
+                        print('\nUnrecognized input.')
+                        user_input = input(prompt).strip().lower()
+                    if user_input == '1' or user_input == '3':
+                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
+                    if user_input == '2' or user_input == '3':
+                        export_time_trace(data)
+
+                else:
+                    options = ['Cleaned spectra']
+
+                    prompt = '\nExport data?\n============\n'
+                    for i, option in enumerate(options, start=1):
+                        prompt += f'({i}) {option}\n'
+                    prompt += '(q) quit\n\nChoice: '
+
+                    user_input = input(prompt).strip().lower()
+                    while user_input not in ['1', 'q']:
+                        print('\nUnrecognized input.')
+                        user_input = input(prompt).strip().lower()
                     if user_input == '1':
                         export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
-                    elif user_input == '2':
-                        export_time_trace(data)
-                    elif user_input == '3':
-                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
-                        export_time_trace(data)
-                    elif user_input == 'q':
-                        pass
-                else:
-                    user_input = input('\nExport cleaned spectra? (Y/N): ').strip().lower()
-
-                    # Check user input is Y or N.
-                    while user_input not in ['y', 'n']:
-                        user_input = input('\nY/N: ').strip().lower()
-                    if user_input == 'y':
-                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
-                    elif user_input == 'n':
-                        pass
 
             _prompt_for_export()
 
