@@ -8,6 +8,7 @@ and experimental parameters.
 @author: David Hebert
 """
 import struct
+import os
 import pandas as pd
 
 
@@ -31,7 +32,7 @@ class KDFile:
         of wavelengths captured by the detector.
     file_bytes : bytes
         The bytes read from the .KD file.
-    spectra : list of :class:`pandas.DataFrame` objects
+    spectra : :class:`pandas.DataFrame`
         All of the raw spectra in the :class:`Dataset`.
     spectra_times : class:`pandas.Series`
         The time values that each spectrum was captured.
@@ -56,8 +57,8 @@ class KDFile:
         """
         Create a KDFile object and parse a .KD file at ``path``.
 
-        Read a .KD file and extract the spectra into a list of :class:`pandas.DataFrame`
-        objects. Also reads the spectrum times and cycle time from the .KD file.
+        Read a .KD file and extract the spectra into a :class:`pandas.DataFrame`.
+        Also reads the spectrum times and cycle time from the .KD file.
 
         Important
         ---------
@@ -82,7 +83,7 @@ class KDFile:
         return absorbance_table_length
 
     def _read_binary(self):
-        print('Reading .KD file...')
+        print(f'Reading .KD file {os.path.basename(self.path)}...')
         with open(self.path, 'rb') as kd_file:
             file_bytes = kd_file.read()
         return file_bytes
@@ -112,8 +113,7 @@ class KDFile:
         data_end = data_start + self.absorbance_table_length
         absorbance_data = self.file_bytes[data_start:data_end]
         absorbance_values = [value for value, in struct.iter_unpack('<d', absorbance_data)]
-        return (pd.DataFrame({'Wavelength (nm)': self.wavelength_range,
-                              'Absorbance (AU)': absorbance_values}))
+        return pd.Series(absorbance_values, index=self.wavelength_range, name='Absorbance (AU)')
 
     def _parse_spectratimes(self, data_start):
         time_value = float(struct.unpack_from('<d', self.file_bytes, data_start)[0])
@@ -122,6 +122,12 @@ class KDFile:
     def _parse_cycletime(self, data_start):
         cycle_time = int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
         return cycle_time
+
+    def _spectra_dataframe(self, list_of_spectra):
+        df = pd.concat(list_of_spectra, axis=1)
+        idx = pd.Index(self.wavelength_range, name='Wavelength (nm)')
+        df.index = idx
+        return df
 
     def parse_kd(self):
         """
@@ -134,7 +140,7 @@ class KDFile:
 
         Returns
         -------
-        spectra : list of :class:`pandas.DataFrame` objects
+        spectra : :class:`pandas.DataFrame`
             The raw spectra contained in the .KD file.
         spectra_times : :class:`pandas.Series`
             The time values that each spectrum was captured.
@@ -142,20 +148,27 @@ class KDFile:
             The cycle time (in seconds) for the UV-Vis experiment.
 
         """
-        spectra = self._extract_data(KDFile.absorbance_data_header, self._parse_spectra)
+        # SPECTRA HANDLING
+        list_of_spectra = self._extract_data(KDFile.absorbance_data_header, self._parse_spectra)
 
-        if spectra is None:
+        if list_of_spectra is None:
             raise Exception('Error parsing file. No spectra found.')
 
+        spectra = self._spectra_dataframe(list_of_spectra)
+
+        print(f'Spectra found: {len(spectra.columns)}', end='\n')
+
+        # SPECTRA TIMES HANDLING
         spectra_times = pd.Series(
             self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes),
             name='Time (s)')
 
+        # CYCLE TIME HANDLING
         cycle_time = int(self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0])
 
         if cycle_time is None:
             cycle_time = 1
 
-        print(f'Setting cycle time set to: {cycle_time} seconds...')
+        print(f'Cycle time (s): {cycle_time}', end='\n')
 
         return spectra, spectra_times, cycle_time

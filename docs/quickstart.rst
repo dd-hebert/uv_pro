@@ -19,75 +19,18 @@ Alternatively, you could open a terminal session inside ``C:\mystuff\UV-Vis Data
     uvp -p mydata.KD
 
 .. Note::
-    When processing data from a .KD file, the experiment's cycle time is automatically
-    imported.
-
-
-Process UV-Vis Data From .csv Files
------------------------------------
-.. Note::
-    This feature is intended for processing complete datasets, where *all* the spectra from an
-    experiment have been exported from the Agilent UV-Vis Chemstation software. Though it will
-    work with partial datasets, the results may be unpredictable.
-
-If you have UV-Vis data stored across multiple .csv files in a folder
-``C:\mystuff\UV-Vis Data\mydatafolder``, you can process these files by opening a terminal and
-entering the following command::
-
-    uvp -p "C:\mystuff\UV-Vis Data\mydatafolder"
-
-The files will automatically be imported, processed, and plotted.
-
-Alternatively, you could open a terminal session inside ``C:\mystuff\UV-Vis Data\`` and use::
-
-    uvp -p mydatafolder
-
-If you know the cycle time for the experiment, you can specify it with ``-ct`` or
-``--cycle_time``::
-
-    # Specify a cycle time of 5 seconds.
-    uvp -p "C:\mystuff\UV-Vis Data\mydatafolder" -ct 5
-
-Setting the cycle time will allow you to use time units (seconds) when trimming your data.
-See `Trim Your Data`_ for more details.
-
+    When parsing a .KD file, the experiment's cycle time is automatically detected.
 
 Trim Your Data
 --------------
 You can ``trim`` your data to keep only a portion between a given interval. For example, if in
-an experiment you collected 1000 spectra, but you only wish you keep the a portion of the spectra,
-you can ``trim`` the data with ``-t`` or ``--trim``:
-
-- For a :class:`~uv_pro.process.Dataset` created from a .KD file::
-
-    # Trim data, keeping the 100th through the 1000th spectra.
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -t 100 1000
+an experiment you collected spectra over 2000 seconds, but you only wish you keep the a portion
+of the spectra, you can ``trim`` the data with ``-t`` or ``--trim``::
 
     # Trim data, keeping the spectra from 100 to 1000 seconds.
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -t 100 1000 -sec
+    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -t 100 1000
 
-- For a :class:`~uv_pro.process.Dataset` created from .csv files::
-
-    # Trim data, keeping the spectra from the 10th to the 30th spectrum.
-    uvp -p "C:\mystuff\UV-Vis Data\mydatafolder" -t 10 30
-    # Using indices because no cycle time was given.
-
-    # Trim data, keeping the spectra from 50 to 250 seconds.
-    uvp -p "C:\mystuff\UV-Vis Data\mydatafolder" -ct 5 -t 50 250 -sec
-    # Note for .csv data a cycle time is needed to use seconds.
-
-.. Important::
-    The :attr:`~uv_pro.process.Dataset.units` of a :class:`~uv_pro.process.Dataset` created from .csv files
-    will be ``"index"`` by default. To use ``"seconds"``, you must provide a ``cycle_time``.
-
-The behavior of ``trim`` is determined by a :class:`~uv_pro.process.Dataset`'s
-:attr:`~uv_pro.process.Dataset.units`. By default, :attr:`~uv_pro.process.Dataset.units`
-is ``"index"``, and ``trim`` will take the given values as indices (spectrum #).
-Otherwise, if :attr:`~uv_pro.process.Dataset.units` is ``"seconds"``, then ``trim`` will take the
-given values as time (seconds).
-
-.. Note::
-    Use the ``-sec`` argument to set :attr:`~uv_pro.process.Dataset.units` to ``"seconds"`` and trim using time.
+Spectra outside of the time range values given with ``trim`` will be removed.
 
 Removing Outliers
 ----------------------------
@@ -210,11 +153,12 @@ Examples
 Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep only spectra
 from 50 seconds to 250 seconds, and show 10 slices::
 
-    uvp -p C:\Desktop\myfile.KD -t 50 250 -sec -ot 0.2 -sl 10
+    uvp -p C:\Desktop\myfile.KD -t 50 250 -ot 0.2 -sl 10
 
+Import the data from ``myfile.KD``, trim the data to keep only spectra from 0 seconds to 750 seconds, change baseline
+parameters, show 25 slices, and get time traces for 780 nm and 1020 nm::
 
-Import the data from the .csv files in ``mydatafolder``, trim the data to keep only spectra from 20 
-seconds to 2000 seconds, set the cycle time to 5 seconds, set the outlier detection to 0.2, and show 
-15 slices::
+    uvp -p C:\Desktop\myfile.KD -t 0 750 -lam 10 -tol 0.1 -sl 25 -tt 780 1020
 
-    uvp -p C:\Desktop\mydatafolder -t 20 2000 -sec -ct 5 -ot 0.2 -sl 15
+The arguments are flexible and can be used in essentially any order (except ``-p`` which must come first). However, each argument
+should only occur once.

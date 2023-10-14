@@ -44,9 +44,9 @@ def export_csv(dataset, spectra, num_spectra=0):
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be exported.
-    spectra : list of :class:`pandas.DataFrame` objects
-        The spectra to be exported. A list of :class:`pandas.DataFrame`
-        objects, such as ``dataset.all_spectra`` or ``dataset.trimmed_spectra``.
+    spectra : :class:`pandas.DataFrame`
+        The spectra to be exported. A :class:`pandas.DataFrame`
+        object such as ``dataset.all_spectra`` or ``dataset.trimmed_spectra``.
     num_spectra : int, optional
         The number of slices to export. The default is 0, where all spectra
         are exported. Example: if ``spectra`` contains 200 spectra and
@@ -57,25 +57,20 @@ def export_csv(dataset, spectra, num_spectra=0):
     None.
 
     """
-    output_dir = _make_output_dir(dataset)
+    # Export all spectra
+    if num_spectra == 0 or int(num_spectra) > len(spectra.columns):
+        output_dir = os.path.dirname(dataset.path)
+        filename = os.path.splitext(dataset.name)[0]
+        spectra.to_csv(os.path.join(output_dir, f'{filename}.csv'), index=True)
 
-    # Get number of digits to use for leading zeros.
-    digits = len(str(len(spectra)))
-
-    # Export all spectra, name files by index in given list of spectra
-    if num_spectra == 0:
-        for i, spectrum in enumerate(spectra):
-            spectrum.to_csv(os.path.join(output_dir, f'{str(i+1).zfill(digits)}.csv'), index=False)
-
-    # Export chosen spectra, name files by index in given list of spectra
+    # Export equally spaced slices of the dataset
     else:
-        if int(num_spectra) > len(spectra):
-            num_spectra = len(spectra)
-
-        for i in range(0, len(spectra), len(spectra) // int(num_spectra)):
-            spectra[i].to_csv(os.path.join(output_dir, f'{str(i+1).zfill(digits)}.csv'), index=False)
-
-    print(f'Finished export: {output_dir}', end='\n')
+        output_dir = os.path.dirname(dataset.path)
+        filename = os.path.splitext(dataset.name)[0]
+        step = len(spectra.columns) // int(num_spectra)
+        columns_to_export = list(range(0, len(spectra.columns), step))
+        spectra.iloc[:, columns_to_export].to_csv(
+            os.path.join(output_dir, f'{filename}.csv'), index=True)
 
 
 def export_time_trace(dataset):
@@ -95,12 +90,9 @@ def export_time_trace(dataset):
     None.
 
     """
-    output_dir = _make_output_dir(dataset)
+    output_dir = os.path.dirname(dataset.path)
+    filename = os.path.splitext(dataset.name)[0]
     time_traces = dataset.specific_time_traces
 
-    for wavelength in time_traces.columns:
-        time_traces[wavelength].to_csv(os.path.join(output_dir, f'{wavelength}.csv'),
-                                       index=True,
-                                       index_label='time (s)')
-
-    print(f'Finished export: {output_dir}', end='\n')
+    time_traces.to_csv(os.path.join(output_dir, f'{filename} Traces.csv'),
+                       index=True)

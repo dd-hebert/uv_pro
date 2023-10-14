@@ -15,7 +15,7 @@ def plot_spectra(dataset, spectra, num_spectra=0):
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         A :class:`~uv_pro.process.Dataset` containing the spectra to be plotted.
-    spectra : list of :class:`pandas.DataFrame` objects
+    spectra : :class:`pandas.DataFrame`
         The spectra to be plotted, such as ``dataset.all_spectra`` or
         ``dataset.cleaned_spectra``.
     num_spectra : int, optional
@@ -34,15 +34,13 @@ def plot_spectra(dataset, spectra, num_spectra=0):
 
     plt.title(dataset.name, fontweight='bold')
 
-    if num_spectra == 0 or num_spectra > len(spectra):
-        for i, spectrum in enumerate(spectra):
-            plt.plot(spectrum['Wavelength (nm)'],
-                     spectrum['Absorbance (AU)'])
+    if num_spectra == 0 or num_spectra > len(spectra.columns):
+        plt.plot(spectra)
 
     else:
-        for i in range(0, len(spectra), len(spectra) // int(num_spectra)):
-            plt.plot(spectra[i]['Wavelength (nm)'],
-                     spectra[i]['Absorbance (AU)'])
+        step = len(spectra.columns) // num_spectra
+        columns_to_plot = range(0, len(spectra.columns), step)
+        plt.plot(spectra.iloc[:, columns_to_plot])
 
     plt.xlim(200, 1100)
     print('Close plot window to continue...', end='\n')
@@ -211,8 +209,7 @@ def _raw_data_subplot(ax, dataset):
            ylabel='Absorbance (AU)',
            title='Raw Data')
 
-    for spectrum in spectra:
-        ax.plot(spectrum['Wavelength (nm)'], spectrum['Absorbance (AU)'])
+    ax.plot(spectra)
 
 
 def _processed_data_subplot(ax, dataset, num_spectra=0):
@@ -237,9 +234,8 @@ def _processed_data_subplot(ax, dataset, num_spectra=0):
            ylabel='Absorbance (AU)',
            title='Processed Data')
 
-    if num_spectra == 0 or num_spectra > len(spectra):
-        for spectrum in spectra:
-            ax.plot(spectrum['Wavelength (nm)'], spectrum['Absorbance (AU)'])
+    if num_spectra == 0 or num_spectra > len(spectra.columns):
+        ax.plot(spectra)
 
         ax.text(0.99, 0.99, 'showing: all spectra',
                 verticalalignment='top',
@@ -247,11 +243,11 @@ def _processed_data_subplot(ax, dataset, num_spectra=0):
                 transform=ax.transAxes,
                 color='gray', fontsize=8)
     else:
-        step = len(spectra) // num_spectra
-        for i in range(0, len(spectra), step):
-            ax.plot(spectra[i]['Wavelength (nm)'], spectra[i]['Absorbance (AU)'])
+        step = len(spectra.columns) // num_spectra
+        columns_to_plot = range(0, len(spectra.columns), step)
+        ax.plot(spectra.iloc[:, columns_to_plot])
 
-        ax.text(0.99, 0.99, f'showing: {num_spectra} spectra',
+        ax.text(0.99, 0.99, f'showing: {len(list(columns_to_plot))} spectra',
                 verticalalignment='top',
                 horizontalalignment='right',
                 transform=ax.transAxes,
@@ -272,12 +268,10 @@ def _time_traces_subplot(ax, dataset):
     """
     if dataset.specific_time_traces is not None:
         time_traces = dataset.specific_time_traces
-        x_axis = 'time (s)'
     else:
         time_traces = dataset.time_traces
-        x_axis = 'Spectrum (time / cycle time)'
 
-    ax.set(xlabel=x_axis,
+    ax.set(xlabel='Time (s)',
            ylabel='Absorbance (AU)',
            title='Time Traces')
 
@@ -309,7 +303,7 @@ def _combined_time_traces_subplot(ax, dataset):
     baseline_tolerance = dataset.baseline_tolerance
     outliers = dataset.outliers
 
-    ax.set(xlabel='Spectrum (time / cycle time)',
+    ax.set(xlabel='Time (s)',
            ylabel='Intensity (arb. units)',
            title='Combined Time Traces & Baseline')
 

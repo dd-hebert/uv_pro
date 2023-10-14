@@ -1,6 +1,8 @@
 """
-Run ``uv_pro`` from the command line. With the ``uv_pro`` package installed,
-this script can be called directly from the command line with::
+Run ``uv_pro`` from the command line.
+
+With the ``uv_pro`` package installed, this script can be called directly from
+the command line with::
 
     uvp -p myfile.KD
 
@@ -25,18 +27,10 @@ Command Line Arguments
     Enable view only mode. No data processing is performed and a plot of
     the data set is shown. Default is False.
 -t, --trim : int int, optional
-    Use ``trim`` to select a specific portion of a dataset of spectra
-    ``first last``. The first value ``trim[0]`` is the index or time
-    (in seconds) of the first spectrum to select. The second value
-    ``trim[1]`` is the index or time (in seconds) of the last spectrum
-    to import. Default is None (no trimming). Trimming uses spectrum #'s (indices).
-    To trim using time (seconds), the -sec must also be given.
--ct, --cycle_time : int, optional
-    Set the cycle time in seconds from the experiment. Only required if using
-    time (seconds) to trim datasets imported from .csv files. The cycle time
-    is automatically detected when creating a dataset from a .KD file.
-    Note: only experiments with a constant cycle time are currently supported.
-    The default is 1 (same as using indexes).
+    Use ``trim`` to select a remove spectra outside the given time range.
+    ``first last`` - The first value ``trim[0]`` is the time (in seconds)
+    of the beginning of the time range and the second value ``trim[1]`` is the
+    end of the time range. Default is None (no trimming).
 -ot, --outlier_threshold : float, optional
     The threshold by which spectra are considered outliers.
     Values closer to 0 result in higher sensitivity (more outliers).
@@ -66,8 +60,6 @@ Command Line Arguments
 -fp, --file_picker : flag, optional
     Interactively pick a .KD file from the console. The file is opened in view
     only mode.
--sec, --use_seconds : flag, optional
-    Use time (seconds) when trimming data instead of spectrum # (indices).
 -ttw, --time_trace_window : int int, optional
     Set the (min, max) wavelength (in nm) window for time traces during
     outlier detection. The default is 300 1060.
@@ -77,6 +69,8 @@ Command Line Arguments
     10 nm. Smaller intervals will increase loading times. The default is 10.
 -tt, --time_traces : arbitrary number of ints, optional
     A list of specific wavelengths (in nm) to create time traces for.
+-ne, --no_export : flag, optional
+    Use this argument to bypass the export data prompt at the end of the script.
 
 Examples
 --------
@@ -90,13 +84,8 @@ Examples
     # Now C:/Desktop can be omitted from the given path.
 
     # Open C:/Desktop/myfile.KD, show 10 spectra from 50 to 250 seconds
-    # with outlier threshold of 0.2.
-    uvp -p myfile.KD -t 50 250 -sec -ot 0.2 -sl 10
-
-    # Open .csv files in C:/Desktop/mydatafolder, set the cycle time to 5
-    # seconds and show 10 spectra from 50 to 250 seconds with outlier threshold
-    # of 0.2
-    uvp -p mydatafolder -t 50 250 -ct 5 -sec -ot 0.2 -sl 10
+    # with outlier threshold of 0.2. Get time traces at 780 nm and 1020 nm.
+    uvp -p myfile.KD -t 50 250 -ot 0.2 -sl 10 -tt 780 1020
 
 @author: David Hebert
 """
@@ -149,11 +138,7 @@ class CLI:
             'clear_root_dir': '''Clear the current root directory.''',
             'view': '''Enable view only mode (no data processing).''',
             'trim': '''2 args: trim data from __ to __.
-                        By default, trimming uses spectrum #'s (indices). You can trim using time (seconds)
-                        by adding the -sec argument. Datasets from .csv files can only be trimmed
-                        using time if a cycle time has also been provided.''',
-            'cycle_time': '''Set the cycle time (in seconds) for the experiment.
-                              Cycle time is automatically detected when using a .KD file.''',
+                        Trim the data to remove spectra outside the given time range.''',
             'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
                                      Values closer to 0 result in higher sensitivity (more outliers).
                                      Values closer to 1 result in lower sensitivity (fewer outliers).''',
@@ -164,14 +149,14 @@ class CLI:
                                     Default: "narrow"''',
             'tree': 'Show the root directory file tree.',
             'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
-            'use_seconds': "Use seconds instead of spectrum #'s when trimming data.",
             'test_mode': 'For testing purposes.',
             'time_trace_window': '''Set the (min, max) wavelength (in nm) window for time traces during
                                     outlier detection''',
             'time_trace_interval': '''Set the interval (in nm) for time traces. An interval of 10 will create time
                                         traces from the window min to max every 10 nm. Smaller intervals will
                                         increase loading times.''',
-            'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.'}
+            'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.',
+            'no_export': 'Skip the export data prompt at the end of the script.'}
 
         parser.add_argument('-p',
                             '--path',
@@ -213,14 +198,6 @@ class CLI:
                             default=None,
                             metavar='',
                             help=help_msg['trim'])
-
-        parser.add_argument('-ct',
-                            '--cycle_time',
-                            action='store',
-                            type=int,
-                            default=None,
-                            metavar='',
-                            help=help_msg['cycle_time'])
 
         parser.add_argument('-ot',
                             '--outlier_threshold',
@@ -273,12 +250,6 @@ class CLI:
                             default=False,
                             help=help_msg['file_picker'])
 
-        parser.add_argument('-sec',
-                            '--use_seconds',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['use_seconds'])
-
         parser.add_argument('-qq',
                             '--test_mode',
                             action='store_true',
@@ -308,6 +279,12 @@ class CLI:
                             nargs='*',
                             default=None,
                             help=help_msg['time_traces'])
+
+        parser.add_argument('-ne',
+                            '--no_export',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['no_export'])
 
         return parser.parse_args()
 
@@ -489,12 +466,10 @@ class CLI:
         else:
             data = Dataset(self.args.path,
                            trim=self.args.trim,
-                           cycle_time=self.args.cycle_time,
                            outlier_threshold=self.args.outlier_threshold,
                            baseline_lambda=self.args.baseline_lambda,
                            baseline_tolerance=self.args.baseline_tolerance,
                            low_signal_window=self.args.low_signal_window,
-                           use_seconds=self.args.use_seconds,
                            time_trace_window=self.args.time_trace_window,
                            time_trace_interval=self.args.time_trace_interval,
                            wavelengths=self.args.time_traces
@@ -509,13 +484,14 @@ class CLI:
                 uvplt.plot_spectra(data, data.all_spectra)
 
             def _prompt_for_export():
+                files_exported = []
                 if data.specific_time_traces is not None:
                     options = ['Cleaned spectra', 'Time traces', 'Both']
 
                     prompt = '\nExport data?\n============\n'
                     for i, option in enumerate(options, start=1):
                         prompt += f'({i}) {option}\n'
-                    prompt += '(q) quit\n\nChoice: '
+                    prompt += '(q) Quit\n\nChoice: '
 
                     user_input = input(prompt).strip().lower()
                     while user_input not in ['1', '2', '3', 'q']:
@@ -523,8 +499,12 @@ class CLI:
                         user_input = input(prompt).strip().lower()
                     if user_input == '1' or user_input == '3':
                         export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
+                        filename = f'{os.path.splitext(os.path.basename(self.args.path))[0]}.csv'
+                        files_exported.append(filename)
                     if user_input == '2' or user_input == '3':
                         export_time_trace(data)
+                        filename = f'{os.path.splitext(os.path.basename(self.args.path))[0]} Traces.csv'
+                        files_exported.append(filename)
 
                 else:
                     options = ['Cleaned spectra']
@@ -532,7 +512,7 @@ class CLI:
                     prompt = '\nExport data?\n============\n'
                     for i, option in enumerate(options, start=1):
                         prompt += f'({i}) {option}\n'
-                    prompt += '(q) quit\n\nChoice: '
+                    prompt += '(q) Quit\n\nChoice: '
 
                     user_input = input(prompt).strip().lower()
                     while user_input not in ['1', 'q']:
@@ -540,8 +520,17 @@ class CLI:
                         user_input = input(prompt).strip().lower()
                     if user_input == '1':
                         export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
+                        filename = f'{os.path.splitext(os.path.basename(self.args.path))[0]}.csv'
+                        files_exported.append(filename)
 
-            _prompt_for_export()
+                return files_exported
+
+            if self.args.no_export is False:
+                files_exported = _prompt_for_export()
+                if files_exported:
+                    print(f'\nExport location: {os.path.dirname(self.args.path)}')
+                    print('Files exported:')
+                    [print(f'\t{file}') for file in files_exported]
 
 
 def main():

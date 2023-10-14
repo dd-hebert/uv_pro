@@ -9,10 +9,8 @@ the Agilent 845x UV-Vis Chemstation software.
 
 import os
 import pandas as pd
-import numpy as np
 from pybaselines import whittaker
 from uv_pro.io.import_kd import KDFile
-from uv_pro.io.import_csv import import_csv
 
 
 class Dataset:
@@ -24,32 +22,29 @@ class Dataset:
     name : string
         The name of the .KD file or Folder (when using .csv format) that the
         :class:`Dataset` was created from.
-    units : string
-        Either ``"seconds"`` or ``"index"``. Denotes how ``trim`` will be
-        interpretted during data trimming. Default is "index". A :class:`Dataset`
-        created from .csv files will require the ``cycle_time`` to be provided
-        in order to use ``"seconds"`` to trim data.
-    all_spectra : list of :class:`pandas.DataFrame` objects
+    cycle_time : int
+        The cycle time in seconds from the experiment.
+    all_spectra : :class:`pandas.DataFrame`
         All of the raw spectra in the :class:`Dataset`.
     time_traces : :class:`pandas.DataFrame`
         The time traces for the :class:`Dataset`.
     specific_time_traces : :class:`pandas.DataFrame`
         Time traces for user-specified wavelengths.
     outliers : list
-        The indices of outlier spectra. See :meth:`find_outliers()`
+        The time values of outlier spectra. See :meth:`find_outliers()`
         for more information.
     baseline : :class:`pandas.Series`
        The baseline of the summed :attr:`time_traces`. See :meth:`find_outliers()`
        for more information.
-    cleaned_spectra : list of :class:`pandas.DataFrame` objects
+    cleaned_spectra : :class:`pandas.DataFrame`
         The :class:`Dataset`'s spectra with :attr:`outliers` removed.
-    trimmed_spectra : list of :class:`pandas.DataFrame` objects
+    trimmed_spectra : :class:`pandas.DataFrame`
         The trimmed portion of the :class:`Dataset`'s :attr:`cleaned_spectra`.
 
     """
 
-    def __init__(self, path, cycle_time=None, trim=None, use_seconds=False,
-                 outlier_threshold=0.1, baseline_lambda=10, baseline_tolerance=0.1,
+    def __init__(self, path, trim=None, outlier_threshold=0.1,
+                 baseline_lambda=10, baseline_tolerance=0.1,
                  low_signal_window='narrow', time_trace_window=(300, 1060),
                  time_trace_interval=10, wavelengths=None, view_only=False):
         """
@@ -63,25 +58,12 @@ class Dataset:
         path : string
             A file path to a .KD file or a folder containing .csv data files
             containing the data to be processed.
-        cycle_time : int or None, optional
-            The cycle time in seconds from the experiment. Only required if
-            using time (seconds) to trim datasets imported from .csv files. The
-            cycle time is automatically detected when creating a dataset from a
-            .KD file. Defaults to 1 (same as using indexes).
-
-            Important
-            ---------
-                Only experiments with a constant cycle time are currently
-                supported.
-
         trim : list-like or None, optional
-            Select a specific portion of a dataset of spectra. The first value
-            ``trim[0]`` is the index or time (in seconds) of the first spectrum
-            to select. The second value ``trim[1]`` is the index or time (in
-            seconds) of the last spectrum to import. Default value is None (no
+            Select spectra within a given time range. The first value
+            ``trim[0]`` is the time (in seconds) of the first spectrum
+            to select. The second value ``trim[1]`` is the time (in
+            seconds) of the last spectrum to select. Default value is None (no
             trimming).
-        use_seconds : True or False, optional
-            Use time (seconds) instead of spectrum #'s when trimming data.
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 result in higher
@@ -123,7 +105,6 @@ class Dataset:
         """
         self.path = path
         self.name = os.path.basename(self.path)
-        self.cycle_time = cycle_time
         self.trim = trim
         self.low_signal_window = low_signal_window
         self.outlier_threshold = outlier_threshold
@@ -133,32 +114,19 @@ class Dataset:
         self.time_trace_interval = time_trace_interval
         self.wavelengths = wavelengths
 
-        if use_seconds is True:
-            self.units = 'seconds'
-        else:
-            self.units = 'index'
-
         self._import_data()
-
-        print(f'{len(self.all_spectra)} spectra successfully imported from: {self.name}.', end='\n')
 
         if not view_only:
             self._process_data()
 
     def _import_data(self):
-        if self.name.endswith('.KD'):
-            kd_file = KDFile(self.path)
-            self.all_spectra = kd_file.spectra
-            self.spectra_times = kd_file.spectra_times
-            self.cycle_time = kd_file.cycle_time
-        else:
-            if self.cycle_time is None:
-                self.cycle_time = 1
-                self.units = 'index'
-            self.all_spectra = import_csv(self.path)
+        kd_file = KDFile(self.path)
+        self.all_spectra = kd_file.spectra
+        self.spectra_times = kd_file.spectra_times
+        self.cycle_time = kd_file.cycle_time
 
     def _process_data(self):
-        if len(self.all_spectra) > 2:
+        if len(self.all_spectra.columns) > 2:
             self.time_traces = self.get_time_traces(window=self.time_trace_window, interval=self.time_trace_interval)
             self.specific_time_traces = self.get_specific_time_traces(self.wavelengths)
             print('Finding outliers...')
@@ -206,16 +174,12 @@ class Dataset:
         all_time_traces = {}
 
         for wavelength in range(window[0], window[1] + 1, interval):
-            time_trace = []
-
-            # Append the absorbance at specific {wavelength} to list.
-            # {wavelength}-190 because the instrument measures from 190 nm.
-            for _, spectrum in enumerate(self.all_spectra):
-                time_trace.append(spectrum['Absorbance (AU)'][wavelength - 190])
+            time_trace = self.all_spectra.loc[wavelength]
+            time_trace.index = pd.Index(self.spectra_times, name='Time (s)')
 
             # Check if the median absorbance of the time trace is below 1.75 AU.
             # This excludes saturated wavelengths.
-            if pd.Series(time_trace).median() < 1.75:
+            if time_trace.median() < 1.75:
                 key = f'{wavelength} (nm)'
                 all_time_traces[key] = time_trace
 
@@ -252,12 +216,7 @@ class Dataset:
                 if int(wavelength) not in range(window[0], window[1] + 1):
                     continue
 
-                time_trace = []
-
-                # Append the absorbance at specified {wavelength} to list.
-                # {wavelength}-190 because the instrument measures from 190 nm.
-                for _, spectrum in enumerate(self.all_spectra):
-                    time_trace.append(spectrum['Absorbance (AU)'][int(wavelength) - 190])
+                time_trace = self.all_spectra.loc[int(wavelength)]
 
                 key = f'{int(wavelength)} (nm)'
                 all_time_traces[key] = time_trace
@@ -281,7 +240,7 @@ class Dataset:
         Returns
         -------
         outliers : list
-            A list containing the indices of outlier spectra.
+            A list containing the time values of outlier spectra.
 
         """
         outliers = []
@@ -297,7 +256,7 @@ class Dataset:
         baseline_outliers = self._find_baseline_outliers(baselined_time_traces)
         outliers.extend(baseline_outliers)
 
-        return np.flip(np.sort(outliers))
+        return outliers
 
     def _find_low_signal_outliers(self):
         """
@@ -306,7 +265,7 @@ class Dataset:
         Returns
         -------
         low_signal_outliers : set
-            A set of indices where low signal outliers are found.
+            A set of time values where low signal outliers are found.
 
         """
         low_signal_outliers = set()
@@ -335,32 +294,6 @@ class Dataset:
             tol=self.baseline_tolerance)[0],
             time_traces.sum(1).index)
 
-    def _find_baseline_outliers_classic(self, baselined_time_traces):
-        """
-        Classic method to filter outliers using the normalized baselined time traces.
-
-        Slow for large Datasets, but works.
-
-        Parameters
-        ----------
-        baselined_time_traces : :class:`pandas.core.series.Series`
-            The summed time traces after subtracting the
-            :attr:`~uv_pro.process.Dataset.baseline`
-
-        Returns
-        -------
-        baseline_outliers : set
-            A set of indices where baseline outliers are located.
-
-        """
-        baseline_outliers = set()
-
-        for i, _ in baselined_time_traces.items():
-            if abs(baselined_time_traces[i] / baselined_time_traces.max()) > self.outlier_threshold:
-                baseline_outliers.add(i)
-
-        return baseline_outliers
-
     def _find_baseline_outliers(self, baselined_time_traces):
         """
         Faster method to find outliers using sort_values().
@@ -374,7 +307,7 @@ class Dataset:
         Returns
         -------
         baseline_outliers : set
-            A set of indices where baseline outliers are located.
+            A set of time values where baseline outliers are located.
 
         """
         baseline_outliers = set()
@@ -387,64 +320,22 @@ class Dataset:
 
         return baseline_outliers
 
-    def clean_data_simple(self, wavelength, tolerance):
-        """
-        Clean data by removing outliers.
-
-        A simple method to clean :attr:`all_spectra` using the rolling median of a time
-        trace at ``wavelength``. If a point of the time trace is greater than its rolling
-        median + ``tolerance``, that point (spectrum) is rejected.
-
-        Tip
-        ---
-            ``tolerance`` may require some trial and error to get a good result.
-
-        Parameters
-        ----------
-        wavelength : int
-            Integer wavelength of a time trace found in :attr:`time_traces`.
-        tolerance : float
-            Changes the sensitivity of the rejection algorithm. A larger tolerance
-            will reject fewer points, while a smaller tolernace will reject more.
-
-        Returns
-        -------
-        cleaned_spectra : list of :class:`pandas.DataFrame` objects.
-            Returns a list of :class:`pandas.DataFrame` objects containing the
-            spectra which fell within the given ``tolerance``. Ideally, most
-            outlier spectra will be removed.
-
-        """
-        cleaned_spectra = []
-        time_trace = self.time_traces[f'{wavelength} (nm)']
-        rolling_median = pd.Series(self.time_traces[f'{wavelength} (nm)']).rolling(3).median()
-
-        for i, spectrum in enumerate(self.all_spectra):
-            if abs(time_trace[i] - rolling_median[i]) < tolerance:
-                cleaned_spectra.append(spectrum)
-            else:
-                pass
-
-        return cleaned_spectra
-
     def clean_data(self):
         """
-        Generate a list of cleaned spectra by popping outliers from :attr:`all_spectra`.
+        Remove outliers from :attr:`all_spectra`.
 
         Returns
         -------
-        cleaned_spectra : list of :class:`pandas.DataFrame` objects.
-            Returns a list of :class:`pandas.DataFrame` objects containing the
+        cleaned_spectra : :class:`pandas.DataFrame`
+            Returns a :class:`pandas.DataFrame` object containing the
             cleaned spectra (with outlier spectra removed).
 
         """
-        cleaned_spectra = []
+        column_numbers = [x for x in range(self.all_spectra.shape[1])]
+        outlier_indices = [self.time_traces.index.get_loc(outlier) for outlier in self.outliers]
+        [column_numbers.remove(outlier) for outlier in outlier_indices]
 
-        for i, _ in enumerate(self.all_spectra):
-            cleaned_spectra.append(self.all_spectra[i])
-
-        for outlier in self.outliers:
-            cleaned_spectra.pop(outlier)
+        cleaned_spectra = self.all_spectra.iloc[:, column_numbers]
 
         return cleaned_spectra
 
@@ -454,34 +345,24 @@ class Dataset:
 
         Returns
         -------
-        trimmed_spectra : list of :class:`pandas.DataFrame` objects.
-            A list of :class:`pandas.DataFrame` objects containing the
+        trimmed_spectra : :class:`pandas.DataFrame`
+            A :class:`pandas.DataFrame` object containing the
             spectra specified by :attr:`uv_pro.process.Dataset.trim`.
 
         """
         trimmed_spectra = []
-        mode = self.units
 
-        if mode == 'seconds':
-            start, end = self._check_trim_values_seconds()
+        start, end = self._check_trim_values()
 
-            # Choose spectra from {start} time to {end_time} time.
-            trimmed_spectra = self.cleaned_spectra[start // self.cycle_time:end // self.cycle_time + 1]
+        # Choose spectra from {start} time to {end_time} time.
+        trimmed_spectra = self.cleaned_spectra.iloc[:, start // self.cycle_time:end // self.cycle_time + 1]
 
-            print(f'Selecting {len(trimmed_spectra)} spectra from {start}',
-                  f'seconds to {end} seconds...')
-
-        elif mode == 'index':
-            start, end = self._check_trim_values_indexes()
-
-            trimmed_spectra = self.cleaned_spectra[start:end + 1]
-
-            print(f'Selecting {len(trimmed_spectra)} spectra from spectrum {start}',
-                  f'to spectrum {end}...')
+        print(f'Selecting {len(trimmed_spectra.columns)} spectra from {start}',
+              f'seconds to {end} seconds...')
 
         return trimmed_spectra
 
-    def _check_trim_values_seconds(self):
+    def _check_trim_values(self):
         start = self.trim[0]
         end = self.trim[1]
 
@@ -489,21 +370,9 @@ class Dataset:
             raise Exception('Data trim start should be before the end.')
 
         if start < self.cycle_time:
-            start = self.cycle_time
+            start = 0
 
-        if end > len(self.all_spectra) * self.cycle_time:
-            end = len(self.all_spectra) * self.cycle_time
-
-        return start, end
-
-    def _check_trim_values_indexes(self):
-        start = self.trim[0]
-        end = self.trim[1]
-
-        if start >= end:
-            raise Exception('Data trim start should be before the end.')
-
-        elif end > len(self.all_spectra):
-            end = len(self.all_spectra)
+        if end > len(self.all_spectra.columns) * self.cycle_time:
+            end = len(self.all_spectra.columns) * self.cycle_time
 
         return start, end
