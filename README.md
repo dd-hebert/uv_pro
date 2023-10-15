@@ -1,5 +1,7 @@
 ``uv_pro``
 ==========
+![Banner logo](/docs/banner_logo1.png?raw=true "Banner Logo")
+
 ``uv_pro`` is a command line tool for processing UV-Vis data files (.KD or .csv formats) created from the Agilent 845x UV-Vis Chemstation software.
 
 Installation
