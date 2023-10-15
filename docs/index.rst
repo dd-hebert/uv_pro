@@ -6,6 +6,8 @@
 uv_pro Documentation
 ====================
 
+.. image:: banner_logo1.png
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
