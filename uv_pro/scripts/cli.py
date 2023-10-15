@@ -353,7 +353,7 @@ class CLI:
 
         """
         test_data = os.path.normpath(
-            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data3.KD'))
+            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD'))
         self.args.path = test_data
         self.proc()
 
@@ -458,9 +458,7 @@ class CLI:
         """
         if self.args.view is True:
             data = Dataset(self.args.path, view_only=True)
-
             print('\nPlotting data...')
-
             uvplt.plot_spectra(data, data.all_spectra)
 
         else:
@@ -476,9 +474,8 @@ class CLI:
                            )
 
             print('\nPlotting data...')
-
             # Show 2x2 plot if data has been cleaned
-            if len(data.all_spectra) > 2:
+            if len(data.all_spectra.columns) > 2:
                 uvplt.plot_2x2(data, self.args.slice_spectra)
             else:
                 uvplt.plot_spectra(data, data.all_spectra)
@@ -487,7 +484,6 @@ class CLI:
                 files_exported = []
                 if data.specific_time_traces is not None:
                     options = ['Cleaned spectra', 'Time traces', 'Both']
-
                     prompt = '\nExport data?\n============\n'
                     for i, option in enumerate(options, start=1):
                         prompt += f'({i}) {option}\n'
@@ -508,7 +504,6 @@ class CLI:
 
                 else:
                     options = ['Cleaned spectra']
-
                     prompt = '\nExport data?\n============\n'
                     for i, option in enumerate(options, start=1):
                         prompt += f'({i}) {option}\n'

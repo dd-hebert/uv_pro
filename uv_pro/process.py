@@ -1,8 +1,8 @@
 """
 Process UV-Vis Data.
 
-Tools for processing UV-Vis data files (.KD or .csv formats) exported from
-the Agilent 845x UV-Vis Chemstation software.
+Tools for processing UV-Vis data files (.KD format) from the Agilent 845x
+UV-Vis Chemstation software.
 
 @author: David Hebert
 """
@@ -20,26 +20,27 @@ class Dataset:
     Attributes
     ----------
     name : string
-        The name of the .KD file or Folder (when using .csv format) that the
-        :class:`Dataset` was created from.
+        The name of the .KD file that the :class:`Dataset` was created from.
     cycle_time : int
         The cycle time in seconds from the experiment.
     all_spectra : :class:`pandas.DataFrame`
         All of the raw spectra in the :class:`Dataset`.
     time_traces : :class:`pandas.DataFrame`
-        The time traces for the :class:`Dataset`.
+        The time traces for the :class:`Dataset`. The number of time traces and
+        their wavelengths are dictated by `time_trace_window` and
+        `time_trace_interval`.
     specific_time_traces : :class:`pandas.DataFrame`
         Time traces for user-specified wavelengths.
     outliers : list
-        The time values of outlier spectra. See :meth:`find_outliers()`
+        The time indices of outlier spectra. See :meth:`find_outliers()`
         for more information.
     baseline : :class:`pandas.Series`
        The baseline of the summed :attr:`time_traces`. See :meth:`find_outliers()`
        for more information.
     cleaned_spectra : :class:`pandas.DataFrame`
-        The :class:`Dataset`'s spectra with :attr:`outliers` removed.
+        The spectra with :attr:`outliers` removed.
     trimmed_spectra : :class:`pandas.DataFrame`
-        The trimmed portion of the :class:`Dataset`'s :attr:`cleaned_spectra`.
+        The spectra that fall within the given time range.
 
     """
 
@@ -50,20 +51,18 @@ class Dataset:
         """
         Initialize a :class:`~uv_pro.process.Dataset`.
 
-        Imports the specified data at ``path`` and processes it to remove bad
+        Parses the .KD file at ``path`` and processes it to remove "bad"
         spectra (e.g. spectra collected when mixing the solution).
 
         Parameters
         ----------
         path : string
-            A file path to a .KD file or a folder containing .csv data files
-            containing the data to be processed.
+            A file path to a .KD file.
         trim : list-like or None, optional
             Select spectra within a given time range. The first value
-            ``trim[0]`` is the time (in seconds) of the first spectrum
-            to select. The second value ``trim[1]`` is the time (in
-            seconds) of the last spectrum to select. Default value is None (no
-            trimming).
+            ``trim[0]`` is the time (in seconds) of the beginning of the time
+            range, and the second value ``trim[1]`` is the end of the time range.
+            Default value is None (no trimming).
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 result in higher
@@ -79,10 +78,8 @@ class Dataset:
             for more information.
         low_signal_window : "narrow" or "wide", optional
             Set the width of the low signal detection window (see
-            :meth:`find_outliers()`). When set to ``"wide"``, the data points
-            before and after the low signal outlier(s) are also considered
-            outliers. The default is ``"narrow"``, meaning only the low signal
-            outlier(s) are considered outliers.
+            :meth:`find_outliers()`). Set to wide if low signal outliers are
+            affecting the baseline.
         time_trace_window : list-like or None, optional
             The wavelength range (min, max) in nm for time traces used in outlier
             detection. The default is (300, 1060).
@@ -96,7 +93,7 @@ class Dataset:
             A list of specific wavelengths to create time traces for. The default is None.
         view_only : True or False, optional
             Indicate whether data processing (cleaning and trimming) should be
-            performed. Default is False (cleaning and trimming are performed).
+            skipped. Default is False (cleaning and trimming are performed).
 
         Returns
         -------
@@ -145,22 +142,22 @@ class Dataset:
 
     def get_time_traces(self, window=(300, 1060), interval=10):
         """
-        Iterate through different wavelengths and builds time traces.
+        Iterate through different wavelengths and get time traces.
 
-        Time traces which have poor signal-to-noise and/or saturate the detector
-        due to high intensity are removed by checking if the mean of their normalized
-        absorbance is above 0.5. The raw (un-normalized) time traces are returned.
+        Time traces which saturate the detector due to high intensity are
+        removed by checking if they have a median absorbance below 1.75 AU.
+        The raw (un-normalized) time traces are returned.
 
         Parameters
         ----------
         window : list-like, optional
-            Describes the window of wavelengths to construct time traces of.
+            The range of wavelengths to construct time traces for.
             The first value ``window[0]`` gives the minimum wavelength, and
             the second value ``window[1]`` gives the maximum wavelength. The
             default value is (300, 1060).
         interval : int, optional
-            Describes the interval in nm to construct time traces. A ``window``
-            of (300, 1000) with an ``interval`` of 10 will build time traces
+            The interval in nm to construct time traces. A ``window`` of
+            (300, 1000) with an ``interval`` of 10 will build time traces
             from [300, 310, 320, 330, 340,... ..., 970, 980, 990] nm. The
             default value is 10 (nm).
 
@@ -194,7 +191,7 @@ class Dataset:
         wavelengths: list-like or None
             A list of wavelengths to create time traces for.
         window : list-like, optional
-            Describes the window of wavelengths to construct time traces of.
+            The window of wavelengths that the spectrometer captures.
             The first value ``window[0]`` gives the minimum wavelength, and
             the second value ``window[1]`` gives the maximum wavelength. The
             default value is (190, 1100).
@@ -240,7 +237,7 @@ class Dataset:
         Returns
         -------
         outliers : list
-            A list containing the time values of outlier spectra.
+            A list containing the time indices of outlier spectra.
 
         """
         outliers = []
@@ -262,10 +259,13 @@ class Dataset:
         """
         Find outlier points with very low absorbance signal.
 
+        Low signal outliers usually occur when the cuvette is removed from the
+        instrument during the experiment.
+
         Returns
         -------
         low_signal_outliers : set
-            A set of time values where low signal outliers are found.
+            A set of time indices where low signal outliers are found.
 
         """
         low_signal_outliers = set()
@@ -274,14 +274,16 @@ class Dataset:
 
         i = 0
         if self.low_signal_window.lower() == 'wide':
-            while sorted_time_traces[sorted_time_traces.index[i]] < low_signal_cutoff:
-                low_signal_outliers.add(sorted_time_traces.index[i] - 1)
-                low_signal_outliers.add(sorted_time_traces.index[i])
-                low_signal_outliers.add(sorted_time_traces.index[i] + 1)
+            while sorted_time_traces.iloc[i] < low_signal_cutoff:
+                outlier_index = self.time_traces.index.get_loc(sorted_time_traces.index[i])
+                low_signal_outliers.add(self.time_traces.index[outlier_index])
+                low_signal_outliers.add(self.time_traces.index[outlier_index + 1])
+                low_signal_outliers.add(self.time_traces.index[outlier_index - 1])
                 i += 1
         else:
-            while sorted_time_traces[sorted_time_traces.index[i]] < low_signal_cutoff:
-                low_signal_outliers.add(sorted_time_traces.index[i])
+            while sorted_time_traces.iloc[i] < low_signal_cutoff:
+                outlier_index = self.time_traces.index.get_loc(sorted_time_traces.index[i])
+                low_signal_outliers.add(self.time_traces.index[outlier_index])
                 i += 1
 
         return low_signal_outliers
@@ -307,14 +309,14 @@ class Dataset:
         Returns
         -------
         baseline_outliers : set
-            A set of time values where baseline outliers are located.
+            A set of time indices where baseline outliers are located.
 
         """
         baseline_outliers = set()
 
         i = 0
         sorted_baselined_time_traces = abs(baselined_time_traces).sort_values(ascending=False)
-        while sorted_baselined_time_traces[sorted_baselined_time_traces.index[i]] / baselined_time_traces.max() > self.outlier_threshold:
+        while sorted_baselined_time_traces.iloc[i] / baselined_time_traces.max() > self.outlier_threshold:
             baseline_outliers.add(sorted_baselined_time_traces.index[i])
             i += 1
 
@@ -334,27 +336,24 @@ class Dataset:
         column_numbers = [x for x in range(self.all_spectra.shape[1])]
         outlier_indices = [self.time_traces.index.get_loc(outlier) for outlier in self.outliers]
         [column_numbers.remove(outlier) for outlier in outlier_indices]
-
         cleaned_spectra = self.all_spectra.iloc[:, column_numbers]
 
         return cleaned_spectra
 
     def trim_data(self):
         """
-        Trim the data to keep only a specific portion.
+        Trim the data to keep a portion within a given time range.
 
         Returns
         -------
         trimmed_spectra : :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` object containing the
-            spectra specified by :attr:`uv_pro.process.Dataset.trim`.
+            spectra within the time range given by
+            :attr:`uv_pro.process.Dataset.trim`.
 
         """
         trimmed_spectra = []
-
         start, end = self._check_trim_values()
-
-        # Choose spectra from {start} time to {end_time} time.
         trimmed_spectra = self.cleaned_spectra.iloc[:, start // self.cycle_time:end // self.cycle_time + 1]
 
         print(f'Selecting {len(trimmed_spectra.columns)} spectra from {start}',
@@ -367,11 +366,10 @@ class Dataset:
         end = self.trim[1]
 
         if start >= end:
-            raise Exception('Data trim start should be before the end.')
-
+            start = self.trim[1]
+            end = self.trim[0]
         if start < self.cycle_time:
             start = 0
-
         if end > len(self.all_spectra.columns) * self.cycle_time:
             end = len(self.all_spectra.columns) * self.cycle_time
 

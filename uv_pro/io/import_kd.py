@@ -148,27 +148,26 @@ class KDFile:
             The cycle time (in seconds) for the UV-Vis experiment.
 
         """
-        # SPECTRA HANDLING
-        list_of_spectra = self._extract_data(KDFile.absorbance_data_header, self._parse_spectra)
+        spectra = self._handle_spectra()
+        spectra_times = self._handle_spectratimes()
+        cycle_time = self._handle_cycletime()
+        print(f'Spectra found: {len(spectra.columns)}', end='\n')
+        print(f'Cycle time (s): {cycle_time}', end='\n')
+        return spectra, spectra_times, cycle_time
 
+    def _handle_spectra(self):
+        list_of_spectra = self._extract_data(KDFile.absorbance_data_header, self._parse_spectra)
         if list_of_spectra is None:
             raise Exception('Error parsing file. No spectra found.')
+        return self._spectra_dataframe(list_of_spectra)
 
-        spectra = self._spectra_dataframe(list_of_spectra)
-
-        print(f'Spectra found: {len(spectra.columns)}', end='\n')
-
-        # SPECTRA TIMES HANDLING
-        spectra_times = pd.Series(
+    def _handle_spectratimes(self):
+        return pd.Series(
             self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes),
             name='Time (s)')
 
-        # CYCLE TIME HANDLING
+    def _handle_cycletime(self):
         cycle_time = int(self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0])
-
         if cycle_time is None:
             cycle_time = 1
-
-        print(f'Cycle time (s): {cycle_time}', end='\n')
-
-        return spectra, spectra_times, cycle_time
+        return cycle_time
