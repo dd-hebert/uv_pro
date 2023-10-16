@@ -33,7 +33,7 @@ uvp -p path\to\your\data.KD
 Command Line Arguments
 ----------------------
 #### ``-p``, ``--path`` : string, required
-The path to a .KD file. You have three options for specifying the path: you can use a path relative to your current working directory, an absolute path, or a path relative to the root directory (if one has been set).
+The path to a .KD file. You have three options for specifying the path: you can use a **path relative to the current working directory**, an **absolute path**, or a **path relative to the root directory** (if one has been set).
 
 ___
 
@@ -41,7 +41,7 @@ ___
 Reset the root directory back to the default location (in the user's home directory).
 
 #### ``-fp``, ``--file_picker`` : flag, optional
-Interactively pick a .KD file from the terminal. The file is opened in view only mode.
+Interactively pick a .KD file from the terminal. The file is opened in _view-only_ mode. The file must be located somewhere inside the root directory.
 
 #### ``-grd``, ``–-get_root_dir`` : flag, optional
 Print the current root directory to the console.
@@ -50,19 +50,19 @@ Print the current root directory to the console.
 Use ``-h`` to get help with command line arguments.
 
 #### ``-lam``, ``-–baseline_lambda`` : float, optional
-Set the smoothness of the baseline when cleaning data. Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See pybaselines.whittaker.asls() for more information.
+Set the smoothness of the baseline (for outlier detection). Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See pybaselines.whittaker.asls() for more information.
 
 #### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
-Set the width of the low signal outlier detection window. Set to "wide" and points which directly neighbor low signal outliers will also be considered outliers. Default is "narrow", meaning only low signal outliers themselves are considered outliers. Set to "wide" if low signals are interfering with the baseline.
+Set the width of the low signal outlier detection window. Set to "wide" if low signals are interfering with the baseline.
 
 #### ``-ne``, ``--no_export`` : flag, optional
 Bypass the data export prompt at the end of the script.
 
 #### ``-ot``, ``--outlier_threshold`` : float between 0 and 1, optional
-The threshold by which spectra are considered outliers. Values closer to 0 result in higher sensitivity (more outliers). Values closer to 1 result in lower sensitivity (fewer outliers). A value of 1 will result in no outliers. The default value is 0.1.
+The threshold by which spectra are considered outliers. Values closer to 0 will produce more outliers, while values closer to 1 will produce fewer outliers. A value of 1 will produce no outliers. The default value is 0.1.
 
 #### ``-rd``, ``-–root_dir`` : string, optional
-Specify a root directory to simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``-p`` is assumed to be relative to the root directory.
+Set a new root directory. Setting a root directory can simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``-p`` is assumed to be relative to the root directory.
 
 **Without root directory:**
 ```
@@ -70,7 +70,7 @@ Specify a root directory to simplify file path entry. For instance, if you store
 uvp -p "C:\mydata\UV-Vis Data\mydata.KD"
 ```
 
-Without a root directory, you must type the full path to the data. 
+Without a root directory, you must type the full path ``"C:\mydata\UV-Vis Data\mydata.KD"`` to the data. 
 
 **With root directory:**
 ```
@@ -81,13 +81,13 @@ uvp -rd "C:\mydata\UV-Vis Data"
 uvp -p mydata.KD
 ```
 
-By setting a root directory, you can omit the root directory part of the path. The root directory is saved between runs in a config file.
+By setting a root directory ``"C:\mydata\UV-Vis Data"``, you can omit that part of the path and just give a relative path ``mydata.KD``. The root directory is saved between runs in a config file.
 
 #### ``-sl``, ``--slice_spectra`` : integer, optional
-The number of spectrum slices to plot and export. The default is 0, where *all* spectra are plotted and exported. Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum would be plotted and exported.
+Set the number of spectrum "slices" to plot and export. Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is 0, where *all* spectra are plotted and exported.
 
 #### ``-t``, ``--trim`` : 2 integers, optional
-Use ``-t`` to select spectra within a given time range. The first integer is the beginning of the time range and the second integer is the end. The spectra outside the given time range will be removed.
+Select spectra within a given time range. The first integer is the beginning of the time range and the second integer is the end. The spectra outside the given time range will be removed.
 
 ```
 # Trim from 50 seconds to 250 seconds
@@ -98,19 +98,19 @@ uvp -p C:\\Desktop\\MyData\\myfile.KD -t 50 250
 Set the exit criteria for the baseline algorithm. Try values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker.asls() for more information.
 
 #### ``-tr``, ``--tree`` : flag, optional
-Print the ``root_directory`` file tree to the console.
+Print the root directory file tree to the console.
 
 #### ``-tt``, ``--time_traces`` : arbitrary number of ints, optional
-Specify wavelengths to create time traces for.
+Get time traces for the specified wavelengths.
 
 #### ``-tti``, ``--time_trace_interval`` : int, optional
-Set the interval (in nm) when creating time traces for outlier detection. An interval of 20 would create time traces like: (window min, window min + 20, ... , window max - 20, window max). Smaller intervals will increase loading times. Default is 10.
+Set the time trace wavelength interval (in nm). An interval of 20 would create time traces like: (window min, window min + 20, ... , window max - 20, window max). Smaller intervals may result in increased loading times. Default is 10.
 
 #### ``-ttw``, ``--time_trace_window`` : int int, optional
-Set the wavelength range (min, max) (in nm) for time traces during outlier detection. The default is (300, 1060).
+Set the time trace wavelength range (min, max) (in nm). The default is (300, 1060).
 
 #### ``-v`` : flag, optional
-Enable view only mode. No data processing is performed and a plot of the data is shown.
+Enable _view-only_ mode. No data processing is performed and a plot of the data is shown.
 
 Examples
 --------
@@ -121,12 +121,12 @@ uvp -p C:\\Desktop\\myfile.KD -t 50 250 -ot 0.2 -sl 10
 
 Multiview Mode
 --------------
-You can open multiple .KD files (in view-only mode) from the command line at once with the ``Multiviewer`` script. Navigate to a directory containing .KD files and run the command:
+You can open multiple .KD files (in _view-only_ mode) from the command line simultaneously with the ``Multiviewer`` script. Navigate to a directory containing .KD files and run the command:
 ```
 uvpmv -f some search filters
 ```
 
-The script will open .KD files which contain any of the supplied search filters in view_only mode.
+The script will open .KD files which contain any of the supplied search filters in _view-only_ mode.
 
 The default search behavior is an *OR* search. You can use supply the ``-a`` or ``--and_filter`` argument to perform an *AND* search:
 ```
