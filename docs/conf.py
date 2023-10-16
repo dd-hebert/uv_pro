@@ -69,3 +69,4 @@ intersphinx_cache_limit = 14
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_favicon = 'favicon.ico'
