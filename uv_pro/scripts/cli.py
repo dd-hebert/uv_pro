@@ -9,11 +9,10 @@ the command line with::
 Command Line Arguments
 ----------------------
 -p, --path : string, required
-    The path to the UV-Vis data, either a .KD file or a folder (.csv format).
-    Paths containing spaces may need to be wrapped in double quotes "". The
-    program will first look for the given path inside the current working
-    directory, if not found it will then look at the absolute path and inside
-    the root directory (if a root directory has been set).
+    The path to a .KD file Paths containing spaces may need to be wrapped
+    in double quotes "". The script will first look for the given path inside
+    the current working directory, then look at the absolute path, and lastly
+    inside the root directory (if a root directory has been set).
 -rd, --root_dir : string, optional
     Specify a root directory to simplify file path entry. For instance, if
     you store all your UV-Vis data files in a common folder, you can designate
@@ -24,25 +23,23 @@ Command Line Arguments
 -crd, --clear_root_dir : flag, optional
     Clear the current root directory.
 -v : flag, optional
-    Enable view only mode. No data processing is performed and a plot of
+    Enable view-only mode. No data processing is performed and a plot of
     the data set is shown. Default is False.
 -t, --trim : int int, optional
-    Use ``trim`` to select a remove spectra outside the given time range.
-    ``first last`` - The first value ``trim[0]`` is the time (in seconds)
-    of the beginning of the time range and the second value ``trim[1]`` is the
-    end of the time range. Default is None (no trimming).
+    Select a spectra within a given time range ``start end``. The first value
+    is the time (in seconds) of the start of the time range and the second value
+    is the end of the range. Default is None (no trimming).
 -ot, --outlier_threshold : float, optional
-    The threshold by which spectra are considered outliers.
-    Values closer to 0 result in higher sensitivity (more outliers).
-    Values closer to 1 result in lower sensitivity (fewer outliers).
+    The threshold by which spectra are considered outliers. Values closer to 0
+    produce more outliers. Values closer to 1 produce fewer outliers.
     The default value is 0.1.
 -sl, --slice_spectra : int, optional
-    The number of slices to plot or export. The default is 0, where all spectra
-    are plotted or exported. Example: if :attr:`uv_pro.process.Dataset.trimmed_spectra`
-    contains 100 spectra and ``slice_spectra`` is 10, then every tenth spectrum
-    will be plotted.
+    The number of slices to plot or export. Example: if
+    :attr:`uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
+    ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
+    default is 0, where all spectra are plotted or exported.
 -lam, --baseline_lambda : float, optional
-    Set the smoothness of the baseline when cleaning data. Higher values
+    Set the smoothness of the baseline (for outlier detection). Higher values
     give smoother baselines. Try values between 0.001 and 10000. The
     default is 10. See :func:`pybaselines.whittaker.asls()` for more information.
 -tol, --baseline_tolerance : float, optional
@@ -51,22 +48,20 @@ Command Line Arguments
     for more information.
 -lsw, --low_signal_window : ``"narrow"`` or ``"wide"``, optional
     Set the width of the low signal outlier detection window (see
-    :meth:`uv_pro.process.Dataset.find_outliers()`). Set to ``"wide"`` to label
-    points directly neighboring low signal outliers as low signal outliers also.
-    Default is ``"narrow"``, meaning only low signal outliers themselves are
-    labelled. Set to ``"wide"`` if low signals are interfering with the baseline.
+    :meth:`uv_pro.process.Dataset.find_outliers()`). Set to ``"wide"`` if low
+    signals are interfering with the baseline.
 -tr, --tree : flag, optional
-    Print the ``root_directory`` file tree to the console.
+    Print the root directory file tree to the console.
 -fp, --file_picker : flag, optional
-    Interactively pick a .KD file from the console. The file is opened in view
-    only mode.
+    Interactively pick a .KD file from the console. The file is opened in view-
+    only mode. The .KD file must be located inside the root directory.
 -ttw, --time_trace_window : int int, optional
-    Set the (min, max) wavelength (in nm) window for time traces during
-    outlier detection. The default is 300 1060.
+    Set the (min, max) wavelength (in nm) range to get time traces for.
+    The default is 300 1060.
 -tti, --time_trace_interval : int, optional
-    Set the interval (in nm) for time traces. An
-    interval of 10 will create time traces from the window min to max every
-    10 nm. Smaller intervals will increase loading times. The default is 10.
+    Set the interval (in nm) for time traces. An interval of 10 will create
+    time traces from the window min to max every 10 nm. Smaller intervals
+    may increase loading times. The default is 10.
 -tt, --time_traces : arbitrary number of ints, optional
     A list of specific wavelengths (in nm) to create time traces for.
 -ne, --no_export : flag, optional

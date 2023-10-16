@@ -12,11 +12,11 @@ Alternatively, you can open a terminal session inside a folder containing a data
     # Current working directory = C:\full\path\to\you\data
     uvp -p file.KD
 
-``uv_pro`` has a helpful root directory feature ``-r`` which you can use to shorten the file paths you type.
+``uv_pro`` has a helpful root directory feature ``-rd`` which you can use to shorten the file paths you type.
 The ``uv_pro`` workflow works best when you keep all of your data files inside a common root folder. If this is
 the case, you can set the root directory at the terminal::
 
-    uvp -r C:\full\path\to\your\data
+    uvp -rd C:\full\path\to\your\data
 
 With the root directory set, you can now use shorter relative paths from *anywhere*::
 

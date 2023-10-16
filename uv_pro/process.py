@@ -58,18 +58,17 @@ class Dataset:
         ----------
         path : string
             A file path to a .KD file.
-        trim : list-like or None, optional
+        trim : tuple-like or None, optional
             Select spectra within a given time range. The first value
             ``trim[0]`` is the time (in seconds) of the beginning of the time
             range, and the second value ``trim[1]`` is the end of the time range.
             Default value is None (no trimming).
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
-            are considered outliers. Values closer to 0 result in higher
-            sensitivity (more outliers). Values closer to 1 result in lower
-            sensitivity (fewer outliers). The default value is 0.1.
+            are considered outliers. Values closer to 0 produce more outliers,
+            while values closer to 1 produce fewer outliers. The default value is 0.1.
         baseline_lambda : float, optional
-            Set the smoothness of the baseline when cleaning data. Higher values
+            Set the smoothness of the baseline (for outlier detection). Higher values
             give smoother baselines. Try values between 0.001 and 10000. The
             default is 10.
         baseline_tolerance : float, optional
@@ -80,17 +79,17 @@ class Dataset:
             Set the width of the low signal detection window (see
             :meth:`find_outliers()`). Set to wide if low signal outliers are
             affecting the baseline.
-        time_trace_window : list-like or None, optional
-            The wavelength range (min, max) in nm for time traces used in outlier
-            detection. The default is (300, 1060).
+        time_trace_window : tuple-like or None, optional
+            The range (min, max) of wavelengths (in nm) to get time traces for.
+            The default is (300, 1060).
         time_trace_interval : int, optional
-            The wavelength interval (in nm) at which time traces are created.
-            A smaller interval means more frequent data points.
+            The wavelength interval (in nm) between time traces.
+            A smaller interval produces more time traces.
             For example, an interval of 20 would generate time traces like this:
             [window min, window min + 20, window min + 40, ..., window max - 20, window max].
             The default value is 10.
         wavelengths : list-like or None, optional
-            A list of specific wavelengths to create time traces for. The default is None.
+            A list of specific wavelengths to get time traces for. The default is None.
         view_only : True or False, optional
             Indicate whether data processing (cleaning and trimming) should be
             skipped. Default is False (cleaning and trimming are performed).
@@ -150,22 +149,20 @@ class Dataset:
 
         Parameters
         ----------
-        window : list-like, optional
-            The range of wavelengths to construct time traces for.
-            The first value ``window[0]`` gives the minimum wavelength, and
-            the second value ``window[1]`` gives the maximum wavelength. The
-            default value is (300, 1060).
+        window : tuple-like, optional
+            The range of wavelengths (in nm) to get time traces for (min, max).
+            The default value is (300, 1060).
         interval : int, optional
-            The interval in nm to construct time traces. A ``window`` of
-            (300, 1000) with an ``interval`` of 10 will build time traces
-            from [300, 310, 320, 330, 340,... ..., 970, 980, 990] nm. The
-            default value is 10 (nm).
+            The wavelength interval (in nm) between time traces. A ``window`` of
+            (300, 1000) with an ``interval`` of 10 will get time traces
+            from [300, 310, 320, ... , 970, 980, 990] nm. The
+            default value is 10.
 
         Returns
         -------
         :class:`pandas.DataFrame`
-            Returns a :class:`pandas.DataFrame` object containing the raw
-            time traces, where each column is a different wavelength.
+            A :class:`pandas.DataFrame` containing the raw time traces,
+            where each column is a different wavelength.
 
         """
         all_time_traces = {}
@@ -189,19 +186,18 @@ class Dataset:
         Parameters
         ----------
         wavelengths: list-like or None
-            A list of wavelengths to create time traces for.
-        window : list-like, optional
-            The window of wavelengths that the spectrometer captures.
-            The first value ``window[0]`` gives the minimum wavelength, and
-            the second value ``window[1]`` gives the maximum wavelength. The
-            default value is (190, 1100).
+            A list of wavelengths to get time traces for.
+        window : tuple-like, optional
+            The range of wavelengths captured by the spectrometer.
+            The default value is (190, 1100).
 
         Returns
         -------
         :class:`pandas.DataFrame` or None
-            Returns a :class:`pandas.DataFrame` object containing the raw
-            time traces, where each column is a different wavelength. Returns
-            None if no wavelengths are given or no time traces could be made.
+            A :class:`pandas.DataFrame` containing the raw time traces,
+            where each column is a different wavelength. Otherwise,
+            returns None if no wavelengths are given or no time traces
+            could be made.
 
         """
         if wavelengths is None:
@@ -329,8 +325,8 @@ class Dataset:
         Returns
         -------
         cleaned_spectra : :class:`pandas.DataFrame`
-            Returns a :class:`pandas.DataFrame` object containing the
-            cleaned spectra (with outlier spectra removed).
+            A :class:`pandas.DataFrame` containing the spectra
+            with outlier spectra removed.
 
         """
         column_numbers = [x for x in range(self.all_spectra.shape[1])]
@@ -347,9 +343,8 @@ class Dataset:
         Returns
         -------
         trimmed_spectra : :class:`pandas.DataFrame`
-            A :class:`pandas.DataFrame` object containing the
-            spectra within the time range given by
-            :attr:`uv_pro.process.Dataset.trim`.
+            A :class:`pandas.DataFrame` containing the spectra within
+            the time range given by :attr:`uv_pro.process.Dataset.trim`.
 
         """
         trimmed_spectra = []

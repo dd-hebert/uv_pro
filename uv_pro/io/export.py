@@ -35,10 +35,10 @@ def _make_output_dir(dataset):
 
 def export_csv(dataset, spectra, num_spectra=0):
     """
-    Export ``spectra`` as .csv format.
+    Export spectra to .csv.
 
-    ``spectra`` are exported to a folder named ``dataset.name`` inside
-    ``dataset.path``.
+    Spectra are exported to the same directory as the parent
+    .KD file.
 
     Parameters
     ----------
@@ -46,7 +46,7 @@ def export_csv(dataset, spectra, num_spectra=0):
         The :class:`~uv_pro.process.Dataset` to be exported.
     spectra : :class:`pandas.DataFrame`
         The spectra to be exported. A :class:`pandas.DataFrame`
-        object such as ``dataset.all_spectra`` or ``dataset.trimmed_spectra``.
+        such as ``dataset.all_spectra`` or ``dataset.trimmed_spectra``.
     num_spectra : int, optional
         The number of slices to export. The default is 0, where all spectra
         are exported. Example: if ``spectra`` contains 200 spectra and
@@ -75,10 +75,10 @@ def export_csv(dataset, spectra, num_spectra=0):
 
 def export_time_trace(dataset):
     """
-    Export time traces to .csv format.
+    Export time traces to .csv.
 
-    Time traces are exported to a folder named ``dataset.name`` inside
-    ``dataset.path``.
+    Time traces are exported to the same directory as the parent
+    .KD file.
 
     Parameters
     ----------
