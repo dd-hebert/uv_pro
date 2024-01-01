@@ -65,9 +65,12 @@ class Dataset:
             ``trim[0]`` is the time (in seconds) of the beginning of the time
             range, and the second value ``trim[1]`` is the end of the time range.
             Default value is None (no trimming).
-        slicing : int or tuple-like or None, optional
+        slicing : dict or None, optional
             Reduce the data down to a selection of slices. Data can be sliced linearly
-            (equally-spaced slices) or exponentially (non-equally spaced).
+            (equally-spaced slices) or exponentially (unequally-spaced). For linear
+            (equally-spaced) slicing: ``{'mode': 'linear', 'slices': int}``.
+            For exponential (unequally-spaced) slicing: ``{'mode': 'exponential',
+            'coefficient': float, 'exponent': float}``.
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
@@ -387,17 +390,22 @@ class Dataset:
         Reduce the data down to a selection of slices.
 
         Slicing can be performed linearly (equally-spaced) or exponentially
-        (non-equally spaced). Linear slicing requires a single integer
+        (unequally-spaced). Linear slicing requires a single integer
         (e.g., a value of 10 will produce 10 equally-spaced slices).
         Exponential slicing requies two floats, a coefficient and an exponent.
         Exponential slicing uses the equation y = coefficient*x^exponent + 1
         to find the indexes of slices to keep.
 
+        Slicing behavior is determined by :attr:`uv_pro.process.Dataset.slicing`.
+        For linear (equally-spaced) slicing: ``{'mode': 'linear', 'slices': int}``.
+        For exponential (unequally-spaced) slicing: ``{'mode': 'exponential',
+        'coefficient': float, 'exponent': float}``.
+
         Returns
         -------
         sliced_spectra : :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` containing the spectra slices
-            given by :attr:`uv_pro.process.Dataset.slice`.
+            given by :attr:`uv_pro.process.Dataset.slicing`.
         """
         sliced_spectra = []
         if self.slicing['mode'] == 'exponential':

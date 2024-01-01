@@ -33,7 +33,7 @@ def _make_output_dir(dataset):
     return output_dir
 
 
-def get_unique_filename(output_dir, base_filename):
+def _get_unique_filename(output_dir, base_filename):
     """If a file named base_filename exists, add a number after."""
     n = 1
     unique_filename = base_filename
@@ -66,7 +66,7 @@ def export_csv(dataset, spectra):
     """
     output_dir = os.path.dirname(dataset.path)
     base_filename = os.path.splitext(dataset.name)[0]
-    filename = get_unique_filename(output_dir, base_filename)
+    filename = _get_unique_filename(output_dir, base_filename)
     spectra.to_csv(os.path.join(output_dir, f'{filename}.csv'), index=True)
     return f'{filename}.csv'
 
@@ -91,7 +91,7 @@ def export_time_trace(dataset):
     """
     output_dir = os.path.dirname(dataset.path)
     base_filename = f'{os.path.splitext(dataset.name)[0]} Traces'
-    filename = get_unique_filename(output_dir, base_filename)
+    filename = _get_unique_filename(output_dir, base_filename)
     time_traces = dataset.specific_time_traces
     time_traces.to_csv(os.path.join(output_dir, f'{filename}.csv'),
                        index=True)
