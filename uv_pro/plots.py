@@ -7,7 +7,7 @@ Functions for plotting and visualizing uv_pro Datasets.
 import matplotlib.pyplot as plt
 
 
-def plot_spectra(dataset, spectra, num_spectra=0):
+def plot_spectra(dataset, spectra):
     """
     Show a simple plot of a single or multiple spectra.
 
@@ -18,10 +18,6 @@ def plot_spectra(dataset, spectra, num_spectra=0):
     spectra : :class:`pandas.DataFrame`
         The spectra to be plotted, such as ``dataset.all_spectra`` or
         ``dataset.cleaned_spectra``.
-    num_spectra : int, optional
-        The number of slices to plot. The default is 0, where all spectra in
-        ``spectra`` are plot. Example: if ``spectra`` contains 100 spectra and
-        ``num_spectra`` is 10, then every tenth spectrum will be plotted.
 
     Returns
     -------
@@ -31,17 +27,8 @@ def plot_spectra(dataset, spectra, num_spectra=0):
     _, ax = plt.subplots()
     ax.set(xlabel='Wavelength (nm)',
            ylabel='Absorbance (AU)')
-
     plt.title(dataset.name, fontweight='bold')
-
-    if num_spectra == 0 or num_spectra > len(spectra.columns):
-        plt.plot(spectra)
-
-    else:
-        step = len(spectra.columns) // num_spectra
-        columns_to_plot = range(0, len(spectra.columns), step)
-        plt.plot(spectra.iloc[:, columns_to_plot])
-
+    plt.plot(spectra)
     plt.xlim(200, 1100)
     print('Close plot window to continue...', end='\n')
     plt.show()
@@ -75,22 +62,17 @@ def plot_time_traces(dataset):
     plt.show()
 
 
-def plot_1x2(dataset, num_spectra=0):
+def plot_1x2(dataset):
     """
     Show the 1-by-2 plot.
 
     Show a 1-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra` and
-    :attr:`~uv_pro.process.Dataset.trimmed_spectra` in ``dataset``.
+    :attr:`~uv_pro.process.Dataset.sliced_spectra` in ``dataset``.
 
     Parameters
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-    num_spectra : int, optional
-        The number of slices to plot. The default is 0, where all spectra in
-        ``dataset.all_spectra`` and ``dataset.trimmed_spectra`` are plotted.
-        Example: if ``dataset.trimmed_spectra`` contains 400 spectra and
-        ``num_spectra`` is 10, then every 40th spectrum will be plotted.
 
     Returns
     -------
@@ -104,28 +86,24 @@ def plot_1x2(dataset, num_spectra=0):
     _raw_data_subplot(ax_raw_data, dataset)
 
     # Plot processed data
-    _processed_data_subplot(ax_processed_data, dataset, num_spectra)
+    _processed_data_subplot(ax_processed_data, dataset)
 
     print('Close plot window to continue...', end='\n')
     plt.show()
 
 
-def plot_1x3(dataset, num_spectra=0):
+def plot_1x3(dataset):
     """
     Show the 1-by-3 plot.
 
     Show a 1-by-3 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
-    :attr:`~uv_pro.process.Dataset.trimmed_spectra`, and
+    :attr:`~uv_pro.process.Dataset.sliced_spectra`, and
     :attr:`~uv_pro.process.Dataset.time_traces` in ``dataset``.
 
     Parameters
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-    num_spectra : int, optional
-        The number of slices to plot. The default is 0, where all spectra are
-        plotted. Example: if ``dataset.trimmed_spectra`` contains 400 spectra
-        and ``num_spectra`` is 10, then every 40th spectrum will be plotted.
 
     Returns
     -------
@@ -139,7 +117,7 @@ def plot_1x3(dataset, num_spectra=0):
     _raw_data_subplot(ax_raw_data, dataset)
 
     # Plot processed data
-    _processed_data_subplot(ax_processed_data, dataset, num_spectra)
+    _processed_data_subplot(ax_processed_data, dataset)
 
     # Plot time traces
     _time_traces_subplot(ax_time_traces, dataset)
@@ -148,12 +126,12 @@ def plot_1x3(dataset, num_spectra=0):
     plt.show()
 
 
-def plot_2x2(dataset, num_spectra=0):
+def plot_2x2(dataset):
     """
     Show the 2-by-2 plot.
 
     Show a 2-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
-    :attr:`~uv_pro.process.Dataset.trimmed_spectra`,
+    :attr:`~uv_pro.process.Dataset.sliced_spectra`,
     :attr:`~uv_pro.process.Dataset.time_traces`, and
     :attr:`~uv_pro.process.Dataset.baseline` with
     :attr:`~uv_pro.process.Dataset.outliers` highlighted.
@@ -162,10 +140,6 @@ def plot_2x2(dataset, num_spectra=0):
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-    num_spectra : int, optional
-        The number of slices to plot. The default is 0, where all spectra are
-        plotted. Example: if ``dataset.trimmed_spectra`` contains 400 spectra
-        and ``num_spectra`` is 10, then every 40th spectrum will be plotted.
 
     Returns
     -------
@@ -179,7 +153,7 @@ def plot_2x2(dataset, num_spectra=0):
     _raw_data_subplot(ax_raw_data, dataset)
 
     # Plot processed data
-    _processed_data_subplot(ax_processed_data, dataset, num_spectra)
+    _processed_data_subplot(ax_processed_data, dataset)
 
     # Plot time traces
     _time_traces_subplot(ax_time_traces, dataset)
@@ -212,7 +186,7 @@ def _raw_data_subplot(ax, dataset):
     ax.plot(spectra)
 
 
-def _processed_data_subplot(ax, dataset, num_spectra=0):
+def _processed_data_subplot(ax, dataset):
     """
     Create a processed data subplot.
 
@@ -222,36 +196,19 @@ def _processed_data_subplot(ax, dataset, num_spectra=0):
         The axes to plot on.
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-    num_spectra : int, optional
-        The number of slices to plot. The default is 0, where all spectra are
-        plotted. Example: if ``dataset.trimmed_spectra`` contains 400 spectra
-        and ``num_spectra`` is 10, then every 40th spectrum will be plotted.
 
     """
-    spectra = dataset.trimmed_spectra
+    spectra = dataset.sliced_spectra
 
     ax.set(xlabel='Wavelength (nm)',
            ylabel='Absorbance (AU)',
            title='Processed Data')
-
-    if num_spectra == 0 or num_spectra > len(spectra.columns):
-        ax.plot(spectra)
-
-        ax.text(0.99, 0.99, 'showing: all spectra',
-                verticalalignment='top',
-                horizontalalignment='right',
-                transform=ax.transAxes,
-                color='gray', fontsize=8)
-    else:
-        step = len(spectra.columns) // num_spectra
-        columns_to_plot = range(0, len(spectra.columns), step)
-        ax.plot(spectra.iloc[:, columns_to_plot])
-
-        ax.text(0.99, 0.99, f'showing: {len(list(columns_to_plot))} spectra',
-                verticalalignment='top',
-                horizontalalignment='right',
-                transform=ax.transAxes,
-                color='gray', fontsize=8)
+    ax.plot(spectra)
+    ax.text(0.99, 0.99, f'showing: {len(spectra.columns)} spectra',
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color='gray', fontsize=8)
 
 
 def _time_traces_subplot(ax, dataset):

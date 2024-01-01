@@ -33,7 +33,17 @@ def _make_output_dir(dataset):
     return output_dir
 
 
-def export_csv(dataset, spectra, num_spectra=0):
+def get_unique_filename(output_dir, base_filename):
+    """If a file named base_filename exists, add a number after."""
+    n = 1
+    unique_filename = base_filename
+    while os.path.exists(f'{os.path.join(output_dir, unique_filename)}.csv'):
+        unique_filename = base_filename + f' ({n})'
+        n += 1
+    return unique_filename
+
+
+def export_csv(dataset, spectra):
     """
     Export spectra to .csv.
 
@@ -47,30 +57,18 @@ def export_csv(dataset, spectra, num_spectra=0):
     spectra : :class:`pandas.DataFrame`
         The spectra to be exported. A :class:`pandas.DataFrame`
         such as ``dataset.all_spectra`` or ``dataset.trimmed_spectra``.
-    num_spectra : int, optional
-        The number of slices to export. The default is 0, where all spectra
-        are exported. Example: if ``spectra`` contains 200 spectra and
-        ``num_spectra`` is 10, then every 20th spectrum will be exported.
 
     Returns
     -------
-    None.
+    str
+        The file name of the exported .csv file.
 
     """
-    # Export all spectra
-    if num_spectra == 0 or int(num_spectra) > len(spectra.columns):
-        output_dir = os.path.dirname(dataset.path)
-        filename = os.path.splitext(dataset.name)[0]
-        spectra.to_csv(os.path.join(output_dir, f'{filename}.csv'), index=True)
-
-    # Export equally spaced slices of the dataset
-    else:
-        output_dir = os.path.dirname(dataset.path)
-        filename = os.path.splitext(dataset.name)[0]
-        step = len(spectra.columns) // int(num_spectra)
-        columns_to_export = list(range(0, len(spectra.columns), step))
-        spectra.iloc[:, columns_to_export].to_csv(
-            os.path.join(output_dir, f'{filename}.csv'), index=True)
+    output_dir = os.path.dirname(dataset.path)
+    base_filename = os.path.splitext(dataset.name)[0]
+    filename = get_unique_filename(output_dir, base_filename)
+    spectra.to_csv(os.path.join(output_dir, f'{filename}.csv'), index=True)
+    return f'{filename}.csv'
 
 
 def export_time_trace(dataset):
@@ -87,12 +85,14 @@ def export_time_trace(dataset):
 
     Returns
     -------
-    None.
+    str
+        The file name of the exported .csv file.
 
     """
     output_dir = os.path.dirname(dataset.path)
-    filename = os.path.splitext(dataset.name)[0]
+    base_filename = f'{os.path.splitext(dataset.name)[0]} Traces'
+    filename = get_unique_filename(output_dir, base_filename)
     time_traces = dataset.specific_time_traces
-
-    time_traces.to_csv(os.path.join(output_dir, f'{filename} Traces.csv'),
+    time_traces.to_csv(os.path.join(output_dir, f'{filename}.csv'),
                        index=True)
+    return f'{filename}.csv'

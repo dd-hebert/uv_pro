@@ -37,7 +37,12 @@ Command Line Arguments
     The number of slices to plot or export. Example: if
     :attr:`uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
     ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
-    default is 0, where all spectra are plotted or exported.
+    default is None, where all spectra are plotted or exported.
+-esl, --exponential_slice : float float, optional
+    Slice the data non-linearly (non-equally spaced slices). Give a coefficient
+    and an exponent and the data slicing will be determined by the equation
+    y = coefficient*x^exponent + 1, where y is the step size between slices.
+    The default is None, where all spectra are plotted or exported.
 -lam, --baseline_lambda : float, optional
     Set the smoothness of the baseline (for outlier detection). Higher values
     give smoother baselines. Try values between 0.001 and 10000. The
@@ -135,9 +140,11 @@ class CLI:
             'trim': '''2 args: trim data from __ to __.
                         Trim the data to remove spectra outside the given time range.''',
             'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
-                                     Values closer to 0 result in higher sensitivity (more outliers).
-                                     Values closer to 1 result in lower sensitivity (fewer outliers).''',
-            'slice_spectra': 'Set the number of slices to plot. Default: 0 (show all).',
+                                    Values closer to 0 result in higher sensitivity (more outliers).
+                                    Values closer to 1 result in lower sensitivity (fewer outliers).''',
+            'slice_spectra': 'Set the number of slices to plot. Default: None (no slicing).',
+            'exponential_slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
+                                    Default: None (no slicing).''',
             'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
             'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
             'low_signal_window': '''"narrow" or "wide". Set the width of the low signal outlier detection window.
@@ -202,13 +209,23 @@ class CLI:
                             metavar='',
                             help=help_msg['outlier_threshold'])
 
-        parser.add_argument('-sl',
-                            '--slice_spectra',
-                            action='store',
-                            type=int,
-                            default=0,
-                            metavar='',
-                            help=help_msg['slice_spectra'])
+        slicing_args = parser.add_mutually_exclusive_group()
+        slicing_args.add_argument('-sl',
+                                  '--slice_spectra',
+                                  action='store',
+                                  type=int,
+                                  default=None,
+                                  metavar='',
+                                  help=help_msg['slice_spectra'])
+
+        slicing_args.add_argument('-esl',
+                                  '--exponential_slice',
+                                  action='store',
+                                  type=float,
+                                  nargs=2,
+                                  default=None,
+                                  metavar='',
+                                  help=help_msg['exponential_slice'])
 
         parser.add_argument('-lam',
                             '--baseline_lambda',
@@ -230,6 +247,7 @@ class CLI:
                             '--low_signal_window',
                             action='store',
                             default='narrow',
+                            choices=['narrow', 'wide'],
                             metavar='',
                             help=help_msg['low_signal_window'])
 
@@ -273,6 +291,7 @@ class CLI:
                             action='store',
                             nargs='*',
                             default=None,
+                            metavar='',
                             help=help_msg['time_traces'])
 
         parser.add_argument('-ne',
@@ -404,6 +423,28 @@ class CLI:
         else:
             raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
 
+    def handle_slicing(self):
+        """
+        Handle the args for data slicing.
+
+        Returns
+        -------
+        dict or None
+            Returns a dictionary with the data slicing parameters or None.
+
+        """
+        if self.args.slice_spectra is None and self.args.exponential_slice is None:
+            return None
+        elif self.args.slice_spectra:
+            return {'mode': 'linear',
+                    'slices': self.args.slice_spectra}
+        elif self.args.exponential_slice:
+            return {'mode': 'exponential',
+                    'coefficient': self.args.exponential_slice[0],
+                    'exponent': self.args.exponential_slice[1]}
+        else:
+            return None
+
     def main(self):
         """
         Prehandles command line args.
@@ -459,6 +500,7 @@ class CLI:
         else:
             data = Dataset(self.args.path,
                            trim=self.args.trim,
+                           slicing=self.handle_slicing(),
                            outlier_threshold=self.args.outlier_threshold,
                            baseline_lambda=self.args.baseline_lambda,
                            baseline_tolerance=self.args.baseline_tolerance,
@@ -471,7 +513,7 @@ class CLI:
             print('\nPlotting data...')
             # Show 2x2 plot if data has been cleaned
             if len(data.all_spectra.columns) > 2:
-                uvplt.plot_2x2(data, self.args.slice_spectra)
+                uvplt.plot_2x2(data)
             else:
                 uvplt.plot_spectra(data, data.all_spectra)
 
@@ -489,12 +531,10 @@ class CLI:
                         print('\nUnrecognized input.')
                         user_input = input(prompt).strip().lower()
                     if user_input == '1' or user_input == '3':
-                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
-                        filename = f'{os.path.splitext(os.path.basename(self.args.path))[0]}.csv'
+                        filename = export_csv(data, data.sliced_spectra)
                         files_exported.append(filename)
                     if user_input == '2' or user_input == '3':
-                        export_time_trace(data)
-                        filename = f'{os.path.splitext(os.path.basename(self.args.path))[0]} Traces.csv'
+                        filename = export_time_trace(data)
                         files_exported.append(filename)
 
                 else:
@@ -509,8 +549,7 @@ class CLI:
                         print('\nUnrecognized input.')
                         user_input = input(prompt).strip().lower()
                     if user_input == '1':
-                        export_csv(data, data.trimmed_spectra, self.args.slice_spectra)
-                        filename = f'{os.path.splitext(os.path.basename(self.args.path))[0]}.csv'
+                        filename = export_csv(data, data.sliced_spectra)
                         files_exported.append(filename)
 
                 return files_exported

@@ -41,10 +41,12 @@ class Dataset:
         The spectra with :attr:`outliers` removed.
     trimmed_spectra : :class:`pandas.DataFrame`
         The spectra that fall within the given time range.
+    sliced_spectra : :class:`pandas.DataFrame`
+        The selected spectra slices.
 
     """
 
-    def __init__(self, path, trim=None, outlier_threshold=0.1,
+    def __init__(self, path, trim=None, slicing=None, outlier_threshold=0.1,
                  baseline_lambda=10, baseline_tolerance=0.1,
                  low_signal_window='narrow', time_trace_window=(300, 1060),
                  time_trace_interval=10, wavelengths=None, view_only=False):
@@ -63,6 +65,9 @@ class Dataset:
             ``trim[0]`` is the time (in seconds) of the beginning of the time
             range, and the second value ``trim[1]`` is the end of the time range.
             Default value is None (no trimming).
+        slicing : int or tuple-like or None, optional
+            Reduce the data down to a selection of slices. Data can be sliced linearly
+            (equally-spaced slices) or exponentially (non-equally spaced).
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
@@ -102,6 +107,7 @@ class Dataset:
         self.path = path
         self.name = os.path.basename(self.path)
         self.trim = trim
+        self.slicing = slicing
         self.low_signal_window = low_signal_window
         self.outlier_threshold = outlier_threshold
         self.baseline_lambda = baseline_lambda
@@ -131,13 +137,19 @@ class Dataset:
 
             print('Cleaning data...')
             self.cleaned_spectra = self.clean_data()
-            print('Success.')
 
             if self.trim is None:
                 self.trimmed_spectra = self.cleaned_spectra
             else:
                 print('Trimming data...')
                 self.trimmed_spectra = self.trim_data()
+
+            if self.slicing is None:
+                self.sliced_spectra = self.trimmed_spectra
+            else:
+                print('Slicing data...')
+                self.sliced_spectra = self.slice_data()
+            print('Success.')
 
     def get_time_traces(self, window=(300, 1060), interval=10):
         """
@@ -369,3 +381,45 @@ class Dataset:
             end = len(self.all_spectra.columns) * self.cycle_time
 
         return start, end
+
+    def slice_data(self):
+        """
+        Reduce the data down to a selection of slices.
+
+        Slicing can be performed linearly (equally-spaced) or exponentially
+        (non-equally spaced). Linear slicing requires a single integer
+        (e.g., a value of 10 will produce 10 equally-spaced slices).
+        Exponential slicing requies two floats, a coefficient and an exponent.
+        Exponential slicing uses the equation y = coefficient*x^exponent + 1
+        to find the indexes of slices to keep.
+
+        Returns
+        -------
+        sliced_spectra : :class:`pandas.DataFrame`
+            A :class:`pandas.DataFrame` containing the spectra slices
+            given by :attr:`uv_pro.process.Dataset.slice`.
+        """
+        sliced_spectra = []
+        if self.slicing['mode'] == 'exponential':
+            slices = []
+            coefficient = self.slicing['coefficient']
+            exponent = self.slicing['exponent']
+            i = 1
+
+            while sum(slices) < len(self.trimmed_spectra.columns):
+                slices.append(round(coefficient * i**exponent + 1))
+                i += 1
+            if sum(slices) > len(self.trimmed_spectra.columns):
+                slices.pop()
+
+            columns_to_keep = [0]
+            for index, value in enumerate(slices):
+                columns_to_keep.append(columns_to_keep[index] + value)
+            sliced_spectra = self.trimmed_spectra.iloc[:, columns_to_keep]
+
+        else:
+            step = len(self.trimmed_spectra.columns) // int(self.slicing['slices'])
+            columns_to_keep = list(range(0, len(self.trimmed_spectra.columns), step))
+            sliced_spectra = self.trimmed_spectra.iloc[:, columns_to_keep]
+
+        return sliced_spectra
