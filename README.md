@@ -40,6 +40,9 @@ ___
 #### ``-crd``, ``-–clear_root_dir`` : flag, optional
 Reset the root directory back to the default location (in the user's home directory).
 
+#### ``-esl``, ``--exponential_slice`` : float float, optional
+Reduce the dataset down to a number of unequally-spaced "slices". This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay. Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
+
 #### ``-fp``, ``--file_picker`` : flag, optional
 Interactively pick a .KD file from the terminal. The file is opened in _view-only_ mode. The file must be located somewhere inside the root directory.
 
@@ -84,7 +87,7 @@ uvp -p mydata.KD
 By setting a root directory ``"C:\mydata\UV-Vis Data"``, you can omit that part of the path and just give a relative path ``mydata.KD``. The root directory is saved between runs in a config file.
 
 #### ``-sl``, ``--slice_spectra`` : integer, optional
-Set the number of spectrum "slices" to plot and export. Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is 0, where *all* spectra are plotted and exported.
+Reduce the dataset down to a number of equally-spaced "slices". Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
 
 #### ``-t``, ``--trim`` : 2 integers, optional
 Select spectra within a given time range. The first integer is the beginning of the time range and the second integer is the end. The spectra outside the given time range will be removed.
