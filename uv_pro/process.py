@@ -267,18 +267,6 @@ class Dataset:
         return outliers
 
     def _find_low_signal_outliers(self):
-        """
-        Find outlier points with very low absorbance signal.
-
-        Low signal outliers usually occur when the cuvette is removed from the
-        instrument during the experiment.
-
-        Returns
-        -------
-        low_signal_outliers : set
-            A set of time indices where low signal outliers are found.
-
-        """
         low_signal_outliers = set()
         low_signal_cutoff = len(self.time_traces.columns) * 0.1
         sorted_time_traces = self.time_traces.sum(1).sort_values()
@@ -308,29 +296,12 @@ class Dataset:
             time_traces.sum(1).index)
 
     def _find_baseline_outliers(self, baselined_time_traces):
-        """
-        Faster method to find outliers using sort_values().
-
-        Parameters
-        ----------
-        baselined_time_traces : :class:`pandas.core.series.Series`
-            The summed time traces after subtracting the
-            :attr:`~uv_pro.process.Dataset.baseline`
-
-        Returns
-        -------
-        baseline_outliers : set
-            A set of time indices where baseline outliers are located.
-
-        """
         baseline_outliers = set()
-
         i = 0
         sorted_baselined_time_traces = abs(baselined_time_traces).sort_values(ascending=False)
         while sorted_baselined_time_traces.iloc[i] / baselined_time_traces.max() > self.outlier_threshold:
             baseline_outliers.add(sorted_baselined_time_traces.index[i])
             i += 1
-
         return baseline_outliers
 
     def clean_data(self):
@@ -409,25 +380,35 @@ class Dataset:
         """
         sliced_spectra = []
         if self.slicing['mode'] == 'exponential':
-            slices = []
-            coefficient = self.slicing['coefficient']
-            exponent = self.slicing['exponent']
-            i = 1
-
-            while sum(slices) < len(self.trimmed_spectra.columns):
-                slices.append(round(coefficient * i**exponent + 1))
-                i += 1
-            while sum(slices) >= len(self.trimmed_spectra.columns):
-                slices.pop()
-
-            columns_to_keep = [0]
-            for index, value in enumerate(slices):
-                columns_to_keep.append(columns_to_keep[index] + value)
-            sliced_spectra = self.trimmed_spectra.iloc[:, columns_to_keep]
-
+            sliced_spectra = self._exponential_slicing()
         else:
-            step = len(self.trimmed_spectra.columns) // int(self.slicing['slices'])
-            columns_to_keep = list(range(0, len(self.trimmed_spectra.columns), step))
-            sliced_spectra = self.trimmed_spectra.iloc[:, columns_to_keep]
-
+            sliced_spectra = self._linear_slicing()
         return sliced_spectra
+
+    def _exponential_slicing(self):
+        coefficient = self._check_exponential_slice_coeff()
+        exponent = self.slicing['exponent']
+        slices = []
+        i = 1
+        while sum(slices) < len(self.trimmed_spectra.columns):
+            slices.append(round(coefficient * i**exponent + 1))
+            i += 1
+        while sum(slices) >= len(self.trimmed_spectra.columns):
+            slices.pop()
+
+        columns_to_keep = [0]
+        for index, value in enumerate(slices):
+            columns_to_keep.append(columns_to_keep[index] + value)
+        return self.trimmed_spectra.iloc[:, columns_to_keep]
+
+    def _check_exponential_slice_coeff(self):
+        coefficient = self.slicing['coefficient']
+        if coefficient > 0:
+            return coefficient
+        else:
+            raise ValueError('Invalid exponential slicing coefficient. Value must be >0.')
+
+    def _linear_slicing(self):
+        step = len(self.trimmed_spectra.columns) // int(self.slicing['slices'])
+        columns_to_keep = list(range(0, len(self.trimmed_spectra.columns), step))
+        return self.trimmed_spectra.iloc[:, columns_to_keep]
