@@ -417,7 +417,7 @@ class Dataset:
             while sum(slices) < len(self.trimmed_spectra.columns):
                 slices.append(round(coefficient * i**exponent + 1))
                 i += 1
-            if sum(slices) > len(self.trimmed_spectra.columns):
+            while sum(slices) >= len(self.trimmed_spectra.columns):
                 slices.pop()
 
             columns_to_keep = [0]
