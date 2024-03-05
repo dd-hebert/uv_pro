@@ -410,5 +410,7 @@ class Dataset:
 
     def _linear_slicing(self):
         step = len(self.trimmed_spectra.columns) // int(self.slicing['slices'])
+        if step == 0:
+            step = 1
         columns_to_keep = list(range(0, len(self.trimmed_spectra.columns), step))
         return self.trimmed_spectra.iloc[:, columns_to_keep]
