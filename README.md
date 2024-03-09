@@ -37,13 +37,14 @@ The path to a .KD file. You have three options for specifying the path: you can 
 
 ___
 
+#### ``-bll``, ``-–baseline_lambda`` : float, optional
+Set the smoothness of the baseline (for outlier detection). Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See [pybaselines.whittaker.asls()](https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares) for more information.
+
+#### ``-blt``, ``-–baseline_tolerance`` : float, optional
+Set the exit criteria for the baseline algorithm. Try values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker.asls() for more information.
+
 #### ``-crd``, ``-–clear_root_dir`` : flag, optional
 Reset the root directory back to the default location (in the user's home directory).
-
-#### ``-esl``, ``--exponential_slice`` : float float, optional
-Reduce the dataset down to a number of unequally-spaced "slices". This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay. Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. 
-
-Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
 
 #### ``-fp``, ``--file_picker`` : flag, optional
 Interactively pick a .KD file from the terminal. The file is opened in _view-only_ mode. The file must be located somewhere inside the root directory.
@@ -51,11 +52,13 @@ Interactively pick a .KD file from the terminal. The file is opened in _view-onl
 #### ``-grd``, ``–-get_root_dir`` : flag, optional
 Print the current root directory to the console.
 
+#### ``-gsl``, ``--gradient_slice`` : float float, optional
+Reduce the dataset down to a number of unequally-spaced "slices". This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay. Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. 
+
+Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
+
 #### ``-h``, ``--help`` : flag
 Use ``-h`` to get help with command line arguments.
-
-#### ``-lam``, ``-–baseline_lambda`` : float, optional
-Set the smoothness of the baseline (for outlier detection). Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See [pybaselines.whittaker.asls()](https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares) for more information.
 
 #### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
 Set the width of the low signal outlier detection window. Set to "wide" if low signals are interfering with the baseline.
@@ -66,7 +69,10 @@ Bypass the data export prompt at the end of the script.
 #### ``-ot``, ``--outlier_threshold`` : float between 0 and 1, optional
 The threshold by which spectra are considered outliers. Values closer to 0 will produce more outliers, while values closer to 1 will produce fewer outliers. A value of 1 will produce no outliers. The default value is 0.1.
 
-#### ``-rd``, ``-–root_dir`` : string, optional
+#### ``-sl``, ``--slice_spectra`` : integer, optional
+Reduce the dataset down to a number of equally-spaced "slices". Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
+
+#### ``-srd``, ``-–set_root_dir`` : string, optional
 Set a new root directory. Setting a root directory can simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``-p`` is assumed to be relative to the root directory.
 
 **Without root directory:**
@@ -88,9 +94,6 @@ uvp -p mydata.KD
 
 By setting a root directory ``"C:\mydata\UV-Vis Data"``, you can omit that part of the path and just give a relative path ``mydata.KD``. The root directory is saved between runs in a config file.
 
-#### ``-sl``, ``--slice_spectra`` : integer, optional
-Reduce the dataset down to a number of equally-spaced "slices". Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
-
 #### ``-t``, ``--trim`` : 2 integers, optional
 Select spectra within a given time range. The first integer is the beginning of the time range and the second integer is the end. The spectra outside the given time range will be removed.
 
@@ -99,10 +102,7 @@ Select spectra within a given time range. The first integer is the beginning of 
 uvp -p C:\\Desktop\\MyData\\myfile.KD -t 50 250
 ```
 
-#### ``-tol``, ``-–baseline_tolerance`` : float, optional
-Set the exit criteria for the baseline algorithm. Try values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker.asls() for more information.
-
-#### ``-tr``, ``--tree`` : flag, optional
+#### ``--tree`` : flag, optional
 Print the root directory file tree to the console.
 
 #### ``-tt``, ``--time_traces`` : arbitrary number of ints, optional
