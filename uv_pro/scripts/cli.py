@@ -13,8 +13,8 @@ Command Line Arguments
     in double quotes "". The script will first look for the given path inside
     the current working directory, then look at the absolute path, and lastly
     inside the root directory (if a root directory has been set).
--rd, --root_dir : string, optional
-    Specify a root directory to simplify file path entry. For instance, if
+-srd, --set_root_dir : string, optional
+    Set a root directory to simplify file path entry. For instance, if
     you store all your UV-Vis data files in a common folder, you can designate
     it as the root directory. Subsequently, any path provided with ``-p`` is
     assumed to be relative to the root directory.
@@ -34,20 +34,20 @@ Command Line Arguments
     produce more outliers. Values closer to 1 produce fewer outliers.
     The default value is 0.1.
 -sl, --slice_spectra : int, optional
-    The number of slices to plot or export. Example: if
+    The number of equally-spaced slices to plot or export. Example: if
     :attr:`uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
     ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
     default is None, where all spectra are plotted or exported.
--esl, --exponential_slice : float float, optional
-    Slice the data non-linearly (non-equally spaced slices). Give a coefficient
+-gsl, --gradient_slice : float float, optional
+    Slice the data in non-equally spaced slices. Give a coefficient
     and an exponent and the data slicing will be determined by the equation
     y = coefficient*x^exponent + 1, where y is the step size between slices.
     The default is None, where all spectra are plotted or exported.
--lam, --baseline_lambda : float, optional
+-bll, --baseline_lambda : float, optional
     Set the smoothness of the baseline (for outlier detection). Higher values
     give smoother baselines. Try values between 0.001 and 10000. The
     default is 10. See :func:`pybaselines.whittaker.asls()` for more information.
--tol, --baseline_tolerance : float, optional
+-blt, --baseline_tolerance : float, optional
     Set the exit criteria for the baseline algorithm. Try values between
     0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
     for more information.
@@ -55,7 +55,7 @@ Command Line Arguments
     Set the width of the low signal outlier detection window (see
     :meth:`uv_pro.process.Dataset.find_outliers()`). Set to ``"wide"`` if low
     signals are interfering with the baseline.
--tr, --tree : flag, optional
+--tree : flag, optional
     Print the root directory file tree to the console.
 -fp, --file_picker : flag, optional
     Interactively pick a .KD file from the console. The file is opened in view-
@@ -80,7 +80,7 @@ Examples
     uvp -p C:/Desktop/myfile.KD -v
 
     # Set a root directory.
-    uvp -rd C:/Desktop
+    uvp -srd C:/Desktop
     # Now C:/Desktop can be omitted from the given path.
 
     # Open C:/Desktop/myfile.KD, show 10 spectra from 50 to 250 seconds
@@ -390,7 +390,7 @@ class CLI:
             self.args.path = FilePicker(root_dir, '.KD').pick_file()
             self.args.view = True
 
-        if self.args.tree is True:  # [-tr]
+        if self.args.tree is True:  # [--tree]
             FilePicker(root_dir, '.KD').tree()
 
     def handle_path(self, root_dir):
@@ -448,7 +448,7 @@ class CLI:
         """
         Prehandles command line args.
 
-        Handles the args ``-qq``, ``-crd``, ``-rd``, ``-grd``, ``-tr``, and ``-fp``.
+        Handles the args ``-qq``, ``-crd``, ``-srd``, ``-grd``, ``--tree``, and ``-fp``.
         Then handles the path before starting the processing routine
         :meth:`~uv_pro.scripts.cli.CLI.proc()`.
 
