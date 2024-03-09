@@ -41,8 +41,8 @@ in the absorbance, and these "outlier" spectra should be removed from the final 
 ``uv_pro`` has 4 parameters which control how outliers are identified and removed from your data:
 
 - `outlier threshold [-ot]`_
-- `baseline lambda [-lam]`_
-- `baseline tolerance [-tol]`_
+- `baseline lambda [-bll]`_
+- `baseline tolerance [-blt]`_
 - `low signal window [-lsw]`_
 
 
@@ -69,41 +69,42 @@ considered :attr:`~uv_pro.process.Dataset.outliers` (marked with red X's in the
     - *Increasing* the outlier threshold will catch *fewer* outliers.
     - *Decreasing* the outlier threshold will catch *more* outliers.
 
+You can use a large outlier threshold >>1 to guarantee no points are considered outliers.
 
-baseline lambda [-lam]
+baseline lambda [-bll]
 ``````````````````````
 The :func:`baseline_lambda <uv_pro.process.Dataset.__init__>` is the smoothness of the
-:attr:`~uv_pro.process.Dataset.baseline`, and can be set using the ``-lam`` or ``--baseline_lambda``
+:attr:`~uv_pro.process.Dataset.baseline`, and can be set using the ``-bll`` or ``--baseline_lambda``
 argument at the terminal::
 
     # Set baseline smoothness.
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -lam 0.1
+    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -bll 0.1
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" --baseline_lambda 1000
 
-Higher ``-lam`` values give smoother baselines. Try values between 0.001 and 10000. The default is 10.
+Higher ``-bll`` values give smoother baselines. Try values between 0.001 and 10000. The default is 10.
 See pybaselines.whittaker_ for more in-depth information. The image below shows how different values
-of ``-lam`` affect the :attr:`~uv_pro.process.Dataset.baseline`:
+of ``-bll`` affect the :attr:`~uv_pro.process.Dataset.baseline`:
 
 .. image:: B3_lam_comparison.png
 
-Notice that a smaller ``-lam`` value will give a :attr:`~uv_pro.process.Dataset.baseline` which follows
+Notice that a smaller ``-bll`` value will give a :attr:`~uv_pro.process.Dataset.baseline` which follows
 the data more closely but as a result, may also include more undesirable outlier points. Alternatively,
-a value of ``-lam`` that is too large will give a :attr:`~uv_pro.process.Dataset.baseline` that is too
-smooth and not follow the data closely enough. In general, the ``-lam`` value required to fit the
+a value of ``-bll`` that is too large will give a :attr:`~uv_pro.process.Dataset.baseline` that is too
+smooth and not follow the data closely enough. In general, the ``-bll`` value required to fit the
 :attr:`~uv_pro.process.Dataset.baseline` will increase as the number of data points increases.
 
 
-baseline tolerance [-tol]
+baseline tolerance [-blt]
 `````````````````````````
 The :func:`baseline_tolerance <uv_pro.process.Dataset.__init__>` specifies the exit criteria of the
 :attr:`~uv_pro.process.Dataset.baseline` detection algorithm (see: pybaselines.whittaker.asls_), and
-can be set using the ``-tol`` or ``--baseline_tolerance`` argument at the terminal::
+can be set using the ``-blt`` or ``--baseline_tolerance`` argument at the terminal::
 
     # Set the baseline tolerance.
-    uvp -p mydata.KD -tol 0.01
+    uvp -p mydata.KD -blt 0.01
     uvp -p mydata.KD --baseline_tolerance 10
 
-Try ``-tol`` values between 0.001 and 10000. The default is 0.1.
+Try ``-blt`` values between 0.001 and 10000. The default is 0.1.
 See pybaselines.whittaker_ for more in-depth information.
 
 
@@ -158,7 +159,7 @@ from 50 seconds to 250 seconds, and show 10 slices::
 Import the data from ``myfile.KD``, trim the data to keep only spectra from 0 seconds to 750 seconds, change baseline
 parameters, show 25 slices, and get time traces for 780 nm and 1020 nm::
 
-    uvp -p C:\Desktop\myfile.KD -t 0 750 -lam 10 -tol 0.1 -sl 25 -tt 780 1020
+    uvp -p C:\Desktop\myfile.KD -t 0 750 -bll 10 -blt 0.1 -sl 25 -tt 780 1020
 
-The arguments are flexible and can be used in essentially any order (except ``-p`` which must come first). However, each argument
+The arguments are flexible and can be used in basically any order (except ``-p`` which must come first). However, each argument
 should only occur once.

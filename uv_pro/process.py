@@ -66,11 +66,10 @@ class Dataset:
             range, and the second value ``trim[1]`` is the end of the time range.
             Default value is None (no trimming).
         slicing : dict or None, optional
-            Reduce the data down to a selection of slices. Data can be sliced linearly
-            (equally-spaced slices) or exponentially (unequally-spaced). For linear
-            (equally-spaced) slicing: ``{'mode': 'linear', 'slices': int}``.
-            For exponential (unequally-spaced) slicing: ``{'mode': 'exponential',
-            'coefficient': float, 'exponent': float}``.
+            Reduce the data down to a selection of slices. Slices can be taken in
+            equally-spaced (linear) or unequally-spaced (gradient) intervals. For linear
+            slicing: ``{'mode': 'linear', 'slices': int}``. For gradient slicing:
+            ``{'mode': 'gradient', 'coefficient': float, 'exponent': float}``.
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
@@ -132,7 +131,8 @@ class Dataset:
 
     def _process_data(self):
         if len(self.all_spectra.columns) > 2:
-            self.time_traces = self.get_time_traces(window=self.time_trace_window, interval=self.time_trace_interval)
+            self.time_traces = self.get_time_traces(window=self.time_trace_window,
+                                                    interval=self.time_trace_interval)
             self.specific_time_traces = self.get_specific_time_traces(self.wavelengths)
             print('Finding outliers...')
             self.outliers = self.find_outliers()
@@ -159,7 +159,7 @@ class Dataset:
         Iterate through different wavelengths and get time traces.
 
         Time traces which saturate the detector due to high intensity are
-        removed by checking if they have a median absorbance below 1.75 AU.
+        removed by checking if they have a median absorbance above 1.75 AU.
         The raw (un-normalized) time traces are returned.
 
         Parameters
@@ -360,16 +360,16 @@ class Dataset:
         """
         Reduce the data down to a selection of slices.
 
-        Slicing can be performed linearly (equally-spaced) or exponentially
-        (unequally-spaced). Linear slicing requires a single integer
+        Slices can be taken at equally-spaced (linear) or unequally-spaced
+        (gradient) intervals. Linear slicing requires a single integer
         (e.g., a value of 10 will produce 10 equally-spaced slices).
-        Exponential slicing requies two floats, a coefficient and an exponent.
-        Exponential slicing uses the equation y = coefficient*x^exponent + 1
-        to find the indexes of slices to keep.
+        Gradient slicing requies two floats, a coefficient and an exponent.
+        For gradient slicing, the step size between slices is calculated
+        by the equation step_size = [coefficient*x^exponent + 1].
 
         Slicing behavior is determined by :attr:`uv_pro.process.Dataset.slicing`.
         For linear (equally-spaced) slicing: ``{'mode': 'linear', 'slices': int}``.
-        For exponential (unequally-spaced) slicing: ``{'mode': 'exponential',
+        For gradient (unequally-spaced) slicing: ``{'mode': 'gradient',
         'coefficient': float, 'exponent': float}``.
 
         Returns
@@ -377,16 +377,17 @@ class Dataset:
         sliced_spectra : :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` containing the spectra slices
             given by :attr:`uv_pro.process.Dataset.slicing`.
+
         """
         sliced_spectra = []
-        if self.slicing['mode'] == 'exponential':
-            sliced_spectra = self._exponential_slicing()
+        if self.slicing['mode'] == 'gradient':
+            sliced_spectra = self._gradient_slicing()
         else:
             sliced_spectra = self._linear_slicing()
         return sliced_spectra
 
-    def _exponential_slicing(self):
-        coefficient = self._check_exponential_slice_coeff()
+    def _gradient_slicing(self):
+        coefficient = self._check_gradient_slice_coeff()
         exponent = self.slicing['exponent']
         slices = []
         i = 1
@@ -401,12 +402,12 @@ class Dataset:
             columns_to_keep.append(columns_to_keep[index] + value)
         return self.trimmed_spectra.iloc[:, columns_to_keep]
 
-    def _check_exponential_slice_coeff(self):
+    def _check_gradient_slice_coeff(self):
         coefficient = self.slicing['coefficient']
         if coefficient > 0:
             return coefficient
         else:
-            raise ValueError('Invalid exponential slicing coefficient. Value must be >0.')
+            raise ValueError('Invalid gradient slicing coefficient. Value must be >0.')
 
     def _linear_slicing(self):
         step = len(self.trimmed_spectra.columns) // int(self.slicing['slices'])

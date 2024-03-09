@@ -132,7 +132,7 @@ class CLI:
         help_msg = {
             'path': '''Process UV-Vis data at the given path.
                         Either a .KD file or a folder (.csv format).''',
-            'root_dir': '''Set a root directory where data files are located so you
+            'set_root_dir': '''Set a root directory where data files are located so you
                            don't have to type a full path every time.''',
             'get_root_dir': '''Print the root directory to the console.''',
             'clear_root_dir': '''Clear the current root directory.''',
@@ -143,7 +143,7 @@ class CLI:
                                     Values closer to 0 result in higher sensitivity (more outliers).
                                     Values closer to 1 result in lower sensitivity (fewer outliers).''',
             'slice_spectra': 'Set the number of slices to plot. Default: None (no slicing).',
-            'exponential_slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
+            'gradient_slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
                                     Default: None (no slicing).''',
             'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
             'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
@@ -167,12 +167,12 @@ class CLI:
                             metavar='',
                             help=help_msg['path'])
 
-        parser.add_argument('-rd',
-                            '--root_dir',
+        parser.add_argument('-srd',
+                            '--set_root_dir',
                             action='store',
                             default=None,
                             metavar='',
-                            help=help_msg['root_dir'])
+                            help=help_msg['set_root_dir'])
 
         parser.add_argument('-grd',
                             '--get_root_dir',
@@ -218,16 +218,16 @@ class CLI:
                                   metavar='',
                                   help=help_msg['slice_spectra'])
 
-        slicing_args.add_argument('-esl',
-                                  '--exponential_slice',
+        slicing_args.add_argument('-gsl',
+                                  '--gradient_slice',
                                   action='store',
                                   type=float,
                                   nargs=2,
                                   default=None,
                                   metavar='',
-                                  help=help_msg['exponential_slice'])
+                                  help=help_msg['gradient_slice'])
 
-        parser.add_argument('-lam',
+        parser.add_argument('-bll',
                             '--baseline_lambda',
                             action='store',
                             type=float,
@@ -235,7 +235,7 @@ class CLI:
                             metavar='',
                             help=help_msg['baseline_lambda'])
 
-        parser.add_argument('-tol',
+        parser.add_argument('-blt',
                             '--baseline_tolerance',
                             action='store',
                             type=float,
@@ -251,8 +251,7 @@ class CLI:
                             metavar='',
                             help=help_msg['low_signal_window'])
 
-        parser.add_argument('-tr',
-                            '--tree',
+        parser.add_argument('--tree',
                             action='store_true',
                             default=False,
                             help=help_msg['tree'])
@@ -433,15 +432,15 @@ class CLI:
             Returns a dictionary with the data slicing parameters or None.
 
         """
-        if self.args.slice_spectra is None and self.args.exponential_slice is None:
+        if self.args.slice_spectra is None and self.args.gradient_slice is None:
             return None
         elif self.args.slice_spectra:
             return {'mode': 'linear',
                     'slices': self.args.slice_spectra}
-        elif self.args.exponential_slice:
-            return {'mode': 'exponential',
-                    'coefficient': self.args.exponential_slice[0],
-                    'exponent': self.args.exponential_slice[1]}
+        elif self.args.gradient_slice:
+            return {'mode': 'gradient',
+                    'coefficient': self.args.gradient_slice[0],
+                    'exponent': self.args.gradient_slice[1]}
         else:
             return None
 
@@ -462,8 +461,8 @@ class CLI:
             self.handle_test_mode()  # [-qq]
             return
 
-        if self.args.root_dir is not None:
-            self.modify_root_dir(self.args.root_dir)  # [-rd]
+        if self.args.set_root_dir is not None:
+            self.modify_root_dir(self.args.set_root_dir)  # [-srd]
 
         if self.args.clear_root_dir is True:
             self.reset_root_dir()  # [-crd]
@@ -473,7 +472,7 @@ class CLI:
         if self.args.get_root_dir is True:
             print(f'root directory: {root_dir}')  # [-gdr]
 
-        self.handle_file_picker(root_dir)  # [-fp] [-tr]
+        self.handle_file_picker(root_dir)  # [-fp] [--tree]
 
         if self.args.path is not None:
             self.handle_path(root_dir)
