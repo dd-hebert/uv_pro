@@ -22,7 +22,6 @@ def plot_spectra(dataset, spectra):
     Returns
     -------
     None. Shows a plot.
-
     """
     _, ax = plt.subplots()
     ax.set(xlabel='Wavelength (nm)',
@@ -47,7 +46,6 @@ def plot_time_traces(dataset):
     Returns
     -------
     None. Shows a plot.
-
     """
     _, ax = plt.subplots()
     ax.set(xlabel='Time (s)',
@@ -77,7 +75,6 @@ def plot_1x2(dataset):
     Returns
     -------
     None. Shows a plot.
-
     """
     fig, (ax_raw_data, ax_processed_data) = plt.subplots(1, 2, figsize=(10, 5), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
@@ -108,7 +105,6 @@ def plot_1x3(dataset):
     Returns
     -------
     None. Shows a plot.
-
     """
     fig, (ax_raw_data, ax_processed_data, ax_time_traces) = plt.subplots(1, 3, figsize=(16, 4), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
@@ -144,7 +140,6 @@ def plot_2x2(dataset):
     Returns
     -------
     None. Shows a plot.
-
     """
     fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_combined)) = plt.subplots(2, 2, figsize=(16, 8), constrained_layout=True)
     fig.suptitle(dataset.name, fontweight='bold')
@@ -175,7 +170,6 @@ def _raw_data_subplot(ax, dataset):
         The axes to plot on.
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-
     """
     spectra = dataset.all_spectra
 
@@ -196,7 +190,6 @@ def _processed_data_subplot(ax, dataset):
         The axes to plot on.
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-
     """
     spectra = dataset.sliced_spectra
 
@@ -221,7 +214,6 @@ def _time_traces_subplot(ax, dataset):
         The axes to plot on.
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-
     """
     if dataset.specific_time_traces is not None:
         time_traces = dataset.specific_time_traces
@@ -251,7 +243,6 @@ def _combined_time_traces_subplot(ax, dataset):
         The axes to plot on.
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-
     """
     baseline = dataset.baseline
     time_traces = dataset.time_traces

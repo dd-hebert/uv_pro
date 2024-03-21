@@ -19,7 +19,6 @@ class FilePicker:
     file_list : list
         A list of tuples containing a subfolder name ``file_list[x][0]`` and
         a list of files in each subfolder ``file_list[x][1]``.
-
     """
 
     def __init__(self, root, file_ext):
@@ -36,7 +35,6 @@ class FilePicker:
         Returns
         -------
         None.
-
         """
         self.root = os.path.abspath(root)
         self.ext = file_ext
@@ -50,7 +48,6 @@ class FilePicker:
         -------
         file_list : list
             A list of files.
-
         """
         print(f'Searching "{self.root}" for {self.ext} files...')
 
@@ -64,6 +61,7 @@ class FilePicker:
         file_list = [(folder, files) for folder, files in file_list if files]
 
         if not file_list:
+            print('No files found.')
             return None
 
         return file_list
@@ -76,7 +74,6 @@ class FilePicker:
         -------
         file_path : string
             Returns the path of the chosen file relative to the root directory.
-
         """
         if self.file_list:
             while True:
@@ -177,7 +174,6 @@ class FilePicker:
         Returns
         -------
         None. Prints a file tree.
-
         """
         print(self.root)
         if self.file_list:

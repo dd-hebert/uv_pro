@@ -62,7 +62,6 @@ def export_csv(dataset, spectra):
     -------
     str
         The file name of the exported .csv file.
-
     """
     output_dir = os.path.dirname(dataset.path)
     base_filename = os.path.splitext(dataset.name)[0]
@@ -87,7 +86,6 @@ def export_time_trace(dataset):
     -------
     str
         The file name of the exported .csv file.
-
     """
     output_dir = os.path.dirname(dataset.path)
     base_filename = f'{os.path.splitext(dataset.name)[0]} Traces'

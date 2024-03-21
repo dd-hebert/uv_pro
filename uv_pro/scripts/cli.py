@@ -110,7 +110,6 @@ class CLI:
         Parsed command-line arguments.
     config : :class:`configparser.ConfigParser`
         The current CLI settings configuration.
-
     """
 
     def __init__(self):
@@ -126,7 +125,6 @@ class CLI:
         Returns
         -------
         parser : :class:`argparse.ArgumentParser`
-
         """
         parser = argparse.ArgumentParser(description='Process UV-Vis Data Files')
         help_msg = {
@@ -309,7 +307,6 @@ class CLI:
         -------
         Config : :class:`configparser.ConfigParser`
             The current configuration.
-
         """
         return Config()
 
@@ -321,7 +318,6 @@ class CLI:
         -------
         str
             The path to the root directory.
-
         """
         return self.config.config['Settings']['root_directory']
 
@@ -337,7 +333,6 @@ class CLI:
         Returns
         -------
         None.
-
         """
         self.config.modify('Settings', 'root_directory', directory)
 
@@ -348,7 +343,6 @@ class CLI:
         Returns
         -------
         None.
-
         """
         self.config.reset()
 
@@ -363,7 +357,6 @@ class CLI:
         Returns
         -------
         None.
-
         """
         test_data = os.path.normpath(
             os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD'))
@@ -384,7 +377,6 @@ class CLI:
         Returns
         -------
         None.
-
         """
         if self.args.file_picker is True and root_dir is not None:
             self.args.path = FilePicker(root_dir, '.KD').pick_file()
@@ -410,7 +402,6 @@ class CLI:
         Returns
         -------
         None.
-
         """
         current_dir = os.getcwd()
         path_exists = os.path.exists(os.path.join(current_dir, self.args.path))
@@ -430,7 +421,6 @@ class CLI:
         -------
         dict or None
             Returns a dictionary with the data slicing parameters or None.
-
         """
         if self.args.slice_spectra is None and self.args.gradient_slice is None:
             return None
@@ -444,6 +434,39 @@ class CLI:
         else:
             return None
 
+    def _prompt_for_export(self, dataset):
+        files_exported = []
+        options = ['Cleaned spectra']
+        if dataset.specific_time_traces is not None:
+            options.extend(['Time traces', 'Both'])
+
+        prompt = f'\nExport data?\n{'=' * 12}\n'
+        prompt += '\n'.join([f'({i}) {option}' for i, option in enumerate(options, start=1)])
+        prompt += '\n(q) Quit\n\nChoice: '
+
+        valid_choices = [str(i) for i in range(1, len(options) + 1)] + ['q']
+        user_input = input(prompt).strip().lower()
+
+        while user_input not in valid_choices:
+            print('\nUnrecognized input.')
+            user_input = input(prompt).strip().lower()
+
+        if user_input in ['1', '3']:
+            filename = export_csv(dataset, dataset.sliced_spectra)
+            files_exported.append(filename)
+        if user_input in ['2', '3']:
+            filename = export_time_trace(dataset)
+            files_exported.append(filename)
+
+        return files_exported
+
+    def _show_plots(self, dataset):
+        # Show 2x2 plot if data has been cleaned
+        if len(dataset.all_spectra.columns) > 2:
+            uvplt.plot_2x2(dataset)
+        else:
+            uvplt.plot_spectra(dataset, dataset.all_spectra)
+
     def main(self):
         """
         Prehandles command line args.
@@ -455,7 +478,6 @@ class CLI:
         Returns
         -------
         None.
-
         """
         if self.args.test_mode is True:
             self.handle_test_mode()  # [-qq]
@@ -489,13 +511,11 @@ class CLI:
         Returns
         -------
         None.
-
         """
         if self.args.view is True:
             data = Dataset(self.args.path, view_only=True)
             print('\nPlotting data...')
             uvplt.plot_spectra(data, data.all_spectra)
-
         else:
             data = Dataset(self.args.path,
                            trim=self.args.trim,
@@ -506,55 +526,13 @@ class CLI:
                            low_signal_window=self.args.low_signal_window,
                            time_trace_window=self.args.time_trace_window,
                            time_trace_interval=self.args.time_trace_interval,
-                           wavelengths=self.args.time_traces
-                           )
+                           wavelengths=self.args.time_traces)
 
             print('\nPlotting data...')
-            # Show 2x2 plot if data has been cleaned
-            if len(data.all_spectra.columns) > 2:
-                uvplt.plot_2x2(data)
-            else:
-                uvplt.plot_spectra(data, data.all_spectra)
-
-            def _prompt_for_export():
-                files_exported = []
-                if data.specific_time_traces is not None:
-                    options = ['Cleaned spectra', 'Time traces', 'Both']
-                    prompt = '\nExport data?\n============\n'
-                    for i, option in enumerate(options, start=1):
-                        prompt += f'({i}) {option}\n'
-                    prompt += '(q) Quit\n\nChoice: '
-
-                    user_input = input(prompt).strip().lower()
-                    while user_input not in ['1', '2', '3', 'q']:
-                        print('\nUnrecognized input.')
-                        user_input = input(prompt).strip().lower()
-                    if user_input == '1' or user_input == '3':
-                        filename = export_csv(data, data.sliced_spectra)
-                        files_exported.append(filename)
-                    if user_input == '2' or user_input == '3':
-                        filename = export_time_trace(data)
-                        files_exported.append(filename)
-
-                else:
-                    options = ['Cleaned spectra']
-                    prompt = '\nExport data?\n============\n'
-                    for i, option in enumerate(options, start=1):
-                        prompt += f'({i}) {option}\n'
-                    prompt += '(q) Quit\n\nChoice: '
-
-                    user_input = input(prompt).strip().lower()
-                    while user_input not in ['1', 'q']:
-                        print('\nUnrecognized input.')
-                        user_input = input(prompt).strip().lower()
-                    if user_input == '1':
-                        filename = export_csv(data, data.sliced_spectra)
-                        files_exported.append(filename)
-
-                return files_exported
+            self._show_plots(data)
 
             if self.args.no_export is False:
-                files_exported = _prompt_for_export()
+                files_exported = self._prompt_for_export(data)
                 if files_exported:
                     print(f'\nExport location: {os.path.dirname(self.args.path)}')
                     print('Files exported:')

@@ -25,7 +25,6 @@ class Config:
         The path to the configuration file directory.
     config : :class:`configparser.ConfigParser`
         The current configuration.
-
     """
 
     name = 'uv_pro'
@@ -44,7 +43,6 @@ class Config:
         Returns
         -------
         None.
-
         """
         if not self.exists():
             self.create()
@@ -60,7 +58,6 @@ class Config:
         -------
         bool
             True if it exists.
-
         """
         return os.path.exists(os.path.join(Config.directory, Config.filename))
 
@@ -71,7 +68,6 @@ class Config:
         Returns
         -------
         None.
-
         """
         os.makedirs(Config.directory, exist_ok=True)
 
@@ -83,7 +79,6 @@ class Config:
         -------
         default_config : :class:`configparser.ConfigParser`
             The default configuration.
-
         """
         default_config = ConfigParser()
         default_config['Settings'] = {"root_directory": Config.directory}
@@ -97,7 +92,6 @@ class Config:
         Returns
         -------
         None.
-
         """
         self.write_config(self.get_defaults())
 
@@ -113,7 +107,6 @@ class Config:
         Returns
         -------
         None.
-
         """
         with open(os.path.join(Config.directory, Config.filename), "w") as f:
             config.write(f)
@@ -126,7 +119,6 @@ class Config:
         -------
         config : :class:`configparser.ConfigParser`
             The current configuration.
-
         """
         config = ConfigParser()
         config.read(os.path.join(Config.directory, Config.filename))
@@ -148,7 +140,6 @@ class Config:
         Returns
         -------
         None.
-
         """
         self.config.set(section, key, value)
         self.write_config(self.config)
@@ -160,6 +151,5 @@ class Config:
         Returns
         -------
         None.
-
         """
         shutil.rmtree(Config.directory)

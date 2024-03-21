@@ -178,7 +178,6 @@ class Dataset:
         :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` containing the raw time traces,
             where each column is a different wavelength.
-
         """
         all_time_traces = {}
 
@@ -213,7 +212,6 @@ class Dataset:
             where each column is a different wavelength. Otherwise,
             returns None if no wavelengths are given or no time traces
             could be made.
-
         """
         if wavelengths is None:
             return None
@@ -249,7 +247,6 @@ class Dataset:
         -------
         outliers : list
             A list containing the time indices of outlier spectra.
-
         """
         outliers = []
         low_signal_outliers = set()
@@ -313,7 +310,6 @@ class Dataset:
         cleaned_spectra : :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` containing the spectra
             with outlier spectra removed.
-
         """
         column_numbers = [x for x in range(self.all_spectra.shape[1])]
         outlier_indices = [self.time_traces.index.get_loc(outlier) for outlier in self.outliers]
@@ -331,7 +327,6 @@ class Dataset:
         trimmed_spectra : :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` containing the spectra within
             the time range given by :attr:`uv_pro.process.Dataset.trim`.
-
         """
         trimmed_spectra = []
         start, end = self._check_trim_values()
@@ -377,7 +372,6 @@ class Dataset:
         sliced_spectra : :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` containing the spectra slices
             given by :attr:`uv_pro.process.Dataset.slicing`.
-
         """
         sliced_spectra = []
         if self.slicing['mode'] == 'gradient':

@@ -33,7 +33,6 @@ def get_args():
     Returns
     -------
     parser : :class:`argparse.ArgumentParser`
-
     """
     parser = argparse.ArgumentParser(description='Process UV-Vis Data Files')
     help_msg = {
@@ -72,7 +71,6 @@ def run_uvp_script(file):
     Returns
     -------
     None.
-
     """
     try:
         subprocess.run(['uvp', '-p', file, '-v'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -95,7 +93,6 @@ def filter_files(search_filters, mode='or'):
     -------
     files : set
         The filtered files.
-
     """
     search_patterns = [f'*{pattern}*.KD' for pattern in search_filters]
 
@@ -125,7 +122,6 @@ def multiview(files):
     Returns
     -------
     None.
-
     """
     try:
         with ThreadPoolExecutor(max_workers=50) as executor:
@@ -141,7 +137,6 @@ def main():
     Returns
     -------
     None.
-
     """
     args = get_args()
 

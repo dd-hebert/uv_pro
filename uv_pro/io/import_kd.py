@@ -146,7 +146,6 @@ class KDFile:
             The time values that each spectrum was captured.
         cycle_time : int
             The cycle time (in seconds) for the UV-Vis experiment.
-
         """
         spectra = self._handle_spectra()
         spectra_times = self._handle_spectratimes()
