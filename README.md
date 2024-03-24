@@ -85,7 +85,7 @@ Without a root directory, you must type the full path ``"C:\mydata\UV-Vis Data\m
 **With root directory:**
 ```
 # Set the root directory
-uvp -rd "C:\mydata\UV-Vis Data"
+uvp -srd "C:\mydata\UV-Vis Data"
 
 # Only need short file path
 uvp -p mydata.KD
