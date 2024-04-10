@@ -83,7 +83,7 @@ class KDFile:
         return absorbance_table_length
 
     def _read_binary(self):
-        print(f'Reading .KD file {os.path.basename(self.path)}...')
+        print(f'\033[1m* Reading .KD file {os.path.basename(self.path)}...\033[22m')
         with open(self.path, 'rb') as kd_file:
             file_bytes = kd_file.read()
         return file_bytes

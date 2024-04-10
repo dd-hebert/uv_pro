@@ -219,6 +219,11 @@ def _time_traces_subplot(ax, dataset):
         time_traces = dataset.specific_time_traces
     else:
         time_traces = dataset.time_traces
+        ax.text(0.99, 0.99, 'saturated wavelengths not shown',
+                verticalalignment='top',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                color='gray', fontsize=8)
 
     ax.set(xlabel='Time (s)',
            ylabel='Absorbance (AU)',
@@ -226,11 +231,8 @@ def _time_traces_subplot(ax, dataset):
 
     ax.plot(time_traces)
 
-    ax.text(0.99, 0.99, 'saturated wavelengths excluded',
-            verticalalignment='top',
-            horizontalalignment='right',
-            transform=ax.transAxes,
-            color='gray', fontsize=8)
+    if dataset.fit is not None:
+        _plot_fit_curves(ax, dataset)
 
 
 def _combined_time_traces_subplot(ax, dataset):
@@ -273,3 +275,21 @@ def _combined_time_traces_subplot(ax, dataset):
             color='gray', fontsize=8)
 
     ax.scatter(outliers, time_traces.sum(1)[outliers], color='red', marker='x')
+
+
+def _plot_fit_curves(ax, dataset):
+    y_pos = 0.99
+    for wavelength in dataset.fit.keys():
+        ax.scatter(x=dataset.fit[wavelength]['curve'].index,
+                   y=dataset.fit[wavelength]['curve'])
+        kobs_text = (f'{wavelength} kobs: '
+                     + f'{dataset.fit[wavelength]['popt'][2].round(5)} '
+                     + f'± {dataset.fit[wavelength]['perr'][2].round(5)}')
+        ax.text(0.99,
+                y_pos,
+                kobs_text,
+                verticalalignment='top',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                color='gray', fontsize=8)
+        y_pos -= 0.04

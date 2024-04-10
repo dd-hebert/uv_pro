@@ -9,8 +9,9 @@ UV-Vis Chemstation software.
 
 import os
 import pandas as pd
-from pybaselines import whittaker
 from uv_pro.io.import_kd import KDFile
+from uv_pro.outliers import find_outliers
+from uv_pro.fitting import fit_exponential
 
 
 class Dataset:
@@ -46,8 +47,8 @@ class Dataset:
 
     """
 
-    def __init__(self, path, trim=None, slicing=None, outlier_threshold=0.1,
-                 baseline_lambda=10, baseline_tolerance=0.1,
+    def __init__(self, path, trim=None, slicing=None, fitting=False,
+                 outlier_threshold=0.1, baseline_lambda=10, baseline_tolerance=0.1,
                  low_signal_window='narrow', time_trace_window=(300, 1060),
                  time_trace_interval=10, wavelengths=None, view_only=False):
         """
@@ -110,6 +111,7 @@ class Dataset:
         self.name = os.path.basename(self.path)
         self.trim = trim
         self.slicing = slicing
+        self.fitting = fitting
         self.low_signal_window = low_signal_window
         self.outlier_threshold = outlier_threshold
         self.baseline_lambda = baseline_lambda
@@ -134,25 +136,39 @@ class Dataset:
             self.time_traces = self.get_time_traces(window=self.time_trace_window,
                                                     interval=self.time_trace_interval)
             self.specific_time_traces = self.get_specific_time_traces(self.wavelengths)
-            print('Finding outliers...')
-            self.outliers = self.find_outliers()
-            print(f'{len(self.outliers)} outliers detected.')
+            print('\033[1m* Finding outliers...\033[22m')
+            self.outliers, self.baseline = find_outliers(time_traces=self.time_traces,
+                                                         outlier_threshold=self.outlier_threshold,
+                                                         low_signal_window=self.low_signal_window,
+                                                         baseline_lambda=self.baseline_lambda,
+                                                         baseline_tolerance=self.baseline_tolerance)
+            print(f'Outliers found: {len(self.outliers)}')
 
-            print('Cleaning data...')
+            print('\033[1m* Cleaning data...\033[22m')
             self.cleaned_spectra = self.clean_data()
 
             if self.trim is None:
                 self.trimmed_spectra = self.cleaned_spectra
+                self.trimmed_traces = self.specific_time_traces
             else:
-                print('Trimming data...')
+                print('\033[1m* Trimming data...\033[22m')
                 self.trimmed_spectra = self.trim_data()
+                self.trimmed_traces = self.trim_traces()
+
+            if self.fitting is True and self.trimmed_traces is not None:
+                print('\033[1m* Fitting exponential...\033[22m')
+                self.fit = fit_exponential(self.trimmed_traces)
+                if self.fit is not None:
+                    self._print_fit()
+            else:
+                self.fit = None
 
             if self.slicing is None:
                 self.sliced_spectra = self.trimmed_spectra
             else:
-                print('Slicing data...')
+                print('\033[1m* Slicing data...\033[22m')
                 self.sliced_spectra = self.slice_data()
-            print('Success.')
+            print('\033[32mSuccess.\033[37m')
 
     def get_time_traces(self, window=(300, 1060), interval=10):
         """
@@ -235,72 +251,6 @@ class Dataset:
             else:
                 return None
 
-    def find_outliers(self):
-        """
-        Find outlier spectra.
-
-        Detects outlier spectra using :attr:`time_traces`. Outliers typically
-        occur when mixing or injecting solutions and result in big spikes or
-        dips in the absorbance.
-
-        Returns
-        -------
-        outliers : list
-            A list containing the time indices of outlier spectra.
-        """
-        outliers = []
-        low_signal_outliers = set()
-
-        low_signal_outliers = self._find_low_signal_outliers()
-        time_traces = self.time_traces.drop(low_signal_outliers)
-        outliers.extend(low_signal_outliers)
-
-        self._compute_baseline(time_traces)
-        baselined_time_traces = time_traces.sum(1) - self.baseline
-
-        baseline_outliers = self._find_baseline_outliers(baselined_time_traces)
-        outliers.extend(baseline_outliers)
-
-        return outliers
-
-    def _find_low_signal_outliers(self):
-        low_signal_outliers = set()
-        low_signal_cutoff = len(self.time_traces.columns) * 0.1
-        sorted_time_traces = self.time_traces.sum(1).sort_values()
-
-        i = 0
-        if self.low_signal_window.lower() == 'wide':
-            while sorted_time_traces.iloc[i] < low_signal_cutoff:
-                outlier_index = self.time_traces.index.get_loc(sorted_time_traces.index[i])
-                low_signal_outliers.add(self.time_traces.index[outlier_index])
-                low_signal_outliers.add(self.time_traces.index[outlier_index + 1])
-                low_signal_outliers.add(self.time_traces.index[outlier_index - 1])
-                i += 1
-        else:
-            while sorted_time_traces.iloc[i] < low_signal_cutoff:
-                outlier_index = self.time_traces.index.get_loc(sorted_time_traces.index[i])
-                low_signal_outliers.add(self.time_traces.index[outlier_index])
-                i += 1
-
-        return low_signal_outliers
-
-    def _compute_baseline(self, time_traces):
-        # Smoothed baseline of the summed time traces (lam=smoothing factor, tol=exit criteria)
-        self.baseline = pd.Series(whittaker.asls(
-            time_traces.sum(1),
-            lam=self.baseline_lambda,
-            tol=self.baseline_tolerance)[0],
-            time_traces.sum(1).index)
-
-    def _find_baseline_outliers(self, baselined_time_traces):
-        baseline_outliers = set()
-        i = 0
-        sorted_baselined_time_traces = abs(baselined_time_traces).sort_values(ascending=False)
-        while sorted_baselined_time_traces.iloc[i] / baselined_time_traces.max() > self.outlier_threshold:
-            baseline_outliers.add(sorted_baselined_time_traces.index[i])
-            i += 1
-        return baseline_outliers
-
     def clean_data(self):
         """
         Remove outliers from :attr:`all_spectra`.
@@ -332,10 +282,17 @@ class Dataset:
         start, end = self._check_trim_values()
         trimmed_spectra = self.cleaned_spectra.iloc[:, start // self.cycle_time:end // self.cycle_time + 1]
 
-        print(f'Selecting {len(trimmed_spectra.columns)} spectra from {start}',
-              f'seconds to {end} seconds...')
+        print(f'Keeping {len(trimmed_spectra.columns)} spectra from {start}',
+              f'to {end} seconds...')
 
         return trimmed_spectra
+
+    def trim_traces(self):
+        if self.specific_time_traces is not None:
+            trim_start = self.trim[0] // self.cycle_time
+            trim_end = self.trim[1] // self.cycle_time + 1
+            return self.specific_time_traces.drop(self.outliers).iloc[trim_start:trim_end]
+        return None
 
     def _check_trim_values(self):
         start = self.trim[0]
@@ -350,6 +307,18 @@ class Dataset:
             end = len(self.all_spectra.columns) * self.cycle_time
 
         return start, end
+
+    def _print_fit(self):
+        # TODO use string formatting to make table prettier
+        print('\nWavelength\tabs_0\t\t\tabs_f\t\t\tkobs\t\t\tr2')
+        print('─' * 95)
+        for wavelength, fit in self.fit.items():
+            abs_0 = f'{fit['popt'][0].round(5)} ± {fit['perr'][0].round(5)}'
+            abs_f = f'{fit['popt'][1].round(5)} ± {fit['perr'][1].round(5)}'
+            kobs = f'{fit['popt'][2].round(5)} ± {fit['perr'][2].round(5)}'
+            r2 = f'{fit['r2'].round(5)}'
+            print(f'{wavelength}\t{abs_0}\t{abs_f}\t{kobs}\t{r2}')
+        print('')
 
     def slice_data(self):
         """

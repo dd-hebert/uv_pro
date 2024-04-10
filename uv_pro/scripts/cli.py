@@ -147,6 +147,7 @@ class CLI:
             'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
             'low_signal_window': '''"narrow" or "wide". Set the width of the low signal outlier detection window.
                                     Default: "narrow"''',
+            'fitting': 'Perform exponential fitting of specified time traces. Default: False.',
             'tree': 'Show the root directory file tree.',
             'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
             'test_mode': 'For testing purposes.',
@@ -190,7 +191,7 @@ class CLI:
                             default=False,
                             help=help_msg['view'])
 
-        parser.add_argument('-t',
+        parser.add_argument('-tr',
                             '--trim',
                             action='store',
                             type=int,
@@ -248,6 +249,12 @@ class CLI:
                             choices=['narrow', 'wide'],
                             metavar='',
                             help=help_msg['low_signal_window'])
+
+        parser.add_argument('-fit',
+                            '--fitting',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['fitting'])
 
         parser.add_argument('--tree',
                             action='store_true',
@@ -520,6 +527,7 @@ class CLI:
             data = Dataset(self.args.path,
                            trim=self.args.trim,
                            slicing=self.handle_slicing(),
+                           fitting=self.args.fitting,
                            outlier_threshold=self.args.outlier_threshold,
                            baseline_lambda=self.args.baseline_lambda,
                            baseline_tolerance=self.args.baseline_tolerance,
