@@ -310,14 +310,21 @@ class Dataset:
 
     def _print_fit(self):
         # TODO use string formatting to make table prettier
-        print('\nWavelength\tabs_0\t\t\tabs_f\t\t\tkobs\t\t\tr2')
-        print('─' * 95)
+        print('\n' + '┌' + '─' * 94 + '┐')
+        table_headings = '│ \033[1m{}\t{:^18}\t{:^18}\t{:^18}\t{:^6}\033[22m │'
+        print(table_headings.format('Wavelength',
+                                    'kobs',
+                                    'abs_0',
+                                    'abs_f', 
+                                    'r2'))
+        print('├' + '─' * 94 + '┤')
         for wavelength, fit in self.fit.items():
-            abs_0 = f'{fit['popt'][0].round(5)} ± {fit['perr'][0].round(5)}'
-            abs_f = f'{fit['popt'][1].round(5)} ± {fit['perr'][1].round(5)}'
-            kobs = f'{fit['popt'][2].round(5)} ± {fit['perr'][2].round(5)}'
-            r2 = f'{fit['r2'].round(5)}'
-            print(f'{wavelength}\t{abs_0}\t{abs_f}\t{kobs}\t{r2}')
+            abs_0 = '{:+.5f} ± {:.5f}'.format(fit['popt'][0], fit['perr'][0])
+            abs_f = '{:+.5f} ± {:.5f}'.format(fit['popt'][1], fit['perr'][1])
+            kobs = '\033[36m{:.2e} ± {:.2e}\033[0m'.format(fit['popt'][2], fit['perr'][2])
+            r2 = '\033[36m{:.4f}\033[0m'.format(fit['r2'])
+            print('│ {:>10}\t{}\t{}\t{}\t{} │'.format(wavelength, kobs, abs_0, abs_f, r2))
+        print('└' + '─' * 94 + '┘')
         print('')
 
     def slice_data(self):

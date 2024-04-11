@@ -37,6 +37,6 @@ def fit_exponential(time_traces):
 def rsquared(data, fit):
     residuals = data - fit
     ss_res = np.sum(residuals ** 2)
-    ss_tot = np.sum(data - np.mean(data) ** 2)
+    ss_tot = np.sum((data - np.mean(data)) ** 2)
     r2 = 1 - (ss_res / ss_tot)
     return r2
