@@ -8,7 +8,6 @@ and experimental parameters.
 @author: David Hebert
 """
 import struct
-import os
 import pandas as pd
 
 
@@ -53,7 +52,8 @@ class KDFile:
         b'\x65\x00\x77\x00\x00\x00\x00\x00',
         'spacing': 24}
 
-    def __init__(self, path, spectrometer_range=(190, 1100)):
+    def __init__(self, path: str,
+                 spectrometer_range: tuple[int, int] = (190, 1100)) -> None:
         """
         Create a KDFile object and parse a .KD file at ``path``.
 
@@ -66,9 +66,9 @@ class KDFile:
 
         Parameters
         ----------
-        path : string
+        path : str
             The file path to a .KD file.
-        spectrometer_range : tuple-like
+        spectrometer_range : tuple[int, int]
             The minimum and maximum wavelengths captured by the spectrometer.
         """
         self.path = path
@@ -77,18 +77,17 @@ class KDFile:
         self.file_bytes = self._read_binary()
         self.spectra, self.spectra_times, self.cycle_time = self.parse_kd()
 
-    def _get_absorbance_table_length(self):
+    def _get_absorbance_table_length(self) -> int:
         """8 hex chars per wavelength."""
         absorbance_table_length = (self.wavelength_range[-1] - self.wavelength_range[0]) * 8 + 8
         return absorbance_table_length
 
-    def _read_binary(self):
-        print(f'\033[1m* Reading .KD file {os.path.basename(self.path)}...\033[22m')
+    def _read_binary(self) -> bytes:
         with open(self.path, 'rb') as kd_file:
             file_bytes = kd_file.read()
         return file_bytes
 
-    def _extract_data(self, header, parse_func):
+    def _extract_data(self, header: dict, parse_func: callable) -> list:
         data_list = []
         position = 0
         data_header = header['header']
@@ -109,27 +108,27 @@ class KDFile:
 
         return data_list
 
-    def _parse_spectra(self, data_start):
+    def _parse_spectra(self, data_start: int) -> pd.Series:
         data_end = data_start + self.absorbance_table_length
         absorbance_data = self.file_bytes[data_start:data_end]
         absorbance_values = [value for value, in struct.iter_unpack('<d', absorbance_data)]
         return pd.Series(absorbance_values, index=self.wavelength_range, name='Absorbance (AU)')
 
-    def _parse_spectratimes(self, data_start):
+    def _parse_spectratimes(self, data_start: int) -> float:
         time_value = float(struct.unpack_from('<d', self.file_bytes, data_start)[0])
         return time_value
 
-    def _parse_cycletime(self, data_start):
+    def _parse_cycletime(self, data_start: int) -> int:
         cycle_time = int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
         return cycle_time
 
-    def _spectra_dataframe(self, list_of_spectra):
-        df = pd.concat(list_of_spectra, axis=1)
+    def _spectra_dataframe(self, spectra: list) -> pd.DataFrame:
+        df = pd.concat(spectra, axis=1)
         idx = pd.Index(self.wavelength_range, name='Wavelength (nm)')
         df.index = idx
         return df
 
-    def parse_kd(self):
+    def parse_kd(self) -> tuple[pd.DataFrame, pd.Series, int]:
         """
         Parse a .KD file and extract data.
 
@@ -150,22 +149,20 @@ class KDFile:
         spectra = self._handle_spectra()
         spectra_times = self._handle_spectratimes()
         cycle_time = self._handle_cycletime()
-        print(f'Spectra found: {len(spectra.columns)}', end='\n')
-        print(f'Cycle time (s): {cycle_time}', end='\n')
         return spectra, spectra_times, cycle_time
 
-    def _handle_spectra(self):
+    def _handle_spectra(self) -> pd.DataFrame:
         list_of_spectra = self._extract_data(KDFile.absorbance_data_header, self._parse_spectra)
         if list_of_spectra is None:
             raise Exception('Error parsing file. No spectra found.')
         return self._spectra_dataframe(list_of_spectra)
 
-    def _handle_spectratimes(self):
+    def _handle_spectratimes(self) -> pd.Series:
         return pd.Series(
             self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes),
             name='Time (s)')
 
-    def _handle_cycletime(self):
+    def _handle_cycletime(self) -> int:
         cycle_time = int(self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0])
         if cycle_time is None:
             cycle_time = 1
