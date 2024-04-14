@@ -13,22 +13,34 @@ Command Line Arguments
     in double quotes "". The script will first look for the given path inside
     the current working directory, then look at the absolute path, and lastly
     inside the root directory (if a root directory has been set).
--srd, --set_root_dir : string, optional
-    Set a root directory to simplify file path entry. For instance, if
-    you store all your UV-Vis data files in a common folder, you can designate
-    it as the root directory. Subsequently, any path provided with ``-p`` is
-    assumed to be relative to the root directory.
--grd, --get_root_dir : flag, optional
-    Print the current root directory to the console.
+-bll, --baseline_lambda : float, optional
+    Set the smoothness of the baseline (for outlier detection). Higher values
+    give smoother baselines. Try values between 0.001 and 10000. The
+    default is 10. See :func:`pybaselines.whittaker.asls()` for more information.
+-blt, --baseline_tolerance : float, optional
+    Set the exit criteria for the baseline algorithm. Try values between
+    0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
+    for more information.
 -crd, --clear_root_dir : flag, optional
     Clear the current root directory.
--v : flag, optional
-    Enable view-only mode. No data processing is performed and a plot of
-    the data set is shown. Default is False.
--t, --trim : int int, optional
-    Select a spectra within a given time range ``start end``. The first value
-    is the time (in seconds) of the start of the time range and the second value
-    is the end of the range. Default is None (no trimming).
+-fit, --fitting : flag, optional
+    Perform exponential fitting on time traces given by `-tt`.
+-fp, --file_picker : flag, optional
+    Interactively pick a .KD file from the console. The file is opened in view-
+    only mode. The .KD file must be located inside the root directory.
+-gsl, --gradient_slice : float float, optional
+    Slice the data in non-equally spaced slices. Give a coefficient
+    and an exponent and the data slicing will be determined by the equation
+    y = coefficient*x^exponent + 1, where y is the step size between slices.
+    The default is None, where all spectra are plotted or exported.
+-grd, --get_root_dir : flag, optional
+    Print the current root directory to the console.
+-lsw, --low_signal_window : ``"narrow"`` or ``"wide"``, optional
+    Set the width of the low signal outlier detection window (see
+    :meth:`uv_pro.process.Dataset.find_outliers()`). Set to ``"wide"`` if low
+    signals are interfering with the baseline.
+-ne, --no_export : flag, optional
+    Use this argument to bypass the export data prompt at the end of the script.
 -ot, --outlier_threshold : float, optional
     The threshold by which spectra are considered outliers. Values closer to 0
     produce more outliers. Values closer to 1 produce fewer outliers.
@@ -38,39 +50,29 @@ Command Line Arguments
     :attr:`uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
     ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
     default is None, where all spectra are plotted or exported.
--gsl, --gradient_slice : float float, optional
-    Slice the data in non-equally spaced slices. Give a coefficient
-    and an exponent and the data slicing will be determined by the equation
-    y = coefficient*x^exponent + 1, where y is the step size between slices.
-    The default is None, where all spectra are plotted or exported.
--bll, --baseline_lambda : float, optional
-    Set the smoothness of the baseline (for outlier detection). Higher values
-    give smoother baselines. Try values between 0.001 and 10000. The
-    default is 10. See :func:`pybaselines.whittaker.asls()` for more information.
--blt, --baseline_tolerance : float, optional
-    Set the exit criteria for the baseline algorithm. Try values between
-    0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
-    for more information.
--lsw, --low_signal_window : ``"narrow"`` or ``"wide"``, optional
-    Set the width of the low signal outlier detection window (see
-    :meth:`uv_pro.process.Dataset.find_outliers()`). Set to ``"wide"`` if low
-    signals are interfering with the baseline.
+-srd, --set_root_dir : string, optional
+    Set a root directory to simplify file path entry. For instance, if
+    you store all your UV-Vis data files in a common folder, you can designate
+    it as the root directory. Subsequently, any path provided with ``-p`` is
+    assumed to be relative to the root directory.
+-tr, --trim : int int, optional
+    Select a spectra within a given time range ``start end``. The first value
+    is the time (in seconds) of the start of the time range and the second value
+    is the end of the range. Default is None (no trimming).
 --tree : flag, optional
     Print the root directory file tree to the console.
--fp, --file_picker : flag, optional
-    Interactively pick a .KD file from the console. The file is opened in view-
-    only mode. The .KD file must be located inside the root directory.
--ttw, --time_trace_window : int int, optional
-    Set the (min, max) wavelength (in nm) range to get time traces for.
-    The default is 300 1060.
+-tt, --time_traces : arbitrary number of ints, optional
+    A list of specific wavelengths (in nm) to create time traces for.
 -tti, --time_trace_interval : int, optional
     Set the interval (in nm) for time traces. An interval of 10 will create
     time traces from the window min to max every 10 nm. Smaller intervals
     may increase loading times. The default is 10.
--tt, --time_traces : arbitrary number of ints, optional
-    A list of specific wavelengths (in nm) to create time traces for.
--ne, --no_export : flag, optional
-    Use this argument to bypass the export data prompt at the end of the script.
+-ttw, --time_trace_window : int int, optional
+    Set the (min, max) wavelength (in nm) range to get time traces for.
+    The default is 300 1060.
+-v : flag, optional
+    Enable view-only mode. No data processing is performed and a plot of
+    the data set is shown. Default is False.
 
 Examples
 --------
@@ -85,7 +87,8 @@ Examples
 
     # Open C:/Desktop/myfile.KD, show 10 spectra from 50 to 250 seconds
     # with outlier threshold of 0.2. Get time traces at 780 nm and 1020 nm.
-    uvp -p myfile.KD -t 50 250 -ot 0.2 -sl 10 -tt 780 1020
+    # Fit exponential to time traces at 780 nm and 1020 nm.
+    uvp -p myfile.KD -tr 50 250 -ot 0.2 -sl 10 -tt 780 1020 -fit
 
 @author: David Hebert
 """
