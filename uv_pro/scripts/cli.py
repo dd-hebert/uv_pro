@@ -24,7 +24,7 @@ Command Line Arguments
 -crd, --clear_root_dir : flag, optional
     Clear the current root directory.
 -fit, --fitting : flag, optional
-    Perform exponential fitting on time traces given by `-tt`.
+    Perform exponential fitting on time traces given by ``-tt``.
 -fp, --file_picker : flag, optional
     Interactively pick a .KD file from the console. The file is opened in view-
     only mode. The .KD file must be located inside the root directory.
@@ -37,17 +37,17 @@ Command Line Arguments
     Print the current root directory to the console.
 -lsw, --low_signal_window : ``"narrow"`` or ``"wide"``, optional
     Set the width of the low signal outlier detection window (see
-    :meth:`uv_pro.process.Dataset.find_outliers()`). Set to ``"wide"`` if low
+    :func:`~uv_pro.outliers.find_outliers()`). Set to ``"wide"`` if low
     signals are interfering with the baseline.
 -ne, --no_export : flag, optional
     Use this argument to bypass the export data prompt at the end of the script.
 -ot, --outlier_threshold : float, optional
     The threshold by which spectra are considered outliers. Values closer to 0
-    produce more outliers. Values closer to 1 produce fewer outliers.
-    The default value is 0.1.
+    produce more outliers. Values closer to 1 produce fewer outliers. A value
+    >> 1 will produce no outliers. The default value is 0.1.
 -sl, --slice_spectra : int, optional
     The number of equally-spaced slices to plot or export. Example: if
-    :attr:`uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
+    :attr:`~uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
     ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
     default is None, where all spectra are plotted or exported.
 -srd, --set_root_dir : string, optional

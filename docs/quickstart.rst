@@ -25,10 +25,10 @@ Trim Your Data
 --------------
 You can ``trim`` your data to keep only a portion between a given interval. For example, if in
 an experiment you collected spectra over 2000 seconds, but you only wish you keep the a portion
-of the spectra, you can ``trim`` the data with ``-t`` or ``--trim``::
+of the spectra, you can ``trim`` the data with ``-tr`` or ``--trim``::
 
     # Trim data, keeping the spectra from 100 to 1000 seconds.
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -t 100 1000
+    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -tr 100 1000
 
 Spectra outside of the time range values given with ``trim`` will be removed.
 
@@ -154,12 +154,12 @@ Examples
 Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep only spectra
 from 50 seconds to 250 seconds, and show 10 slices::
 
-    uvp -p C:\Desktop\myfile.KD -t 50 250 -ot 0.2 -sl 10
+    uvp -p C:\Desktop\myfile.KD -tr 50 250 -ot 0.2 -sl 10
 
 Import the data from ``myfile.KD``, trim the data to keep only spectra from 0 seconds to 750 seconds, change baseline
 parameters, show 25 slices, and get time traces for 780 nm and 1020 nm::
 
-    uvp -p C:\Desktop\myfile.KD -t 0 750 -bll 10 -blt 0.1 -sl 25 -tt 780 1020
+    uvp -p C:\Desktop\myfile.KD -tr 0 750 -bll 10 -blt 0.1 -sl 25 -tt 780 1020
 
 The arguments are flexible and can be used in basically any order (except ``-p`` which must come first). However, each argument
 should only occur once.
