@@ -154,8 +154,7 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset):
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
     spectra = dataset.all_spectra
-    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)',
-           title='Raw Data')
+    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)', title='Raw Data')
     ax.plot(spectra)
 
 
@@ -173,8 +172,7 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset):
     spectra = dataset.sliced_spectra
     cycler = _get_linestyles(spectra)
     ax.set_prop_cycle(cycler)
-    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)',
-           title='Processed Data')
+    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)', title='Processed Data')
     ax.plot(spectra)
     ax.text(x=0.99, y=0.99,
             s=f'showing: {len(spectra.columns)} spectra',
@@ -224,25 +222,25 @@ def _combined_time_traces_subplot(ax: Axes, dataset: Dataset):
     ax.set(xlabel='Time (s)',
            ylabel='Intensity (arb. units)',
            title='Combined Time Traces & Baseline')
+    _plot_baseline(ax, dataset)
+    ax.scatter(dataset.outliers, dataset.time_traces.sum(1)[dataset.outliers],
+               color='red', marker='x', zorder=2)
+    ax.plot(dataset.time_traces.sum(1), color='black', linestyle='solid', zorder=3)
 
+
+def _plot_baseline(ax: Axes, dataset: Dataset):
     baselined_time_traces = dataset.time_traces.sum(1) - dataset.baseline
-    upper_bound = dataset.outlier_finder.outlier_threshold * baselined_time_traces.max() + dataset.baseline
-    lower_bound = -dataset.outlier_finder.outlier_threshold * baselined_time_traces.max() + dataset.baseline
+    upper_bound = dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline
+    lower_bound = -dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline
 
     ax.plot(upper_bound, color='skyblue', linestyle='solid', alpha=0.5)
     ax.plot(lower_bound, color='skyblue', linestyle='solid', alpha=0.5)
     ax.fill_between(upper_bound.index, upper_bound,
                     y2=lower_bound, color='powderblue', alpha=0.5)
-
-    ax.plot(dataset.baseline, color='skyblue', linestyle='dashed', alpha=0.8)
-    ax.plot(dataset.time_traces.sum(1), color='black', linestyle='solid')
-    ax.text(x=0.99, y=0.99,
-            s=(f'lam={dataset.outlier_finder.baseline_lambda} '
-               f'tol={dataset.outlier_finder.baseline_tolerance}'),
+    ax.plot(dataset.baseline, color='skyblue', linestyle='dashed', alpha=0.8, zorder=1)
+    ax.text(x=0.99, y=0.99, s=f'lam={dataset.baseline_lambda} tol={dataset.baseline_tolerance}',
             verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes, color='gray', fontsize=8)
-
-    ax.scatter(dataset.outliers, dataset.time_traces.sum(1)[dataset.outliers], color='red', marker='x')
 
 
 def _plot_fit_curves(ax: Axes, dataset: Dataset):
@@ -275,6 +273,5 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset):
 
 def _get_linestyles(dataframe: DataFrame):
     num_lines = len(dataframe.columns)
-    line_styles = (cycler(color=['k'] + ['0.8'] * (num_lines - 2) + ['r'])
-                   + cycler(linewidth=[3] + [1] * (num_lines - 2) + [3]))
+    line_styles = (cycler(color=['k'] + ['0.8'] * (num_lines - 2) + ['r']) + cycler(linewidth=[3] + [1] * (num_lines - 2) + [3]))
     return line_styles

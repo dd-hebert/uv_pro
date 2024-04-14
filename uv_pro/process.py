@@ -10,7 +10,7 @@ UV-Vis Chemstation software.
 import os
 import pandas as pd
 from uv_pro.io.import_kd import KDFile
-from uv_pro.outliers import OutlierFinder
+from uv_pro.outliers import find_outliers
 from uv_pro.fitting import fit_exponential
 
 
@@ -32,9 +32,8 @@ class Dataset:
         `time_trace_interval`.
     specific_time_traces : :class:`pandas.DataFrame`
         Time traces for user-specified wavelengths.
-    outlier_finder : :class:`uv_pro.outliers.OutlierFinder`
     outliers : list
-        The time indices of outlier spectra. See :meth:`find_outliers()`
+        The times of outlier spectra. See :meth:`find_outliers()`
         for more information.
     baseline : :class:`pandas.Series`
        The baseline of the summed :attr:`time_traces`. See :meth:`find_outliers()`
@@ -61,7 +60,7 @@ class Dataset:
         ----------
         path : string
             A file path to a .KD file.
-        trim : tuple-like or None, optional
+        trim : tuple or None, optional
             Select spectra within a given time range. The first value
             ``trim[0]`` is the time (in seconds) of the beginning of the time
             range, and the second value ``trim[1]`` is the end of the time range.
@@ -88,7 +87,7 @@ class Dataset:
             Set the width of the low signal detection window (see
             :meth:`find_outliers()`). Set to wide if low signal outliers are
             affecting the baseline.
-        time_trace_window : tuple-like or None, optional
+        time_trace_window : tuple or None, optional
             The range (min, max) of wavelengths (in nm) to get time traces for.
             The default is (300, 1060).
         time_trace_interval : int, optional
@@ -97,7 +96,7 @@ class Dataset:
             For example, an interval of 20 would generate time traces like this:
             [window min, window min + 20, window min + 40, ..., window max - 20, window max].
             The default value is 10.
-        wavelengths : list-like or None, optional
+        wavelengths : list or None, optional
             A list of specific wavelengths to get time traces for. The default is None.
         view_only : True or False, optional
             Indicate whether data processing (cleaning and trimming) should be
@@ -112,18 +111,16 @@ class Dataset:
         self.trim = trim
         self.slicing = slicing
         self.fitting = fitting
-        self.outlier_finder = OutlierFinder(
-            outlier_threshold=outlier_threshold,
-            low_signal_window=low_signal_window,
-            baseline_lambda=baseline_lambda,
-            baseline_tolerance=baseline_tolerance)
         self.time_trace_window = time_trace_window
         self.time_trace_interval = time_trace_interval
         self.wavelengths = wavelengths
-
+        self.outlier_threshold = outlier_threshold
+        self.low_signal_window = low_signal_window
+        self.baseline_lambda = baseline_lambda
+        self.baseline_tolerance = baseline_tolerance
         self._import_data()
 
-        if not view_only:
+        if not view_only and len(self.all_spectra.columns) > 2:
             self._process_data()
 
     def _import_data(self):
@@ -136,41 +133,43 @@ class Dataset:
         print(f'Cycle time (s): {self.cycle_time}')
 
     def _process_data(self):
-        if len(self.all_spectra.columns) > 2:
-            self.time_traces = self.get_time_traces(
-                window=self.time_trace_window, interval=self.time_trace_interval)
-            self.specific_time_traces = self.get_specific_time_traces(self.wavelengths)
+        self.time_traces = self.get_time_traces(window=self.time_trace_window, interval=self.time_trace_interval)
+        self.specific_time_traces = self.get_specific_time_traces(self.wavelengths)
 
-            print('\033[1m* Finding outliers...\033[22m')
-            self.outliers, self.baseline = self.outlier_finder.find_outliers(self.time_traces)
-            print(f'Outliers found: {len(self.outliers)}')
+        print('\033[1m* Finding outliers...\033[22m')
+        self.outliers, self.baseline = find_outliers(traces=self.time_traces, threshold=self.outlier_threshold,
+                                                     lsw=self.low_signal_window, lam=self.baseline_lambda,
+                                                     tol=self.baseline_tolerance)
+        print(f'Outliers found: {len(self.outliers)}')
 
-            print('\033[1m* Cleaning data...\033[22m')
-            self.cleaned_spectra = self.clean_data()
+        print('\033[1m* Cleaning data...\033[22m')
+        self.cleaned_spectra = self.clean_data()
 
-            if self.trim is None:
-                self.trimmed_spectra = self.cleaned_spectra
-                self.trimmed_traces = self.specific_time_traces
-            else:
-                print('\033[1m* Trimming data...\033[22m')
-                self.trimmed_spectra = self.trim_data()
-                self.trimmed_traces = self.trim_traces()
+        if self.trim is None:
+            self.trimmed_spectra = self.cleaned_spectra
+            self.trimmed_traces = self.specific_time_traces
+        else:
+            print('\033[1m* Trimming data...\033[22m')
+            self.trimmed_spectra, self.trimmed_traces = self.trim_data()
+            print(f'Removed data before {self.trim[0]} and after {self.trim[1]} seconds.')
+            print(f'Spectra remaining: {len(self.trimmed_spectra.columns)}')
 
-            if self.slicing is None:
-                self.sliced_spectra = self.trimmed_spectra
-            else:
-                print('\033[1m* Slicing data...\033[22m')
-                self.sliced_spectra = self.slice_data()
+        if self.slicing is None:
+            self.sliced_spectra = self.trimmed_spectra
+        else:
+            print('\033[1m* Slicing data...\033[22m')
+            self.sliced_spectra = self.slice_data()
 
-            if self.fitting is True and self.trimmed_traces is not None:
-                print('\033[1m* Fitting exponential...\033[22m')
-                self.fit = fit_exponential(self.trimmed_traces)
-                if self.fit is not None:
-                    self._print_fit()
-            else:
-                self.fit = None
+        if self.fitting is True and self.trimmed_traces is not None:
+            print('\033[1m* Fitting exponential...\033[22m')
+            self.fit = fit_exponential(self.trimmed_traces)
+            if self.fit is not None:
+                self._print_fit()
+        else:
+            self.fit = None
 
-            print('\033[32mSuccess.\033[37m')
+        self._print_results()
+        print('\033[32mSuccess.\033[37m')
 
     def get_time_traces(self, window=(300, 1060), interval=10):
         """
@@ -262,52 +261,48 @@ class Dataset:
         cleaned_spectra = self.all_spectra.iloc[:, column_numbers]
         return cleaned_spectra
 
-    def trim_data(self):
+    def trim_data(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Trim the data to keep a portion within a given time range.
+
+        Parameters
+        ----------
+        trim_start : int
+            The index of the first spectrum to keep.
+        trim_end : int
+            The index of the last spectrum to keep.
 
         Returns
         -------
         trimmed_spectra : :class:`pandas.DataFrame`
             A :class:`pandas.DataFrame` containing the spectra within
             the time range given by :attr:`uv_pro.process.Dataset.trim`.
+        trimmed_spectra : :class:`pandas.DataFrame`
+            A :class:`pandas.DataFrame` containing the spectra within
+            the time range given by :attr:`uv_pro.process.Dataset.trim`.
         """
-        trimmed_spectra = []
-        start, end = self._check_trim_values()
-        trimmed_spectra = self.cleaned_spectra.iloc[:, start // self.cycle_time:end // self.cycle_time + 1]
-        print(f'Keeping {len(trimmed_spectra.columns)} spectra from {start}',
-              f'to {end} seconds...')
-        return trimmed_spectra
-
-    def trim_traces(self):
-        """
-        Trim the specified time traces to keep a portion within a given time range.
-
-        Returns
-        -------
-        :class:`pandas.DataFrame` or None
-            A :class:`pandas.DataFrame` containing the trimmed time traces,
-            where each column is a different wavelength.
-        """
+        start_idx, end_idx = self._get_trim_indexes()
+        self._update_trim_times(start_idx, end_idx)
+        trimmed_spectra = self.cleaned_spectra.iloc[:, start_idx:end_idx]
         if self.specific_time_traces is not None:
-            trim_start = self.trim[0] // self.cycle_time
-            trim_end = self.trim[1] // self.cycle_time + 1
-            return self.specific_time_traces.drop(self.outliers).iloc[trim_start:trim_end]
-        return None
+            trimmed_traces = self.specific_time_traces.drop(self.outliers).iloc[start_idx:end_idx]
+        else:
+            trimmed_traces = None
+        return trimmed_spectra, trimmed_traces
 
-    def _check_trim_values(self) -> tuple:
-        start = self.trim[0]
-        end = self.trim[1]
+    def _get_trim_indexes(self) -> tuple[int, int]:
+        start_time = self.trim[0]
+        end_time = self.trim[1]
+        if start_time > end_time:
+            start_time = self.trim[1]
+            end_time = self.trim[0]
+        closest_start_index = (self.spectra_times - start_time).abs().idxmin()
+        closest_end_index = (self.spectra_times - end_time).abs().idxmin()
+        return closest_start_index, closest_end_index
 
-        if start >= end:
-            start = self.trim[1]
-            end = self.trim[0]
-        if start < self.cycle_time:
-            start = 0
-        if end > len(self.all_spectra.columns) * self.cycle_time:
-            end = len(self.all_spectra.columns) * self.cycle_time
-
-        return start, end
+    def _update_trim_times(self, start_idx: int, end_idx: int) -> None:
+        self.trim[0] = self.spectra_times[start_idx]
+        self.trim[1] = self.spectra_times[end_idx]
 
     def _print_fit(self) -> None:
         # TODO use string formatting to make table prettier
