@@ -56,7 +56,8 @@ def export_csv(dataset, spectra):
         The :class:`~uv_pro.process.Dataset` to be exported.
     spectra : :class:`pandas.DataFrame`
         The spectra to be exported. A :class:`pandas.DataFrame`
-        such as ``dataset.all_spectra`` or ``dataset.trimmed_spectra``.
+        such as :attr:`~uv_pro.process.Dataset.all_spectra` or
+        :attr:`~uv_pro.process.Dataset.trimmed_spectra`.
 
     Returns
     -------
