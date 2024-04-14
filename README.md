@@ -47,6 +47,9 @@ Set the smoothness of the baseline (for outlier detection). Higher values give s
 #### ``-blt``, ``-–baseline_tolerance`` : float, optional
 Set the exit criteria for the baseline algorithm. Try values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker.asls() for more information.
 
+#### ``-fit``, ``--fitting`` : flag, optional
+Perform an exponential fitting of time traces. You must specify the wavelengths to fit with the ``-tt`` argument. 
+
 #### ``-gsl``, ``--gradient_slice`` : float float, optional
 Reduce the dataset down to a number of unequally-spaced "slices". This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay. Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. 
 
@@ -64,12 +67,12 @@ The threshold by which spectra are considered outliers. Values closer to 0 will 
 #### ``-sl``, ``--slice_spectra`` : integer, optional
 Reduce the dataset down to a number of equally-spaced "slices". Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
 
-#### ``-t``, ``--trim`` : 2 integers, optional
+#### ``-tr``, ``--trim`` : 2 integers, optional
 Select spectra within a given time range. The first integer is the beginning of the time range and the second integer is the end. The spectra outside the given time range will be removed.
 
 ```
 # Trim from 50 seconds to 250 seconds
-uvp -p C:\\Desktop\\MyData\\myfile.KD -t 50 250
+uvp -p C:\\Desktop\\MyData\\myfile.KD -tr 50 250
 ```
 
 #### ``-tt``, ``--time_traces`` : arbitrary number of ints, optional
@@ -131,7 +134,7 @@ Examples
 --------
 Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep the spectra from 50 seconds to 250 seconds, and show 10 slices:
 ```
-uvp -p C:\\Desktop\\myfile.KD -t 50 250 -ot 0.2 -sl 10
+uvp -p C:\\Desktop\\myfile.KD -tr 50 250 -ot 0.2 -sl 10
 ```
 
 Multiview Mode
