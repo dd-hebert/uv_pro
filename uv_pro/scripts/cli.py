@@ -150,77 +150,131 @@ class CLI:
                                         increase loading times.''',
             'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.',
             'no_export': 'Skip the export data prompt at the end of the script.'}
-        parser.add_argument('-p', '--path', action='store', default=None,
-                            metavar='', help=help_msg['path'])
+        parser.add_argument('-p', '--path',
+                            action='store',
+                            default=None,
+                            metavar='',
+                            help=help_msg['path'])
 
-        parser.add_argument('-srd', '--set_root_dir', action='store',
-                            default=None, metavar='',
+        parser.add_argument('-srd', '--set_root_dir',
+                            action='store',
+                            default=None,
+                            metavar='',
                             help=help_msg['set_root_dir'])
 
-        parser.add_argument('-grd', '--get_root_dir', action='store_true',
-                            default=False, help=help_msg['get_root_dir'])
+        parser.add_argument('-grd', '--get_root_dir',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['get_root_dir'])
 
-        parser.add_argument('-crd', '--clear_root_dir', action='store_true',
-                            default=False, help=help_msg['clear_root_dir'])
+        parser.add_argument('-crd', '--clear_root_dir',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['clear_root_dir'])
 
-        parser.add_argument('-v', '--view', action='store_true',
-                            default=False, help=help_msg['view'])
+        parser.add_argument('-v', '--view',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['view'])
 
-        parser.add_argument('-tr', '--trim', action='store', type=int,
-                            nargs=2, default=None, metavar='',
+        parser.add_argument('-tr', '--trim',
+                            action='store',
+                            type=int,
+                            nargs=2,
+                            default=None,
+                            metavar='',
                             help=help_msg['trim'])
 
-        parser.add_argument('-ot', '--outlier_threshold', action='store',
-                            type=float, default=0.1, metavar='',
+        parser.add_argument('-ot', '--outlier_threshold',
+                            action='store',
+                            type=float,
+                            default=0.1,
+                            metavar='',
                             help=help_msg['outlier_threshold'])
 
         slicing_args = parser.add_mutually_exclusive_group()
-        slicing_args.add_argument('-sl', '--slice_spectra', action='store',
-                                  type=int, default=None, metavar='',
+        slicing_args.add_argument('-sl', '--slice_spectra',
+                                  action='store',
+                                  type=int,
+                                  default=None,
+                                  metavar='',
                                   help=help_msg['slice_spectra'])
 
-        slicing_args.add_argument('-gsl', '--gradient_slice', action='store',
-                                  type=float, nargs=2, default=None,
-                                  metavar='', help=help_msg['gradient_slice'])
+        slicing_args.add_argument('-gsl', '--gradient_slice',
+                                  action='store',
+                                  type=float,
+                                  nargs=2,
+                                  default=None,
+                                  metavar='',
+                                  help=help_msg['gradient_slice'])
 
-        parser.add_argument('-bll', '--baseline_lambda', action='store',
-                            type=float, default=10, metavar='',
+        parser.add_argument('-bll', '--baseline_lambda',
+                            action='store',
+                            type=float,
+                            default=10,
+                            metavar='',
                             help=help_msg['baseline_lambda'])
 
-        parser.add_argument('-blt', '--baseline_tolerance', action='store',
-                            type=float, default=0.1, metavar='',
+        parser.add_argument('-blt', '--baseline_tolerance',
+                            action='store',
+                            type=float,
+                            default=0.1,
+                            metavar='',
                             help=help_msg['baseline_tolerance'])
 
-        parser.add_argument('-lsw', '--low_signal_window', action='store',
-                            default='narrow', choices=['narrow', 'wide'],
-                            metavar='', help=help_msg['low_signal_window'])
+        parser.add_argument('-lsw', '--low_signal_window',
+                            action='store',
+                            default='narrow',
+                            choices=['narrow', 'wide'],
+                            metavar='',
+                            help=help_msg['low_signal_window'])
 
-        parser.add_argument('-fit', '--fitting', action='store_true',
-                            default=False, help=help_msg['fitting'])
+        parser.add_argument('-fit', '--fitting',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['fitting'])
 
-        parser.add_argument('--tree', action='store_true', default=False,
+        parser.add_argument('--tree',
+                            action='store_true',
+                            default=False,
                             help=help_msg['tree'])
 
-        parser.add_argument('-fp', '--file_picker', action='store_true',
-                            default=False, help=help_msg['file_picker'])
+        parser.add_argument('-fp', '--file_picker',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['file_picker'])
 
-        parser.add_argument('-qq', '--test_mode', action='store_true',
-                            default=False, help=help_msg['test_mode'])
+        parser.add_argument('-qq', '--test_mode',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['test_mode'])
 
-        parser.add_argument('-ttw', '--time_trace_window', action='store',
-                            type=int, nargs=2, default=[300, 1060],
-                            metavar='', help=help_msg['time_trace_window'])
+        parser.add_argument('-ttw', '--time_trace_window',
+                            action='store',
+                            type=int,
+                            nargs=2,
+                            default=[300, 1060],
+                            metavar='',
+                            help=help_msg['time_trace_window'])
 
-        parser.add_argument('-tti', '--time_trace_interval', action='store',
-                            type=int, default=10, metavar='',
+        parser.add_argument('-tti', '--time_trace_interval',
+                            action='store',
+                            type=int,
+                            default=10,
+                            metavar='',
                             help=help_msg['time_trace_interval'])
 
-        parser.add_argument('-tt', '--time_traces', action='store',
-                            nargs='*', default=None, metavar='',
+        parser.add_argument('-tt', '--time_traces',
+                            action='store',
+                            nargs='*',
+                            default=None,
+                            metavar='',
                             help=help_msg['time_traces'])
 
-        parser.add_argument('-ne', '--no_export', action='store_true',
-                            default=False, help=help_msg['no_export'])
+        parser.add_argument('-ne', '--no_export',
+                            action='store_true',
+                            default=False,
+                            help=help_msg['no_export'])
 
         return parser.parse_args()
 

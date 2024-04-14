@@ -168,7 +168,6 @@ class Dataset:
         else:
             self.fit = None
 
-        self._print_results()
         print('\033[32mSuccess.\033[37m')
 
     def get_time_traces(self, window=(300, 1060), interval=10):

@@ -11,7 +11,7 @@ from pandas import DataFrame
 from uv_pro.process import Dataset
 
 
-plt.style.use('fast')
+plt.style.use('seaborn-v0_8-bright')
 
 
 def plot_spectra(dataset: Dataset, spectra):
@@ -154,7 +154,10 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset):
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
     spectra = dataset.all_spectra
-    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)', title='Raw Data')
+    ax.set(xlabel='Wavelength (nm)',
+           ylabel='Absorbance (AU)',
+           title='Raw Data')
+    ax.set_xlim(190, 1100)
     ax.plot(spectra)
 
 
@@ -172,12 +175,19 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset):
     spectra = dataset.sliced_spectra
     cycler = _get_linestyles(spectra)
     ax.set_prop_cycle(cycler)
-    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)', title='Processed Data')
-    ax.plot(spectra)
-    ax.text(x=0.99, y=0.99,
+    ax.set(xlabel='Wavelength (nm)',
+           ylabel='Absorbance (AU)',
+           title='Processed Data')
+    ax.text(x=0.99,
+            y=0.99,
             s=f'showing: {len(spectra.columns)} spectra',
-            verticalalignment='top', horizontalalignment='right',
-            transform=ax.transAxes, color='gray', fontsize=8)
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color='gray',
+            fontsize=8)
+    ax.set_xlim(300, 1100)
+    ax.plot(spectra)
 
 
 def _time_traces_subplot(ax: Axes, dataset: Dataset):
@@ -196,9 +206,14 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset):
         time_traces = dataset.specific_time_traces
     else:
         time_traces = dataset.time_traces
-        ax.text(x=0.99, y=0.99, s='saturated wavelengths not shown',
-                verticalalignment='top', horizontalalignment='right',
-                transform=ax.transAxes, color='gray', fontsize=8)
+        ax.text(x=0.99,
+                y=0.99,
+                s='saturated wavelengths not shown',
+                verticalalignment='top',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                color='gray',
+                fontsize=8)
 
     ax.set(xlabel='Time (s)', ylabel='Absorbance (AU)', title='Time Traces')
 
@@ -222,10 +237,17 @@ def _combined_time_traces_subplot(ax: Axes, dataset: Dataset):
     ax.set(xlabel='Time (s)',
            ylabel='Intensity (arb. units)',
            title='Combined Time Traces & Baseline')
+    ax.set_xlim(left=0, right=dataset.spectra_times.iloc[-1])
     _plot_baseline(ax, dataset)
-    ax.scatter(dataset.outliers, dataset.time_traces.sum(1)[dataset.outliers],
-               color='red', marker='x', zorder=2)
-    ax.plot(dataset.time_traces.sum(1), color='black', linestyle='solid', zorder=3)
+    ax.scatter(dataset.outliers,
+               dataset.time_traces.sum(1)[dataset.outliers],
+               color='red',
+               marker='x',
+               zorder=2)
+    ax.plot(dataset.time_traces.sum(1),
+            color='black',
+            linestyle='solid',
+            zorder=3)
 
 
 def _plot_baseline(ax: Axes, dataset: Dataset):
@@ -235,12 +257,24 @@ def _plot_baseline(ax: Axes, dataset: Dataset):
 
     ax.plot(upper_bound, color='skyblue', linestyle='solid', alpha=0.5)
     ax.plot(lower_bound, color='skyblue', linestyle='solid', alpha=0.5)
-    ax.fill_between(upper_bound.index, upper_bound,
-                    y2=lower_bound, color='powderblue', alpha=0.5)
-    ax.plot(dataset.baseline, color='skyblue', linestyle='dashed', alpha=0.8, zorder=1)
-    ax.text(x=0.99, y=0.99, s=f'lam={dataset.baseline_lambda} tol={dataset.baseline_tolerance}',
-            verticalalignment='top', horizontalalignment='right',
-            transform=ax.transAxes, color='gray', fontsize=8)
+    ax.fill_between(upper_bound.index,
+                    upper_bound,
+                    y2=lower_bound,
+                    color='powderblue',
+                    alpha=0.5)
+    ax.plot(dataset.baseline,
+            color='skyblue',
+            linestyle='dashed',
+            alpha=0.8,
+            zorder=1)
+    ax.text(x=0.99,
+            y=0.99,
+            s=f'lam={dataset.baseline_lambda} tol={dataset.baseline_tolerance}',
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color='gray',
+            fontsize=8)
 
 
 def _plot_fit_curves(ax: Axes, dataset: Dataset):
@@ -248,27 +282,36 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset):
         # ax.scatter(x=dataset.fit[wavelength]['curve'].index,
         #            y=dataset.fit[wavelength]['curve'],
         #            label=wavelength,
-        #            marker='.',
+        #            marker='s',
         #            facecolors='none',
         #            edgecolors=f'k',
         #            alpha=0.5,
         #            zorder=1)
-        ax.plot(dataset.fit[wavelength]['curve'], color='k',
-                linestyle=':', linewidth=4, alpha=1, zorder=1)
-        kobs_text = (' ').join([
-            f'{wavelength}',
-            r'$k_{obs} =$',
-            f'{dataset.fit[wavelength]['popt'][2].round(5)}',
-            f'± {dataset.fit[wavelength]['perr'][2].round(5)}',
-            r'$r^2 =$',
-            f'{dataset.fit[wavelength]['r2'].round(4)}'])
-        ax.text(x=0.99, y=0.99 - i * 0.04, s=kobs_text,
-                verticalalignment='top', horizontalalignment='right',
-                transform=ax.transAxes, color=f'C{i}', fontsize=8)
+        ax.plot(dataset.fit[wavelength]['curve'],
+                color='k',
+                linestyle=':',
+                linewidth=4,
+                alpha=1,
+                zorder=1)
+        kobs_text = (' ').join([f'{wavelength}',
+                                r'$k_{obs} =$',
+                                f'{dataset.fit[wavelength]['popt'][2].round(5)}',
+                                f'± {dataset.fit[wavelength]['perr'][2].round(5)}',
+                                r'$r^2 =$',
+                                f'{dataset.fit[wavelength]['r2'].round(4)}'])
+        ax.text(x=0.99,
+                y=0.99 - i * 0.04,
+                s=kobs_text,
+                verticalalignment='top',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                color=f'C{i}',
+                fontsize=8)
 
-    xaxis_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
-    ax.set_xlim(dataset.trim[0] - xaxis_padding,
-                dataset.trim[1] + xaxis_padding)
+    if dataset.trim:
+        xaxis_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
+        ax.set_xlim(dataset.trim[0] - xaxis_padding,
+                    dataset.trim[1] + xaxis_padding)
 
 
 def _get_linestyles(dataframe: DataFrame):
