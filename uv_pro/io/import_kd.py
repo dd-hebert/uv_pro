@@ -32,8 +32,8 @@ class KDFile:
     file_bytes : bytes
         The bytes read from the .KD file.
     spectra : :class:`pandas.DataFrame`
-        All of the raw spectra in the :class:`Dataset`.
-    spectra_times : class:`pandas.Series`
+        All of the raw spectra found in the .KD file.
+    spectra_times : :class:`pandas.Series`
         The time values that each spectrum was captured.
     cycle_time : int
         The cycle time value (in seconds) for the experiment.

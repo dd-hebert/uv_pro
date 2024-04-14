@@ -216,9 +216,7 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset):
                 fontsize=8)
 
     ax.set(xlabel='Time (s)', ylabel='Absorbance (AU)', title='Time Traces')
-
     ax.plot(time_traces)
-
     if dataset.fit is not None:
         _plot_fit_curves(ax, dataset)
 
@@ -310,7 +308,7 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset):
 
     if dataset.trim:
         xaxis_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
-        ax.set_xlim(dataset.trim[0] - xaxis_padding,
+        ax.set_xlim(max(dataset.trim[0] - xaxis_padding, 0),
                     dataset.trim[1] + xaxis_padding)
 
 

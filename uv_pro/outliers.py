@@ -2,7 +2,7 @@ import pandas as pd
 from pybaselines.whittaker import asls
 
 
-def find_outliers(traces: pd.DataFrame, threshold: float, lsw: str, lam: float, tol: float) -> list:
+def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: float, tol: float) -> list:
     """
     Find outlier spectra.
 
@@ -12,7 +12,7 @@ def find_outliers(traces: pd.DataFrame, threshold: float, lsw: str, lam: float, 
 
     Parameters
     ----------
-    traces : :class:`pd.DataFrame`
+    time_traces : :class:`pd.DataFrame`
         Time traces to find outliers with.
     threshold : float
         The outlier threshold, values closer to 0 produce more outliers
@@ -36,8 +36,8 @@ def find_outliers(traces: pd.DataFrame, threshold: float, lsw: str, lam: float, 
         The baseline used for outlier detection.
     """
     outliers = []
-    low_signal_outliers = find_low_signal_outliers(data=traces, window=lsw)
-    time_traces = traces.drop(low_signal_outliers)
+    low_signal_outliers = find_low_signal_outliers(data=time_traces, window=lsw)
+    time_traces = time_traces.drop(low_signal_outliers)
 
     baseline = compute_baseline(data=time_traces.sum(1), lam=lam, tol=tol)
     baselined_time_traces = time_traces.sum(1) - baseline
@@ -86,6 +86,21 @@ def compute_baseline(data: pd.DataFrame, lam: float, tol: float) -> pd.Series:
 
 
 def find_baseline_outliers(data: pd.DataFrame, threshold: float) -> set:
+    """
+    Find outliers outside the given ``threshold`` from the baseline.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data to find outliers with.
+    threshold : float
+        The outlier threshold.
+
+    Returns
+    -------
+    outliers : set
+        A set of outlier x-axis values.
+    """
     # Normalize data and get index of rows above threshold.
     max_value = data.abs().max()
     outliers = data[data.abs() / max_value > threshold].index
