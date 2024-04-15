@@ -70,4 +70,3 @@ def print_fit(fit: dict) -> None:
         r2 = '{:.4f}'.format(fit['r2'])
         print('│ {:>10}\t{}\t{}\t{}\t{} │'.format(wavelength, kobs, abs_0, abs_f, r2))
     print('└' + '─' * 94 + '┘')
-    print('')

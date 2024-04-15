@@ -61,7 +61,7 @@ class FilePicker:
 
         Returns
         -------
-        file_path : string
+        file_path : str
             Returns the path of the chosen file relative to the root directory.
         """
         if self.file_list:

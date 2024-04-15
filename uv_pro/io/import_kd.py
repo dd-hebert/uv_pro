@@ -112,7 +112,7 @@ class KDFile:
         data_end = data_start + self.absorbance_table_length
         absorbance_data = self.file_bytes[data_start:data_end]
         absorbance_values = [value for value, in struct.iter_unpack('<d', absorbance_data)]
-        return pd.Series(absorbance_values, index=self.wavelength_range, name='Absorbance (AU)')
+        return pd.Series(absorbance_values, index=self.wavelength_range)
 
     def _parse_spectratimes(self, data_start: int) -> float:
         time_value = float(struct.unpack_from('<d', self.file_bytes, data_start)[0])
@@ -122,10 +122,10 @@ class KDFile:
         cycle_time = int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
         return cycle_time
 
-    def _spectra_dataframe(self, spectra: list) -> pd.DataFrame:
+    def _spectra_dataframe(self, spectra: list, spectra_times: pd.Series) -> pd.DataFrame:
         df = pd.concat(spectra, axis=1)
-        idx = pd.Index(self.wavelength_range, name='Wavelength (nm)')
-        df.index = idx
+        df.index = pd.Index(self.wavelength_range, name='Wavelength (nm)')
+        df.columns = spectra_times
         return df
 
     def parse_kd(self) -> tuple[pd.DataFrame, pd.Series, int]:
@@ -146,16 +146,16 @@ class KDFile:
         cycle_time : int
             The cycle time (in seconds) for the UV-Vis experiment.
         """
-        spectra = self._handle_spectra()
-        spectra_times = self._handle_spectratimes()
         cycle_time = self._handle_cycletime()
+        spectra_times = self._handle_spectratimes()
+        spectra = self._handle_spectra(spectra_times)
         return spectra, spectra_times, cycle_time
 
-    def _handle_spectra(self) -> pd.DataFrame:
+    def _handle_spectra(self, spectra_times: pd.Series) -> pd.DataFrame:
         list_of_spectra = self._extract_data(KDFile.absorbance_data_header, self._parse_spectra)
         if list_of_spectra is None:
             raise Exception('Error parsing file. No spectra found.')
-        return self._spectra_dataframe(list_of_spectra)
+        return self._spectra_dataframe(list_of_spectra, spectra_times)
 
     def _handle_spectratimes(self) -> pd.Series:
         return pd.Series(
