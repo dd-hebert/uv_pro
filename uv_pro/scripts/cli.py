@@ -8,7 +8,7 @@ the command line with::
 
 Command Line Arguments
 ----------------------
--p, --path : string, required
+-p, --path : str, required
     The path to a .KD file Paths containing spaces may need to be wrapped
     in double quotes "". The script will first look for the given path inside
     the current working directory, then look at the absolute path, and lastly
@@ -50,15 +50,14 @@ Command Line Arguments
     :attr:`~uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
     ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
     default is None, where all spectra are plotted or exported.
--srd, --set_root_dir : string, optional
+-srd, --set_root_dir : str, optional
     Set a root directory to simplify file path entry. For instance, if
     you store all your UV-Vis data files in a common folder, you can designate
     it as the root directory. Subsequently, any path provided with ``-p`` is
     assumed to be relative to the root directory.
 -tr, --trim : int int, optional
-    Select a spectra within a given time range ``start end``. The first value
-    is the time (in seconds) of the start of the time range and the second value
-    is the end of the range. Default is None (no trimming).
+    Trim data outside a given time range: ``[trim_before, trim_after]``.
+    Default value is None (no trimming).
 --tree : flag, optional
     Print the root directory file tree to the console.
 -tt, --time_traces : arbitrary number of ints, optional
@@ -374,10 +373,9 @@ class CLI:
         """
         if self.args.view is True:
             data = Dataset(self.args.path, view_only=True)
-            print('\nPlotting data...')
-            uvplt.plot_spectra(data, data.all_spectra)
         else:
-            data = Dataset(self.args.path, trim=self.args.trim,
+            data = Dataset(self.args.path,
+                           trim=self.args.trim,
                            slicing=self.handle_slicing(),
                            fitting=self.args.fitting,
                            outlier_threshold=self.args.outlier_threshold,
@@ -388,15 +386,16 @@ class CLI:
                            time_trace_interval=self.args.time_trace_interval,
                            wavelengths=self.args.time_traces)
 
-            print('\nPlotting data...')
-            self._show_plots(data)
+        print(data)
+        print('Plotting data...')
+        self._show_plots(data)
 
-            if self.args.no_export is False:
-                files_exported = self._prompt_for_export(data)
-                if files_exported:
-                    print(f'\nExport location: {os.path.dirname(self.args.path)}')
-                    print('Files exported:')
-                    [print(f'\t{file}') for file in files_exported]
+        if data.is_processed is True and self.args.no_export is False:
+            files_exported = self._prompt_for_export(data)
+            if files_exported:
+                print(f'\nExport location: {os.path.dirname(self.args.path)}')
+                print('Files exported:')
+                [print(f'\t{file}') for file in files_exported]
 
     def _prompt_for_export(self, dataset: Dataset) -> list:
         files_exported = []
@@ -425,7 +424,7 @@ class CLI:
         return files_exported
 
     def _show_plots(self, dataset: Dataset) -> None:
-        if len(dataset.all_spectra.columns) > 2:
+        if dataset.is_processed:
             uvplt.plot_2x2(dataset)
         else:
             uvplt.plot_spectra(dataset, dataset.all_spectra)

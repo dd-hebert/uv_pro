@@ -11,7 +11,8 @@ import os
 import pandas as pd
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
-from uv_pro.fitting import fit_exponential, print_fit
+from uv_pro.fitting import fit_exponential
+from uv_pro.utils.printing import print_dataset
 
 
 class Dataset:
@@ -20,12 +21,12 @@ class Dataset:
 
     Attributes
     ----------
-    name : string
+    name : str
         The name of the .KD file that the :class:`Dataset` was created from.
     cycle_time : int
         The cycle time in seconds from the experiment.
     all_spectra : :class:`pandas.DataFrame`
-        All of the raw spectra in the :class:`Dataset`.
+        All the raw spectra in the :class:`Dataset`.
     time_traces : :class:`pandas.DataFrame`
         The time traces for the :class:`Dataset`. The number of time traces and
         their wavelengths are dictated by `time_trace_window` and
@@ -36,7 +37,7 @@ class Dataset:
         The times of outlier spectra.
         See :func:`~uv_pro.outliers.find_outliers()` for more information.
     baseline : :class:`pandas.Series`
-       The baseline of the summed :attr:`time_traces`. 
+       The baseline of the summed :attr:`time_traces`.
        See :func:`~uv_pro.outliers.find_outliers()` for more information.
     cleaned_spectra : :class:`pandas.DataFrame`
         The spectra with :attr:`outliers` removed.
@@ -44,12 +45,25 @@ class Dataset:
         The spectra that fall within the given time range.
     sliced_spectra : :class:`pandas.DataFrame`
         The selected spectra slices.
+    is_processed : bool
+        Indicates if the data has been processed. Data is processed only if the
+        :class:`~uv_pro.process.Dataset` was initialized with ``view_only=False``
+        and it contains more than 2 spectra.
     """
 
-    def __init__(self, path, trim=None, slicing=None, fitting=False,
-                 outlier_threshold=0.1, baseline_lambda=10, baseline_tolerance=0.1,
-                 low_signal_window='narrow', time_trace_window=(300, 1060),
-                 time_trace_interval=10, wavelengths=None, view_only=False) -> None:
+    def __init__(self, path: str,
+                 trim: list[int, int] | None = None,
+                 slicing: dict | None = None,
+                 fitting: bool = False,
+                 outlier_threshold: float = 0.1,
+                 baseline_lambda: float = 10,
+                 baseline_tolerance: float = 0.1,
+                 low_signal_window: str = 'narrow',
+                 time_trace_window: tuple[int, int] = (300, 1060),
+                 time_trace_interval: int = 10,
+                 wavelengths: list | None = None,
+                 view_only: bool = False
+                 ) -> None:
         """
         Initialize a :class:`~uv_pro.process.Dataset`.
 
@@ -58,49 +72,51 @@ class Dataset:
 
         Parameters
         ----------
-        path : string
+        path : str
             A file path to a .KD file.
-        trim : tuple or None, optional
-            Select spectra within a given time range. The first value
-            ``trim[0]`` is the time (in seconds) of the beginning of the time
-            range, and the second value ``trim[1]`` is the end of the time range.
+        trim : list[int, int] or None, optional
+            Trim data outside a given time range: ``[trim_before, trim_after]``.
             Default value is None (no trimming).
         slicing : dict or None, optional
             Reduce the data down to a selection of slices. Slices can be taken in
-            equally-spaced or unequally-spaced (gradient) intervals. For equal
+            equally- or unequally-spaced (gradient) intervals. For equal
             slicing: ``{'mode': 'equal', 'slices': int}``. For gradient slicing:
             ``{'mode': 'gradient', 'coefficient': float, 'exponent': float}``.
+        fitting : bool, optional
+            Perform exponential fitting on the time traces specified with ``wavelengths``
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
-            while values closer to 1 produce fewer outliers. Values >>1 produce no outliers.
-            The default value is 0.1.
+            while values closer to 1 produce fewer outliers. Use a value >>1 to guarantee
+            no data are considered outliers. The default value is 0.1.
         baseline_lambda : float, optional
             Set the smoothness of the baseline (for outlier detection). Higher values
-            give smoother baselines. Try values between 0.001 and 10000. The
-            default is 10.
+            give smoother baselines. Try values between 0.001 and 10000. The default is 10.
         baseline_tolerance : float, optional
             Set the exit criteria for the baseline algorithm. Try values between
             0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
             for more information.
         low_signal_window : str, "narrow" or "wide", optional
             Set the width of the low signal detection window (see
-            :meth:`find_outliers()`). Set to wide if low signal outliers are
-            affecting the baseline.
-        time_trace_window : tuple or None, optional
+            :func:`~uv_pro.outliers.find_outliers()`). Set to wide if low signal
+            outliers are affecting the baseline.
+        time_trace_window : tuple[int, int] or None, optional
             The range (min, max) of wavelengths (in nm) to get time traces for.
+            Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
             The default is (300, 1060).
         time_trace_interval : int, optional
-            The wavelength interval (in nm) between time traces.
-            A smaller interval produces more time traces.
+            The wavelength interval (in nm) between time traces. A smaller interval
+            produces more time traces. Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`
             For example, an interval of 20 would generate time traces like this:
             [window min, window min + 20, window min + 40, ..., window max - 20, window max].
             The default value is 10.
-        wavelengths : list or None, optional
-            A list of specific wavelengths to get time traces for. The default is None.
+        wavelengths : list[int, ...] or None, optional
+            A list of specific wavelengths to get time traces for. These time traces are
+            independent of those created by :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            The default is None.
         view_only : bool, optional
-            Indicate whether data processing (cleaning and trimming) should be
-            skipped. Default is False (cleaning and trimming are performed).
+            Indicate if data processing (cleaning and trimming) should be
+            performed. Default is False (processing is performed).
         """
         self.path = path
         self.name = os.path.basename(self.path)
@@ -115,59 +131,50 @@ class Dataset:
         self.baseline_lambda = baseline_lambda
         self.baseline_tolerance = baseline_tolerance
         self._import_data()
+        self.is_processed = False
 
         if not view_only and len(self.all_spectra.columns) > 2:
-            self._process_data()
+            self.process_data()
+            self.is_processed = True
+
+    def __str__(self) -> str:
+        return print_dataset(self)
 
     def _import_data(self) -> None:
-        print(f'\033[1m* Reading .KD file {os.path.basename(self.path)}...\033[22m')
         kd_file = KDFile(self.path)
         self.all_spectra = kd_file.spectra
         self.spectra_times = kd_file.spectra_times
         self.cycle_time = kd_file.cycle_time
-        print(f'Spectra found: {len(self.all_spectra.columns)}')
-        print(f'Cycle time (s): {self.cycle_time}')
 
-    def _process_data(self) -> None:
+    def process_data(self) -> None:
         self.time_traces = self.get_time_traces(window=self.time_trace_window,
                                                 interval=self.time_trace_interval)
+
         self.specific_time_traces = self.get_specific_time_traces(self.wavelengths)
 
-        print('\033[1m* Finding outliers...\033[22m')
         self.outliers, self.baseline = find_outliers(time_traces=self.time_traces,
                                                      threshold=self.outlier_threshold,
                                                      lsw=self.low_signal_window,
                                                      lam=self.baseline_lambda,
                                                      tol=self.baseline_tolerance)
-        print(f'Outliers found: {len(self.outliers)}')
 
-        print('\033[1m* Cleaning data...\033[22m')
-        self.cleaned_spectra = self.clean_data()
+        self.cleaned_spectra, self.cleaned_traces = self.clean_data()
 
         if self.trim is None:
             self.trimmed_spectra = self.cleaned_spectra
             self.trimmed_traces = self.specific_time_traces
         else:
-            print('\033[1m* Trimming data...\033[22m')
             self.trimmed_spectra, self.trimmed_traces = self.trim_data()
-            print(f'Removed data before {self.trim[0]} and after {self.trim[1]} seconds.')
-            print(f'Spectra remaining: {len(self.trimmed_spectra.columns)}')
 
         if self.slicing is None:
             self.sliced_spectra = self.trimmed_spectra
         else:
-            print('\033[1m* Slicing data...\033[22m')
             self.sliced_spectra = self.slice_data()
 
         if self.fitting is True and self.trimmed_traces is not None:
-            print('\033[1m* Fitting exponential...\033[22m')
             self.fit = fit_exponential(self.trimmed_traces)
-            if self.fit is not None:
-                print_fit(self.fit)
         else:
             self.fit = None
-
-        print('\033[32mSuccess.\033[37m')
 
     def get_time_traces(self, window=(300, 1060), interval=10):
         """
@@ -218,7 +225,7 @@ class Dataset:
         -------
         :class:`pandas.DataFrame` or None
             The raw time traces, where each column is a different
-            wavelength. Otherwise returns None if no wavelengths
+            wavelength. Otherwise, returns None if no wavelengths
             are given or no time traces could be made.
         """
         if wavelengths is None:
@@ -234,62 +241,54 @@ class Dataset:
                 all_time_traces[key] = time_trace
 
             if all_time_traces:
-                time_values = pd.Index(self.spectra_times, name='Time (s)')
                 specific_time_traces = pd.DataFrame.from_dict(all_time_traces)
+                time_values = pd.Index(self.spectra_times, name='Time (s)')
                 specific_time_traces.set_index(time_values, inplace=True)
                 return specific_time_traces
             else:
                 return None
 
-    def clean_data(self):
+    def clean_data(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Remove outliers from :attr:`all_spectra`.
+        Remove outliers from :attr:`all_spectra` and :attr:`specific_time_traces`.
 
         Returns
         -------
         cleaned_spectra : :class:`pandas.DataFrame`
             The spectra with outlier spectra removed.
+        cleaned_traces : :class:`pandas.DataFrame`
+            The time traces with outlier points removed.
         """
-        column_numbers = [x for x in range(self.all_spectra.shape[1])]
-        outlier_indices = [self.time_traces.index.get_loc(outlier) for outlier in self.outliers]
-        [column_numbers.remove(outlier) for outlier in outlier_indices]
-        cleaned_spectra = self.all_spectra.iloc[:, column_numbers]
-        return cleaned_spectra
+        cleaned_spectra = self.all_spectra.drop(self.outliers, axis='columns')
+        if self.specific_time_traces is not None:
+            cleaned_traces = self.specific_time_traces.drop(self.outliers)
+        else:
+            cleaned_traces = None
+        return cleaned_spectra, cleaned_traces
 
     def trim_data(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """Keep a portion within the time range given by :attr:`Dataset.trim`."""
-        start_idx, end_idx = self._get_trim_indexes()
-        self._update_trim_times(start_idx, end_idx)
-        trimmed_spectra = self.cleaned_spectra.iloc[:, start_idx:end_idx]
-        if self.specific_time_traces is not None:
-            trimmed_traces = self.specific_time_traces.drop(self.outliers).iloc[start_idx:end_idx]
+        """Truncate the data to the time range given by :attr:`Dataset.trim`."""
+        self._check_trim_values()
+        trimmed_spectra = self.cleaned_spectra.truncate(before=self.trim[0], after=self.trim[1], axis='columns')
+        if self.cleaned_traces is not None:
+            trimmed_traces = self.cleaned_traces.truncate(before=self.trim[0], after=self.trim[1])
         else:
             trimmed_traces = None
         return trimmed_spectra, trimmed_traces
 
-    def _get_trim_indexes(self) -> tuple[int, int]:
-        """Adjust :attr:`uv_pro.process.Dataset.trim` to nearest value in data."""
-        start_time = self.trim[0]
-        end_time = self.trim[1]
-        if start_time > end_time:
-            start_time = self.trim[1]
-            end_time = self.trim[0]
-        closest_start_index = (self.spectra_times - start_time).abs().idxmin()
-        closest_end_index = (self.spectra_times - end_time).abs().idxmin()
-        return closest_start_index, closest_end_index
+    def _check_trim_values(self) -> None:
+        start = min(self.trim)
+        end = max(self.trim)
+        self.trim = (start, end)
 
-    def _update_trim_times(self, start_idx: int, end_idx: int) -> None:
-        self.trim[0] = self.spectra_times[start_idx]
-        self.trim[1] = self.spectra_times[end_idx]
-
-    def slice_data(self):
+    def slice_data(self) -> pd.DataFrame:
         """
         Reduce the data down to a selection of slices.
 
         Slices can be taken at equally-spaced or unequally-spaced
         (gradient) intervals. Equal slicing requires a single integer
         (e.g., a value of 10 will produce 10 equally-spaced slices).
-        Gradient slicing requies two floats, a coefficient and an exponent.
+        Gradient slicing requires two floats, a coefficient and an exponent.
         For gradient slicing, the step size between slices is calculated
         by the equation step_size = [coefficient*x^exponent + 1].
 
@@ -303,16 +302,10 @@ class Dataset:
         sliced_spectra : :class:`pandas.DataFrame`
             The spectra slices given by :attr:`uv_pro.process.Dataset.slicing`.
         """
-        sliced_spectra = []
         if self.slicing['mode'] == 'gradient':
             sliced_spectra = self._gradient_slicing()
-            slicing_args = '\n'.join([f'Coefficient: {self.slicing['coefficient']}',
-                                      f'Exponent: {self.slicing['exponent']}'])
         else:
             sliced_spectra = self._equal_slicing()
-            slicing_args = f'Slices: {len(sliced_spectra.columns)}'
-        print(f'Mode: {self.slicing['mode']}')
-        print(slicing_args)
         return sliced_spectra
 
     def _gradient_slicing(self) -> pd.DataFrame:
@@ -339,7 +332,7 @@ class Dataset:
             raise ValueError('Invalid gradient slicing coefficient. Value must be >0.')
 
     def _equal_slicing(self) -> pd.DataFrame:
-        step = len(self.trimmed_spectra.columns) // int(self.slicing['slices'])
+        step = round(len(self.trimmed_spectra.columns) / int(self.slicing['slices']))
         if step == 0:
             step = 1
         columns_to_keep = list(range(0, len(self.trimmed_spectra.columns), step))
