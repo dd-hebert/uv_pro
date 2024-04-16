@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 View multiple .KD files from the command line.
 
@@ -26,7 +25,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 
 
-def get_args():
+def get_args() -> argparse.Namespace:
     """
     Create an ``ArgumentParser`` and parse command line arguments.
 
@@ -34,32 +33,45 @@ def get_args():
     -------
     parser : :class:`argparse.ArgumentParser`
     """
-    parser = argparse.ArgumentParser(description='Process UV-Vis Data Files')
+    parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
     help_msg = {
         'search_filters': '''An arbitrary number of search filters''',
         'and_filter': '``and`` filter mode.',
-        'or_filter': '``or`` filter mode.'}
-
-    parser.add_argument('-f',
-                        '--search_filters',
-                        action='store',
-                        nargs='*',
-                        default='*',
-                        metavar='',
-                        help=help_msg['search_filters'])
-
+        'or_filter': '``or`` filter mode.'
+    }
+    parser.add_argument(
+        '-f',
+        '--search_filters',
+        action='store',
+        nargs='*',
+        default='*',
+        metavar='',
+        help=help_msg['search_filters']
+    )
     arg_group = parser.add_mutually_exclusive_group(required=False)
-    arg_group.add_argument('-a', '--and_filter', dest='filter_mode', action='store_const',
-                           const='and', help=help_msg['and_filter'])
-    arg_group.add_argument('-o', '--or_filter', dest='filter_mode', action='store_const',
-                           const='or', help=help_msg['or_filter'])
+    arg_group.add_argument(
+        '-a',
+        '--and_filter',
+        dest='filter_mode',
+        action='store_const',
+        const='and',
+        help=help_msg['and_filter']
+    )
+    arg_group.add_argument(
+        '-o',
+        '--or_filter',
+        dest='filter_mode',
+        action='store_const',
+        const='or',
+        help=help_msg['or_filter']
+    )
 
     parser.set_defaults(filter_mode='or')
 
     return parser.parse_args()
 
 
-def run_uvp_script(file):
+def run_uvp_script(file: str) -> None:
     """
     Run the uvp script in parallel.
 
@@ -73,12 +85,17 @@ def run_uvp_script(file):
     None.
     """
     try:
-        subprocess.run(['uvp', '-p', file, '-v'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        subprocess.run(
+            ['uvp', '-p', file, '-v'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT
+        )
+
     except Exception as e:
         print(f"An error occurred while processing the file: {str(e)}")
 
 
-def filter_files(search_filters, mode='or'):
+def filter_files(search_filters: list, mode: str = 'or') -> set:
     """
     Filter a list of files into a set.
 
@@ -87,7 +104,7 @@ def filter_files(search_filters, mode='or'):
     search_filters : list
         A list of search filter strings.
     mode : str, optional
-        The filter mode, can be ``'and'`` or ``'or'``. The default is ``'or'``.
+        The filter mode, can be 'and' or 'or'. The default is 'or'.
 
     Returns
     -------
@@ -139,5 +156,4 @@ def main():
     None.
     """
     args = get_args()
-
     multiview(filter_files(args.search_filters, mode=args.filter_mode))

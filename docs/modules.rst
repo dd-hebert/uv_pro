@@ -10,5 +10,6 @@ API Reference
    outliers
    plots
    process
+   slicing
    config
    filepicker

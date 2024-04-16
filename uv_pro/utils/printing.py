@@ -1,6 +1,13 @@
-def print_dataset(dataset):
+"""
+Printing helper functions.
+
+@author: David Hebert
+"""
+
+
+def print_dataset(dataset) -> None:
     print(f'Filename: {dataset.name}')
-    print(f'Spectra found: {len(dataset.all_spectra.columns)}')
+    print(f'Spectra found: {len(dataset.raw_spectra.columns)}')
     print(f'Cycle time (s): {dataset.cycle_time}')
 
     if dataset.is_processed is True:
@@ -8,20 +15,22 @@ def print_dataset(dataset):
 
         if dataset.trim is not None:
             print(f'Removed data before {dataset.trim[0]} and after {dataset.trim[1]} seconds.')
-            print(f'Spectra remaining: {len(dataset.trimmed_spectra.columns)}')
 
-        if dataset.slicing is not None:
+        if dataset.slicing is None:
+            print(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
+        else:
             print(f'Slicing mode: {dataset.slicing['mode']}')
             if dataset.slicing['mode'] == 'gradient':
-                print(f'Coefficient: {dataset.slicing['coefficient']}')
-                print(f'Exponent: {dataset.slicing['exponent']}')
-            print(f'Slices: {len(dataset.sliced_spectra.columns)}')
+                print(f'Coefficient: {dataset.slicing['coeff']}')
+                print(f'Exponent: {dataset.slicing['expo']}')
+            print(f'Slices: {len(dataset.processed_spectra.columns)}')
 
         if dataset.fit is not None:
             equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
             print(f'Fit function: {equation}')
             print_fit(dataset.fit)
     return ''
+
 
 def print_fit(fit: dict) -> None:
     # TODO use string formatting to make table prettier

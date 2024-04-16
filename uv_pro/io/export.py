@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Export data.
 
-Contains functions for exporting UV-Vis data to .csv format.
+Contains functions for exporting UV-vis data to .csv format.
 
 @author: David Hebert
 """
@@ -56,13 +55,13 @@ def export_csv(dataset, spectra):
         The :class:`~uv_pro.process.Dataset` to be exported.
     spectra : :class:`pandas.DataFrame`
         The spectra to be exported. A :class:`pandas.DataFrame`
-        such as :attr:`~uv_pro.process.Dataset.all_spectra` or
-        :attr:`~uv_pro.process.Dataset.trimmed_spectra`.
+        such as :attr:`~uv_pro.process.Dataset.raw_spectra` or
+        :attr:`~uv_pro.process.Dataset.processed_spectra`.
 
     Returns
     -------
     str
-        The file name of the exported .csv file.
+        The name of the exported .csv file.
     """
     output_dir = os.path.dirname(dataset.path)
     base_filename = os.path.splitext(dataset.name)[0]
@@ -86,12 +85,11 @@ def export_time_trace(dataset):
     Returns
     -------
     str
-        The file name of the exported .csv file.
+        The name of the exported .csv file.
     """
     output_dir = os.path.dirname(dataset.path)
     base_filename = f'{os.path.splitext(dataset.name)[0]} Traces'
     filename = _get_unique_filename(output_dir, base_filename)
-    time_traces = dataset.specific_time_traces
-    time_traces.to_csv(os.path.join(output_dir, f'{filename}.csv'),
-                       index=True)
+    time_traces = dataset.chosen_traces
+    time_traces.to_csv(os.path.join(output_dir, f'{filename}.csv'), index=True)
     return f'{filename}.csv'

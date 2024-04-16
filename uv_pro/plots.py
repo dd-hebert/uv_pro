@@ -14,21 +14,17 @@ from uv_pro.process import Dataset
 plt.style.use('seaborn-v0_8-bright')
 
 
-def plot_spectra(dataset: Dataset, spectra):
+def plot_spectra(dataset: Dataset, spectra) -> None:
     """
-    Show a simple plot of a single or multiple spectra.
+    Show a simple spectra plot.
 
     Parameters
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         A :class:`~uv_pro.process.Dataset` containing the spectra to be plotted.
     spectra : :class:`pandas.DataFrame`
-        The spectra to be plotted, such as ``dataset.all_spectra`` or
-        ``dataset.cleaned_spectra``.
-
-    Returns
-    -------
-    None. Shows a plot.
+        The spectra to be plotted, such as :attr:`~uv_pro.process.Dataset.raw_spectra`
+        or :attr:`~uv_pro.process.Dataset.processed_spectra`.
     """
     _, ax = plt.subplots()
     ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)')
@@ -39,7 +35,7 @@ def plot_spectra(dataset: Dataset, spectra):
     plt.show()
 
 
-def plot_time_traces(dataset: Dataset):
+def plot_time_traces(dataset: Dataset) -> None:
     """
     Plot the :attr:`~uv_pro.process.Dataset.time_traces` of a ``dataset``.
 
@@ -48,10 +44,6 @@ def plot_time_traces(dataset: Dataset):
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` containing the time traces to be
         plotted.
-
-    Returns
-    -------
-    None. Shows a plot.
     """
     _, ax = plt.subplots()
     ax.set(xlabel='Time (s)',
@@ -63,21 +55,17 @@ def plot_time_traces(dataset: Dataset):
     plt.show()
 
 
-def plot_1x2(dataset: Dataset):
+def plot_1x2(dataset: Dataset) -> None:
     """
     Show the 1-by-2 plot.
 
-    Show a 1-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra` and
-    :attr:`~uv_pro.process.Dataset.sliced_spectra` in ``dataset``.
+    Show a 1-by-2 plot of :attr:`~uv_pro.process.Dataset.raw_spectra` and
+    :attr:`~uv_pro.process.Dataset.processed_spectra` in ``dataset``.
 
     Parameters
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-
-    Returns
-    -------
-    None. Shows a plot.
     """
     fig, (ax_raw_data, ax_processed_data) = plt.subplots(1, 2, figsize=(10, 5), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
@@ -87,22 +75,18 @@ def plot_1x2(dataset: Dataset):
     plt.show()
 
 
-def plot_1x3(dataset: Dataset):
+def plot_1x3(dataset: Dataset) -> None:
     """
     Show the 1-by-3 plot.
 
-    Show a 1-by-3 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
-    :attr:`~uv_pro.process.Dataset.sliced_spectra`, and
+    Show a 1-by-3 plot of :attr:`~uv_pro.process.Dataset.raw_spectra`,
+    :attr:`~uv_pro.process.Dataset.processed_spectra`, and
     :attr:`~uv_pro.process.Dataset.time_traces` in ``dataset``.
 
     Parameters
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-
-    Returns
-    -------
-    None. Shows a plot.
     """
     fig, (ax_raw_data, ax_processed_data, ax_time_traces) = plt.subplots(1, 3, figsize=(16, 4), layout='constrained')
     fig.suptitle(dataset.name, fontweight='bold')
@@ -113,24 +97,25 @@ def plot_1x3(dataset: Dataset):
     plt.show()
 
 
-def plot_2x2(dataset: Dataset):
+def plot_2x2(dataset: Dataset) -> None:
     """
     Show the 2-by-2 plot.
 
-    Show a 2-by-2 plot of :attr:`~uv_pro.process.Dataset.all_spectra`,
-    :attr:`~uv_pro.process.Dataset.sliced_spectra`,
+    Show a 2-by-2 plot of :attr:`~uv_pro.process.Dataset.raw_spectra`,
+    :attr:`~uv_pro.process.Dataset.processed_spectra`,
     :attr:`~uv_pro.process.Dataset.time_traces`, and
     :attr:`~uv_pro.process.Dataset.baseline` with
     :attr:`~uv_pro.process.Dataset.outliers` highlighted.
+
+    Note
+    ----
+    If specific time traces have been chosen, then the time traces
+    plot will instead show :attr:`~uv_pro.process.Dataset.chosen_traces`.
 
     Parameters
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
-
-    Returns
-    -------
-    None. Shows a plot.
     """
     fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_combined)) = plt.subplots(2, 2, figsize=(16, 8), constrained_layout=True)
     fig.suptitle(dataset.name, fontweight='bold')
@@ -142,7 +127,7 @@ def plot_2x2(dataset: Dataset):
     plt.show()
 
 
-def _raw_data_subplot(ax: Axes, dataset: Dataset):
+def _raw_data_subplot(ax: Axes, dataset: Dataset) -> None:
     """
     Create a raw data subplot.
 
@@ -153,15 +138,17 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset):
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
-    spectra = dataset.all_spectra
-    ax.set(xlabel='Wavelength (nm)',
-           ylabel='Absorbance (AU)',
-           title='Raw Data')
+    spectra = dataset.raw_spectra
+    ax.set(
+        xlabel='Wavelength (nm)',
+        ylabel='Absorbance (AU)',
+        title='Raw Data'
+    )
     ax.set_xlim(190, 1100)
     ax.plot(spectra)
 
 
-def _processed_data_subplot(ax: Axes, dataset: Dataset):
+def _processed_data_subplot(ax: Axes, dataset: Dataset) -> None:
     """
     Create a processed data subplot.
 
@@ -172,25 +159,33 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset):
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
-    spectra = dataset.sliced_spectra
+    spectra = dataset.processed_spectra
     cycler = _get_linestyles(spectra)
     ax.set_prop_cycle(cycler)
-    ax.set(xlabel='Wavelength (nm)',
-           ylabel='Absorbance (AU)',
-           title='Processed Data')
-    ax.text(x=0.99,
-            y=0.99,
-            s=f'showing: {len(spectra.columns)} spectra',
-            verticalalignment='top',
-            horizontalalignment='right',
-            transform=ax.transAxes,
-            color='gray',
-            fontsize=8)
+
+    ax.set(
+        xlabel='Wavelength (nm)',
+        ylabel='Absorbance (AU)',
+        title='Processed Data'
+    )
+
+    ax.text(
+        x=0.99,
+        y=0.99,
+        s=f'showing: {len(spectra.columns)} spectra',
+        verticalalignment='top',
+        horizontalalignment='right',
+        transform=ax.transAxes,
+        color='gray',
+        fontsize=8
+    )
+
     ax.set_xlim(300, 1100)
+
     ax.plot(spectra)
 
 
-def _time_traces_subplot(ax: Axes, dataset: Dataset):
+def _time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
     """
     Create a time traces subplot.
 
@@ -201,27 +196,32 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset):
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
-    if dataset.specific_time_traces is not None:
+    if dataset.chosen_traces is not None:
         # TODO add legend for specific time traces
-        time_traces = dataset.specific_time_traces
+        time_traces = dataset.chosen_traces
     else:
         time_traces = dataset.time_traces
-        ax.text(x=0.99,
-                y=0.99,
-                s='saturated wavelengths not shown',
-                verticalalignment='top',
-                horizontalalignment='right',
-                transform=ax.transAxes,
-                color='gray',
-                fontsize=8)
+
+        ax.text(
+            x=0.99,
+            y=0.99,
+            s='saturated wavelengths not shown',
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color='gray',
+            fontsize=8
+        )
 
     ax.set(xlabel='Time (s)', ylabel='Absorbance (AU)', title='Time Traces')
+
     ax.plot(time_traces)
+
     if dataset.fit is not None:
         _plot_fit_curves(ax, dataset)
 
 
-def _combined_time_traces_subplot(ax: Axes, dataset: Dataset):
+def _combined_time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
     """
     Create combined time traces subplot.
 
@@ -232,50 +232,69 @@ def _combined_time_traces_subplot(ax: Axes, dataset: Dataset):
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
-    ax.set(xlabel='Time (s)',
-           ylabel='Intensity (arb. units)',
-           title='Combined Time Traces & Baseline')
+    ax.set(
+        xlabel='Time (s)',
+        ylabel='Intensity (arb. units)',
+        title='Combined Time Traces & Baseline'
+    )
+
     ax.set_xlim(left=0, right=dataset.spectra_times.iloc[-1])
+
     _plot_baseline(ax, dataset)
-    ax.scatter(dataset.outliers,
-               dataset.time_traces.sum(1)[dataset.outliers],
-               color='red',
-               marker='x',
-               zorder=2)
-    ax.plot(dataset.time_traces.sum(1),
-            color='black',
-            linestyle='solid',
-            zorder=3)
+
+    ax.scatter(
+        dataset.outliers,
+        dataset.time_traces.sum(1)[dataset.outliers],
+        color='red',
+        marker='x',
+        zorder=2
+    )
+
+    ax.plot(
+        dataset.time_traces.sum(1),
+        color='black',
+        linestyle='solid',
+        zorder=3
+    )
 
 
-def _plot_baseline(ax: Axes, dataset: Dataset):
-    baselined_time_traces = dataset.time_traces.sum(1) - dataset.baseline
-    upper_bound = dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline
-    lower_bound = -dataset.outlier_threshold * baselined_time_traces.max() + dataset.baseline
+def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
+    baselined_traces = dataset.time_traces.sum(1) - dataset.baseline
+    upper_bound = dataset.outlier_threshold * baselined_traces.max() + dataset.baseline
+    lower_bound = -dataset.outlier_threshold * baselined_traces.max() + dataset.baseline
 
     ax.plot(upper_bound, color='skyblue', linestyle='solid', alpha=0.5)
     ax.plot(lower_bound, color='skyblue', linestyle='solid', alpha=0.5)
-    ax.fill_between(upper_bound.index,
-                    upper_bound,
-                    y2=lower_bound,
-                    color='powderblue',
-                    alpha=0.5)
-    ax.plot(dataset.baseline,
-            color='skyblue',
-            linestyle='dashed',
-            alpha=0.8,
-            zorder=1)
-    ax.text(x=0.99,
-            y=0.99,
-            s=f'lam={dataset.baseline_lambda} tol={dataset.baseline_tolerance}',
-            verticalalignment='top',
-            horizontalalignment='right',
-            transform=ax.transAxes,
-            color='gray',
-            fontsize=8)
+
+    ax.fill_between(
+        upper_bound.index,
+        upper_bound,
+        y2=lower_bound,
+        color='powderblue',
+        alpha=0.5
+    )
+
+    ax.plot(
+        dataset.baseline,
+        color='skyblue',
+        linestyle='dashed',
+        alpha=0.8,
+        zorder=1
+    )
+
+    ax.text(
+        x=0.99,
+        y=0.99,
+        s=f'lam={dataset.baseline_lambda} tol={dataset.baseline_tolerance}',
+        verticalalignment='top',
+        horizontalalignment='right',
+        transform=ax.transAxes,
+        color='gray',
+        fontsize=8
+    )
 
 
-def _plot_fit_curves(ax: Axes, dataset: Dataset):
+def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
     for i, wavelength in enumerate(dataset.fit.keys()):
         # ax.scatter(x=dataset.fit[wavelength]['curve'].index,
         #            y=dataset.fit[wavelength]['curve'],
@@ -285,34 +304,48 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset):
         #            edgecolors=f'k',
         #            alpha=0.5,
         #            zorder=1)
-        ax.plot(dataset.fit[wavelength]['curve'],
-                color='k',
-                linestyle=':',
-                linewidth=4,
-                alpha=1,
-                zorder=1)
-        kobs_text = (' ').join([f'{wavelength}',
-                                r'$k_{obs} =$',
-                                f'{dataset.fit[wavelength]['popt'][2].round(5)}',
-                                f'± {dataset.fit[wavelength]['perr'][2].round(5)}',
-                                r'$r^2 =$',
-                                f'{dataset.fit[wavelength]['r2'].round(4)}'])
-        ax.text(x=0.99,
-                y=0.99 - i * 0.04,
-                s=kobs_text,
-                verticalalignment='top',
-                horizontalalignment='right',
-                transform=ax.transAxes,
-                color=f'C{i}',
-                fontsize=8)
+
+        ax.plot(
+            dataset.fit[wavelength]['curve'],
+            color='k',
+            linestyle=':',
+            linewidth=4,
+            alpha=1,
+            zorder=1
+        )
+
+        kobs_text = (' ').join(
+            [
+                f'{wavelength}',
+                r'$k_{obs} =$',
+                f'{dataset.fit[wavelength]['popt'][2].round(5)}',
+                f'± {dataset.fit[wavelength]['perr'][2].round(5)}',
+                r'$r^2 =$',
+                f'{dataset.fit[wavelength]['r2'].round(4)}'
+            ]
+        )
+
+        ax.text(
+            x=0.99,
+            y=0.99 - i * 0.04,
+            s=kobs_text,
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color=f'C{i}',
+            fontsize=8
+        )
 
     if dataset.trim:
         xaxis_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
-        ax.set_xlim(max(dataset.trim[0] - xaxis_padding, 0),
-                    dataset.trim[1] + xaxis_padding)
+        left_bound = max(dataset.trim[0] - xaxis_padding, 0)
+        right_bound = dataset.trim[1] + xaxis_padding
+        ax.set_xlim(left=left_bound, right=right_bound)
 
 
-def _get_linestyles(dataframe: DataFrame):
+def _get_linestyles(dataframe: DataFrame) -> cycler:
     num_lines = len(dataframe.columns)
-    line_styles = (cycler(color=['k'] + ['0.8'] * (num_lines - 2) + ['r']) + cycler(linewidth=[3] + [1] * (num_lines - 2) + [3]))
+    colors = ['k'] + ['0.8'] * (num_lines - 2) + ['r']
+    linewidths = [3] + [1] * (num_lines - 2) + [3]
+    line_styles = cycler(color=colors) + cycler(linewidth=linewidths)
     return line_styles

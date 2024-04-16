@@ -1,8 +1,8 @@
 """
 uv_pro
 ======
-A tool for processing UV-Vis data files (.KD or .csv formats) exported from the
-Agilent 845x UV-Vis Chemstation software. UV-Vis data files in either .KD or
+A tool for processing UV-vis data files (.KD or .csv formats) exported from the
+Agilent 845x UV-vis Chemstation software. UV-vis data files in either .KD or
 .csv formats can be imported, processed, and exported as .csv.
 
 You can run uv_pro directly from the command line using::
@@ -21,4 +21,4 @@ github: https://github.com/dd-hebert/uv_pro
 @author: David Hebert
 """
 __author__ = 'David Hebert'
-__version__ = '0.3.1'
+__version__ = '0.3.2'

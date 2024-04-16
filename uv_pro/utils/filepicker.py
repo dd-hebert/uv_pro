@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Simple utilities to view directories and pick files from the terminal.
 
@@ -87,6 +86,7 @@ class FilePicker:
         # Print list of folders in root directory
         print(f'\n{self.root}')
         max_digits = len(str(len(self.file_list)))
+
         for index, entry in enumerate(self.file_list):
             extra_spacing = max_digits - len(str(index + 1))
             spacing = ' ' * (4 + extra_spacing)
@@ -115,6 +115,7 @@ class FilePicker:
         max_digits = len(str(len(self.file_list[folder_index][1])))
         spacing = ' ' * (6 + max_digits)
         print(f'\n{spacing}{folder_name}:')
+
         for index, file in enumerate(self.file_list[folder_index][1]):
             extra_spacing = max_digits - len(str(index + 1))
             spacing = ' ' * (4 + extra_spacing)

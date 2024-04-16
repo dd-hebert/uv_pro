@@ -1,3 +1,10 @@
+"""
+Detect outliers.
+
+Contains functions for detecting outliers from UV-vis time traces.
+
+@author: David Hebert
+"""
 import pandas as pd
 from pybaselines.whittaker import asls
 
@@ -40,8 +47,8 @@ def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: fl
     time_traces = time_traces.drop(low_signal_outliers)
 
     baseline = compute_baseline(data=time_traces.sum(1), lam=lam, tol=tol)
-    baselined_time_traces = time_traces.sum(1) - baseline
-    baseline_outliers = find_baseline_outliers(data=baselined_time_traces, threshold=threshold)
+    baselined_traces = time_traces.sum(1) - baseline
+    baseline_outliers = find_baseline_outliers(data=baselined_traces, threshold=threshold)
 
     outliers.extend(low_signal_outliers)
     outliers.extend(baseline_outliers)
@@ -72,11 +79,18 @@ def find_low_signal_outliers(data: pd.DataFrame, window: str) -> set[float]:
     """
     outlier_cutoff = len(data.columns) * 0.1
     outliers = set(data[data.sum(axis=1) < outlier_cutoff].index)
+
     if window.lower() == 'wide':
         outlier_indexes = data.index.get_indexer(outliers)
-        neighboring_outliers = set(pd.Index.union(data.iloc[outlier_indexes - 1].index,
-                                                  data.iloc[outlier_indexes + 1].index))
+        neighboring_outliers = set(
+            pd.Index.union(
+                data.iloc[outlier_indexes - 1].index,
+                data.iloc[outlier_indexes + 1].index
+            )
+        )
+
         outliers.update(neighboring_outliers)
+
     return outliers
 
 

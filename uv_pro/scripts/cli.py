@@ -47,12 +47,12 @@ Command Line Arguments
     >> 1 will produce no outliers. The default value is 0.1.
 -sl, --slice_spectra : int, optional
     The number of equally-spaced slices to plot or export. Example: if
-    :attr:`~uv_pro.process.Dataset.trimmed_spectra` contains 100 spectra and
+    :attr:`~uv_pro.process.Dataset.processed_spectra` contains 100 spectra and
     ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
     default is None, where all spectra are plotted or exported.
 -srd, --set_root_dir : str, optional
     Set a root directory to simplify file path entry. For instance, if
-    you store all your UV-Vis data files in a common folder, you can designate
+    you store all your UV-vis data files in a common folder, you can designate
     it as the root directory. Subsequently, any path provided with ``-p`` is
     assumed to be relative to the root directory.
 -tr, --trim : int int, optional
@@ -120,9 +120,9 @@ class CLI:
         self.main()
 
     def get_args(self) -> argparse.Namespace:
-        parser = argparse.ArgumentParser(description='Process UV-Vis Data Files')
+        parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
         help_msg = {
-            'path': '''Process UV-Vis data at the given path.
+            'path': '''Process UV-vis data at the given path.
                         Either a .KD file or a folder (.csv format).''',
             'set_root_dir': '''Set a root directory where data files are located so you
                            don't have to type a full path every time.''',
@@ -151,132 +151,174 @@ class CLI:
                                         traces from the window min to max every 10 nm. Smaller intervals will
                                         increase loading times.''',
             'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.',
-            'no_export': 'Skip the export data prompt at the end of the script.'}
-        parser.add_argument('-p', '--path',
-                            action='store',
-                            default=None,
-                            metavar='',
-                            help=help_msg['path'])
+            'no_export': 'Skip the export data prompt at the end of the script.'
+        }
 
-        parser.add_argument('-srd', '--set_root_dir',
-                            action='store',
-                            default=None,
-                            metavar='',
-                            help=help_msg['set_root_dir'])
-
-        parser.add_argument('-grd', '--get_root_dir',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['get_root_dir'])
-
-        parser.add_argument('-crd', '--clear_root_dir',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['clear_root_dir'])
-
-        parser.add_argument('-v', '--view',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['view'])
-
-        parser.add_argument('-tr', '--trim',
-                            action='store',
-                            type=int,
-                            nargs=2,
-                            default=None,
-                            metavar='',
-                            help=help_msg['trim'])
-
-        parser.add_argument('-ot', '--outlier_threshold',
-                            action='store',
-                            type=float,
-                            default=0.1,
-                            metavar='',
-                            help=help_msg['outlier_threshold'])
-
+        parser.add_argument(
+            '-p',
+            '--path',
+            action='store',
+            default=None,
+            metavar='',
+            help=help_msg['path']
+        )
+        parser.add_argument(
+            '-srd',
+            '--set_root_dir',
+            action='store',
+            default=None,
+            metavar='',
+            help=help_msg['set_root_dir']
+        )
+        parser.add_argument(
+            '-grd',
+            '--get_root_dir',
+            action='store_true',
+            default=False,
+            help=help_msg['get_root_dir']
+        )
+        parser.add_argument(
+            '-crd',
+            '--clear_root_dir',
+            action='store_true',
+            default=False,
+            help=help_msg['clear_root_dir']
+        )
+        parser.add_argument(
+            '-v',
+            '--view',
+            action='store_true',
+            default=False,
+            help=help_msg['view']
+        )
+        parser.add_argument(
+            '-tr',
+            '--trim',
+            action='store',
+            type=int,
+            nargs=2,
+            default=None,
+            metavar='',
+            help=help_msg['trim']
+        )
+        parser.add_argument(
+            '-ot',
+            '--outlier_threshold',
+            action='store',
+            type=float,
+            default=0.1,
+            metavar='',
+            help=help_msg['outlier_threshold']
+        )
         slicing_args = parser.add_mutually_exclusive_group()
-        slicing_args.add_argument('-sl', '--slice_spectra',
-                                  action='store',
-                                  type=int,
-                                  default=None,
-                                  metavar='',
-                                  help=help_msg['slice_spectra'])
-
-        slicing_args.add_argument('-gsl', '--gradient_slice',
-                                  action='store',
-                                  type=float,
-                                  nargs=2,
-                                  default=None,
-                                  metavar='',
-                                  help=help_msg['gradient_slice'])
-
-        parser.add_argument('-bll', '--baseline_lambda',
-                            action='store',
-                            type=float,
-                            default=10,
-                            metavar='',
-                            help=help_msg['baseline_lambda'])
-
-        parser.add_argument('-blt', '--baseline_tolerance',
-                            action='store',
-                            type=float,
-                            default=0.1,
-                            metavar='',
-                            help=help_msg['baseline_tolerance'])
-
-        parser.add_argument('-lsw', '--low_signal_window',
-                            action='store',
-                            default='narrow',
-                            choices=['narrow', 'wide'],
-                            metavar='',
-                            help=help_msg['low_signal_window'])
-
-        parser.add_argument('-fit', '--fitting',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['fitting'])
-
-        parser.add_argument('--tree',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['tree'])
-
-        parser.add_argument('-fp', '--file_picker',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['file_picker'])
-
-        parser.add_argument('-qq', '--test_mode',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['test_mode'])
-
-        parser.add_argument('-ttw', '--time_trace_window',
-                            action='store',
-                            type=int,
-                            nargs=2,
-                            default=[300, 1060],
-                            metavar='',
-                            help=help_msg['time_trace_window'])
-
-        parser.add_argument('-tti', '--time_trace_interval',
-                            action='store',
-                            type=int,
-                            default=10,
-                            metavar='',
-                            help=help_msg['time_trace_interval'])
-
-        parser.add_argument('-tt', '--time_traces',
-                            action='store',
-                            nargs='*',
-                            default=None,
-                            metavar='',
-                            help=help_msg['time_traces'])
-
-        parser.add_argument('-ne', '--no_export',
-                            action='store_true',
-                            default=False,
-                            help=help_msg['no_export'])
+        slicing_args.add_argument(
+            '-sl',
+            '--slice_spectra',
+            action='store',
+            type=int,
+            default=None,
+            metavar='',
+            help=help_msg['slice_spectra']
+        )
+        slicing_args.add_argument(
+            '-gsl',
+            '--gradient_slice',
+            action='store',
+            type=float,
+            nargs=2,
+            default=None,
+            metavar='',
+            help=help_msg['gradient_slice']
+        )
+        parser.add_argument(
+            '-bll',
+            '--baseline_lambda',
+            action='store',
+            type=float,
+            default=10,
+            metavar='',
+            help=help_msg['baseline_lambda']
+        )
+        parser.add_argument(
+            '-blt',
+            '--baseline_tolerance',
+            action='store',
+            type=float,
+            default=0.1,
+            metavar='',
+            help=help_msg['baseline_tolerance']
+        )
+        parser.add_argument(
+            '-lsw',
+            '--low_signal_window',
+            action='store',
+            default='narrow',
+            choices=['narrow', 'wide'],
+            metavar='',
+            help=help_msg['low_signal_window']
+        )
+        parser.add_argument(
+            '-fit',
+            '--fitting',
+            action='store_true',
+            default=False,
+            help=help_msg['fitting']
+        )
+        parser.add_argument(
+            '--tree',
+            action='store_true',
+            default=False,
+            help=help_msg['tree']
+        )
+        parser.add_argument(
+            '-fp',
+            '--file_picker',
+            action='store_true',
+            default=False,
+            help=help_msg['file_picker']
+        )
+        parser.add_argument(
+            '-qq',
+            '--test_mode',
+            action='store_true',
+            default=False,
+            help=help_msg['test_mode']
+        )
+        parser.add_argument(
+            '-ttw',
+            '--time_trace_window',
+            action='store',
+            type=int,
+            nargs=2,
+            default=[300, 1060],
+            metavar='',
+            help=help_msg['time_trace_window']
+        )
+        parser.add_argument(
+            '-tti',
+            '--time_trace_interval',
+            action='store',
+            type=int,
+            default=10,
+            metavar='',
+            help=help_msg['time_trace_interval']
+        )
+        parser.add_argument(
+            '-tt',
+            '--time_traces',
+            action='store',
+            nargs='*',
+            default=None,
+            metavar='',
+            help=help_msg['time_traces']
+        )
+        parser.add_argument(
+            '-ne',
+            '--no_export',
+            action='store_true',
+            default=False,
+            help=help_msg['no_export']
+        )
 
         return parser.parse_args()
 
@@ -292,7 +334,8 @@ class CLI:
     def handle_test_mode(self) -> None:
         r"""Test mode `-qq` only works from inside the repo \...\uv_pro\uv_pro."""
         test_data = os.path.normpath(
-            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD'))
+            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD')
+        )
         self.args.path = test_data
         self.proc()
 
@@ -300,31 +343,36 @@ class CLI:
         if self.args.file_picker is True and root_dir is not None:
             self.args.path = FilePicker(root_dir, '.KD').pick_file()
             self.args.view = True
+
         if self.args.tree is True:
             FilePicker(root_dir, '.KD').tree()
 
     def handle_path(self, root_dir: str | None) -> None:
         current_dir = os.getcwd()
         path_exists = os.path.exists(os.path.join(current_dir, self.args.path))
+
         if path_exists:
             self.args.path = os.path.join(current_dir, self.args.path)
+
         elif root_dir is not None and os.path.exists(os.path.join(root_dir, self.args.path)):
             self.args.path = os.path.join(root_dir, self.args.path)
+
         else:
             raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
 
     def handle_slicing(self) -> dict | None:
         if self.args.slice_spectra is None and self.args.gradient_slice is None:
             return None
+
         elif self.args.slice_spectra:
-            return {'mode': 'equal',
-                    'slices': self.args.slice_spectra}
+            return {'mode': 'equal', 'slices': self.args.slice_spectra}
+
         elif self.args.gradient_slice:
             return {'mode': 'gradient',
-                    'coefficient': self.args.gradient_slice[0],
-                    'exponent': self.args.gradient_slice[1]}
-        else:
-            return None
+                    'coeff': self.args.gradient_slice[0],
+                    'expo': self.args.gradient_slice[1]
+                    }
+        return None
 
     def main(self):
         """
@@ -374,17 +422,19 @@ class CLI:
         if self.args.view is True:
             data = Dataset(self.args.path, view_only=True)
         else:
-            data = Dataset(self.args.path,
-                           trim=self.args.trim,
-                           slicing=self.handle_slicing(),
-                           fitting=self.args.fitting,
-                           outlier_threshold=self.args.outlier_threshold,
-                           baseline_lambda=self.args.baseline_lambda,
-                           baseline_tolerance=self.args.baseline_tolerance,
-                           low_signal_window=self.args.low_signal_window,
-                           time_trace_window=self.args.time_trace_window,
-                           time_trace_interval=self.args.time_trace_interval,
-                           wavelengths=self.args.time_traces)
+            data = Dataset(
+                self.args.path,
+                trim=self.args.trim,
+                slicing=self.handle_slicing(),
+                fitting=self.args.fitting,
+                outlier_threshold=self.args.outlier_threshold,
+                baseline_lambda=self.args.baseline_lambda,
+                baseline_tolerance=self.args.baseline_tolerance,
+                low_signal_window=self.args.low_signal_window,
+                time_trace_window=self.args.time_trace_window,
+                time_trace_interval=self.args.time_trace_interval,
+                wavelengths=self.args.time_traces
+            )
 
         print(data)
         print('Plotting data...')
@@ -400,7 +450,7 @@ class CLI:
     def _prompt_for_export(self, dataset: Dataset) -> list:
         files_exported = []
         options = ['Cleaned spectra']
-        if dataset.specific_time_traces is not None:
+        if dataset.chosen_traces is not None:
             options.extend(['Time traces', 'Both'])
 
         prompt = f'\nExport data?\n{'=' * 12}\n'
@@ -415,7 +465,7 @@ class CLI:
             user_input = input(prompt).strip().lower()
 
         if user_input in ['1', '3']:
-            filename = export_csv(dataset, dataset.sliced_spectra)
+            filename = export_csv(dataset, dataset.processed_spectra)
             files_exported.append(filename)
         if user_input in ['2', '3']:
             filename = export_time_trace(dataset)
@@ -427,7 +477,7 @@ class CLI:
         if dataset.is_processed:
             uvplt.plot_2x2(dataset)
         else:
-            uvplt.plot_spectra(dataset, dataset.all_spectra)
+            uvplt.plot_spectra(dataset, dataset.raw_spectra)
 
 
 def main() -> None:
