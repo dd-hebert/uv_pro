@@ -44,7 +44,8 @@ class FilePicker:
                 os.path.relpath(path, self.root),
                 [file for file in files if os.path.splitext(file)[1].lower() == self.ext.lower()]
             )
-            for path, subdirs, files in os.walk(self.root)]
+            for path, subdirs, files in os.walk(self.root)
+        ]
 
         file_list = [(folder, files) for folder, files in file_list if files]
 
@@ -77,8 +78,10 @@ class FilePicker:
 
                 if file_choice is None:
                     return None  # User wants to quit
+
                 elif file_choice == 'back':
                     continue  # Go back to folder selection
+
                 else:
                     return self._print_selection(folder_name, file_choice)
 
@@ -99,15 +102,16 @@ class FilePicker:
 
         if user_folder in ['q', 'Q']:
             return None
+
         elif user_folder.isnumeric() is False or int(user_folder) not in accepted_range:
             self._print_folders_in_root()
             print('\nInvalid selection. Input a folder number (shown in brackets)',
                   'or q to quit.')
             return self._get_folder_choice()
+
         else:
             folder_index = int(user_folder) - 1
             folder_name = self.file_list[folder_index][0]
-
             return folder_index, folder_name
 
     def _print_files_in_folder(self, folder_index: int, folder_name: str) -> None:
@@ -119,8 +123,10 @@ class FilePicker:
         for index, file in enumerate(self.file_list[folder_index][1]):
             extra_spacing = max_digits - len(str(index + 1))
             spacing = ' ' * (4 + extra_spacing)
+
             if index < len(self.file_list[folder_index][1]) - 1:
                 print(f'[{index + 1}]{spacing}├───{file}\t')
+
             else:
                 print(f'[{index + 1}]{spacing}└───{file}\t')
 
@@ -131,17 +137,19 @@ class FilePicker:
 
         if user_file in ['q', 'Q']:
             return None
+
         elif user_file in ['b', 'B']:
             return 'back'  # Indicates going back
+
         elif user_file.isnumeric() is False or int(user_file) not in accepted_range:
             self._print_files_in_folder(folder_index, folder_name)
             print('\nInvalid selection. Input a file number (shown in brackets)',
                   'or q (quit), b (back).')
             return self._get_file_choice(folder_index, folder_name)
+
         else:
             file_index = int(user_file) - 1
             file_name = self.file_list[folder_index][1][file_index]
-
             return file_name
 
     def _print_selection(self, folder_name: str, file_name: str) -> str:
@@ -152,6 +160,7 @@ class FilePicker:
         # Get file path
         if folder_name == 'root':
             file_path = os.path.join(file_name)
+
         else:
             file_path = os.path.join(folder_name, file_name)
 
@@ -162,6 +171,7 @@ class FilePicker:
         print(self.root)
         if self.file_list:
             for index, entry in enumerate(self.file_list):
+
                 if index < len(self.file_list) - 1:
                     print(f'├───{entry[0]}')
                     for i, file in enumerate(entry[1]):
@@ -169,6 +179,7 @@ class FilePicker:
                             print(f'│   ├───{file}\t')
                         else:
                             print(f'│   └───{file}\t')
+
                 else:
                     print(f'└───{entry[0]}')
                     for i, file in enumerate(entry[1]):

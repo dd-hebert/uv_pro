@@ -9,9 +9,9 @@ the command line with::
 Command Line Arguments
 ----------------------
 -p, --path : str, required
-    The path to a .KD file Paths containing spaces may need to be wrapped
-    in double quotes "". The script will first look for the given path inside
-    the current working directory, then look at the absolute path, and lastly
+    The path to a .KD file. Paths containing spaces should be wrapped in double
+    quotes "". The script will first look for the file inside the current
+    working directory, then look at the absolute path, and lastly
     inside the root directory (if a root directory has been set).
 -bll, --baseline_lambda : float, optional
     Set the smoothness of the baseline (for outlier detection). Higher values
@@ -30,7 +30,7 @@ Command Line Arguments
     only mode. The .KD file must be located inside the root directory.
 -gsl, --gradient_slice : float float, optional
     Slice the data in non-equally spaced slices. Give a coefficient
-    and an exponent and the data slicing will be determined by the equation
+    and an exponent. The data slicing will be determined by the equation
     y = coefficient*x^exponent + 1, where y is the step size between slices.
     The default is None, where all spectra are plotted or exported.
 -grd, --get_root_dir : flag, optional
@@ -48,13 +48,13 @@ Command Line Arguments
 -sl, --slice_spectra : int, optional
     The number of equally-spaced slices to plot or export. Example: if
     :attr:`~uv_pro.process.Dataset.processed_spectra` contains 100 spectra and
-    ``slice_spectra`` is 10, then every tenth spectrum will be plotted. The
+    ``slice_spectra`` is 10, then every tenth spectrum will be kept. The
     default is None, where all spectra are plotted or exported.
 -srd, --set_root_dir : str, optional
     Set a root directory to simplify file path entry. For instance, if
     you store all your UV-vis data files in a common folder, you can designate
-    it as the root directory. Subsequently, any path provided with ``-p`` is
-    assumed to be relative to the root directory.
+    it as the root directory. Subsequently, you can omit the root directory
+    portion of the path provided with ``-p`` and just provide a relative path.
 -tr, --trim : int int, optional
     Trim data outside a given time range: ``[trim_before, trim_after]``.
     Default value is None (no trimming).
@@ -62,12 +62,16 @@ Command Line Arguments
     Print the root directory file tree to the console.
 -tt, --time_traces : arbitrary number of ints, optional
     A list of specific wavelengths (in nm) to create time traces for.
+    These time traces are independent from the time traces created by
+    :meth:`~uv_pro.process.Dataset.get_time_traces()`.
 -tti, --time_trace_interval : int, optional
     Set the interval (in nm) for time traces. An interval of 10 will create
     time traces from the window min to max every 10 nm. Smaller intervals
-    may increase loading times. The default is 10.
+    may increase loading times. Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+    The default is 10.
 -ttw, --time_trace_window : int int, optional
     Set the (min, max) wavelength (in nm) range to get time traces for.
+    Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
     The default is 300 1060.
 -v : flag, optional
     Enable view-only mode. No data processing is performed and a plot of
@@ -123,33 +127,33 @@ class CLI:
         parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
         help_msg = {
             'path': '''Process UV-vis data at the given path.
-                        Either a .KD file or a folder (.csv format).''',
+                       Either a .KD file or a folder (.csv format).''',
             'set_root_dir': '''Set a root directory where data files are located so you
-                           don't have to type a full path every time.''',
+                               don't have to type a full path every time.''',
             'get_root_dir': '''Print the root directory to the console.''',
             'clear_root_dir': '''Clear the current root directory.''',
             'view': '''Enable view only mode (no data processing).''',
             'trim': '''2 args: trim data from __ to __.
-                        Trim the data to remove spectra outside the given time range.''',
+                       Trim the data to remove spectra outside the given time range.''',
             'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
                                     Values closer to 0 result in higher sensitivity (more outliers).
                                     Values closer to 1 result in lower sensitivity (fewer outliers).''',
             'slice_spectra': 'Set the number of slices to plot. Default: None (no slicing).',
             'gradient_slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
-                                    Default: None (no slicing).''',
+                                 Default: None (no slicing).''',
             'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
             'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
             'low_signal_window': '''"narrow" or "wide". Set the width of the low signal outlier detection window.
-                                    Default: "narrow"''',
+                                     Default: "narrow"''',
             'fitting': 'Perform exponential fitting of specified time traces. Default: False.',
             'tree': 'Show the root directory file tree.',
             'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
             'test_mode': 'For testing purposes.',
-            'time_trace_window': '''Set the (min, max) wavelength (in nm) window for time traces during
+            'time_trace_window': '''Set the (min, max) wavelength (in nm) window for time traces used for
                                     outlier detection''',
             'time_trace_interval': '''Set the interval (in nm) for time traces. An interval of 10 will create time
-                                        traces from the window min to max every 10 nm. Smaller intervals will
-                                        increase loading times.''',
+                                      traces from the window min to max every 10 nm. Smaller intervals may
+                                      increase loading times.''',
             'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.',
             'no_export': 'Skip the export data prompt at the end of the script.'
         }
@@ -308,6 +312,7 @@ class CLI:
             '--time_traces',
             action='store',
             nargs='*',
+            type=int,
             default=None,
             metavar='',
             help=help_msg['time_traces']
@@ -374,17 +379,13 @@ class CLI:
                     }
         return None
 
-    def main(self):
+    def main(self) -> None:
         """
         Prehandles command line args.
 
         Handles the args ``-qq``, ``-crd``, ``-srd``, ``-grd``, ``--tree``, and ``-fp``.
         Then handles the path before starting the processing routine
         :meth:`~uv_pro.scripts.cli.CLI.proc()`.
-
-        Returns
-        -------
-        None.
         """
         if self.args.test_mode is True:
             self.handle_test_mode()  # [-qq]
@@ -407,20 +408,17 @@ class CLI:
             self.handle_path(root_dir)
             self.proc()
 
-    def proc(self):
+    def proc(self) -> None:
         """
         Process data.
 
         Initializes a :class:`~uv_pro.process.Dataset` with the
         given ``args``, plots the result, and prompts the user
         for exporting.
-
-        Returns
-        -------
-        None.
         """
         if self.args.view is True:
             data = Dataset(self.args.path, view_only=True)
+
         else:
             data = Dataset(
                 self.args.path,

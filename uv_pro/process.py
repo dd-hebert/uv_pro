@@ -30,11 +30,11 @@ class Dataset:
         The raw spectra found in the .KD file that the :class:`Dataset`
         was created from.
     time_traces : :class:`pandas.DataFrame`
-        The time traces for the :class:`Dataset`. The number of time traces and
-        their wavelengths are dictated by ``time_trace_window`` and
+        The time traces for the :class:`Dataset`. The number of time traces and \
+        their wavelengths are dictated by ``time_trace_window`` and \
         ``time_trace_interval``.
     chosen_traces : :class:`pandas.DataFrame`
-        Time traces for user-specified wavelengths.
+        Time traces of user-specified wavelengths.
     outliers : list
         The times of outlier spectra.
         See :func:`~uv_pro.outliers.find_outliers()` for more information.
@@ -42,13 +42,14 @@ class Dataset:
        The baseline of the summed :attr:`time_traces`.
        See :func:`~uv_pro.outliers.find_outliers()` for more information.
     processed_spectra : :class:`pandas.DataFrame`
-        The processed spectra with :attr:`outliers` removed and with trimming
-        and slicing applied.
+        The processed spectra with :attr:`outliers` removed and with
+        trimming and slicing applied.
     processed_traces : :class:`pandas.DataFrame`
-        The processed chosen traces with :attr:`outliers` and trimming applied.
+        The processed chosen traces with :attr:`outliers` removed and
+        trimming applied.
     is_processed : bool
-        Indicates if the data has been processed. Data is processed only if the
-        :class:`Dataset` was initialized with ``view_only=False``
+        Indicates if the data has been processed. Data is processed only if the \
+        :class:`Dataset` was initialized with ``view_only=False`` \
         and it contains more than 2 spectra.
     """
 
@@ -62,8 +63,11 @@ class Dataset:
         """
         Initialize a :class:`Dataset`.
 
-        Parses the .KD file at ``path`` and processes the found spectra to
-        remove "bad" spectra (e.g. spectra collected when mixing the solution).
+        Parses a .KD file at ``path`` and processes the found spectra. Processing \
+        includes removing "bad" spectra (e.g. stray light or spectra collected \
+        during mixing), trimming (see :meth:`trim_data`), slicing \
+        (see :func:`~uv_pro.slicing.slice_spectra`), and exponential fitting of \
+        time traces.
 
         Parameters
         ----------
@@ -73,10 +77,10 @@ class Dataset:
             Trim data outside a given time range: ``[trim_before, trim_after]``.
             Default value is None (no trimming).
         slicing : dict or None, optional
-            Reduce the data down to a selection of slices. Slices can be taken in
-            equally- or unequally-spaced (gradient) intervals. For equal
-            slicing: ``{'mode': 'equal', 'slices': int}``. For gradient slicing:
-            ``{'mode': 'gradient', 'coeff': float, 'expo': float}``.
+            Reduce the data down to a selection of slices. Slices can be taken in \
+            equally- or unequally-spaced (gradient) intervals.
+            For equal slicing: ``{'mode': 'equal', 'slices': int}``.
+            For gradient slicing: ``{'mode': 'gradient', 'coeff': float, 'expo': float}``.
         fitting : bool, optional
             Perform exponential fitting on the time traces specified with ``wavelengths``
         outlier_threshold : float, optional
@@ -85,14 +89,15 @@ class Dataset:
             while values closer to 1 produce fewer outliers. Use a value >>1 to guarantee
             no data are considered outliers. The default value is 0.1.
         baseline_lambda : float, optional
-            Set the smoothness of the baseline (for outlier detection). Higher values
-            give smoother baselines. Try values between 0.001 and 10000. The default is 10.
+            Set the smoothness of the baseline (for outlier detection). Higher values \
+            give smoother baselines. Try values between 0.001 and 10000.
+            See :func:`~uv_pro.outliers.find_outliers`. The default is 10.
         baseline_tolerance : float, optional
-            Set the exit criteria for the baseline algorithm. Try values between
+            Set the exit criteria for the baseline algorithm. Try values between \
             0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
             for more information.
         low_signal_window : str, "narrow" or "wide", optional
-            Set the width of the low signal detection window (see
+            Set the width of the low signal detection window (see \
             :func:`~uv_pro.outliers.find_outliers()`). Set to wide if low signal
             outliers are affecting the baseline.
         time_trace_window : tuple[int, int] or None, optional
@@ -100,18 +105,18 @@ class Dataset:
             Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
             The default is (300, 1060).
         time_trace_interval : int, optional
-            The wavelength interval (in nm) between time traces. A smaller interval
-            produces more time traces. Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`
-            For example, an interval of 20 would generate time traces like this:
+            The wavelength interval (in nm) between time traces. A smaller interval \
+            produces more time traces. Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            An interval of 20 would generate time traces like this:
             [window min, window min + 20, window min + 40, ..., window max - 20, window max].
             The default value is 10.
-        wavelengths : list[int, ...] or None, optional
-            A list of specific wavelengths to get time traces for. These time traces are
+        wavelengths : list[int] or None, optional
+            A list of specific wavelengths to get time traces for. These time traces are \
             independent of those created by :meth:`~uv_pro.process.Dataset.get_time_traces()`.
             The default is None.
         view_only : bool, optional
-            Indicate if data processing (cleaning and trimming) should be
-            performed. Default is False (processing is performed).
+            Indicate if data processing (cleaning and trimming) should be performed.
+            Default is False (processing is performed).
         """
         self.path = path
         self.name = os.path.basename(self.path)
@@ -151,6 +156,7 @@ class Dataset:
         """
         if len(self.raw_spectra.columns) <= 2:
             pass
+
         else:
             self.time_traces = self.get_time_traces(
                 window=self.time_trace_window,
@@ -169,8 +175,9 @@ class Dataset:
             self.processed_spectra = self._process_spectra()
             self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
 
-            if self.fitting is True:
+            if self.fitting is True and self.processed_traces is not None:
                 self.fit = fit_exponential(self.processed_traces)
+
             else:
                 self.fit = None
 
@@ -188,20 +195,22 @@ class Dataset:
         return processed_spectra
 
     def _process_chosen_traces(self, wavelengths):
-        if wavelengths is not None:
-            chosen_traces = self.get_chosen_traces(wavelengths)
+        if wavelengths is None:
+            return None, None
 
-            if chosen_traces is not None:
-                processed_traces = self.clean_data(chosen_traces, axis='index')
+        chosen_traces = self.get_chosen_traces(wavelengths)
 
-                if self.trim is not None:
-                    processed_traces = self.trim_data(processed_traces, axis='index')
+        if chosen_traces is None:
+            return None, None
 
-            return chosen_traces, processed_traces
+        processed_traces = self.clean_data(chosen_traces, axis='index')
 
-        return None, None
+        if self.trim:
+            processed_traces = self.trim_data(processed_traces, axis='index')
 
-    def get_time_traces(self, window=(300, 1060), interval=10):
+        return chosen_traces, processed_traces
+
+    def get_time_traces(self, window=(300, 1060), interval=10) -> pd.DataFrame:
         """
         Iterate through different wavelengths and get time traces.
 
@@ -227,48 +236,32 @@ class Dataset:
         :class:`pandas.DataFrame`
             The raw time traces, where each column is a different wavelength.
         """
-        all_time_traces = {}
-        for wavelength in range(window[0], window[1] + 1, interval):
-            time_trace = self.raw_spectra.loc[wavelength]
-            time_trace.index = pd.Index(self.spectra_times, name='Time (s)')
-            if time_trace.median() < 1.75:  # Exclude saturated wavelengths.
-                key = f'{wavelength} (nm)'
-                all_time_traces[key] = time_trace
-        return pd.DataFrame.from_dict(all_time_traces)
+        time_traces = self.raw_spectra.loc[window[0]:window[1]:interval].transpose()
+        return time_traces[time_traces.median(axis='columns') < 1.75]
 
-    def get_chosen_traces(self, wavelengths, window=(190, 1100)):
+    def get_chosen_traces(self, wavelengths: list[int]) -> pd.DataFrame:
         """
         Get time traces of specific wavelengths.
 
         Parameters
         ----------
-        wavelengths: list
+        wavelengths: list[int]
             A list of wavelengths to get time traces for.
-        window : tuple, optional
-            The range of wavelengths captured by the spectrometer.
-            The default value is (190, 1100).
 
         Returns
         -------
         :class:`pandas.DataFrame` or None
-            The raw time traces, where each column is a different
-            wavelength. Otherwise, returns None if no wavelengths
-            are given or no time traces could be made.
+            The chosen time traces, where each column is a different
+            wavelength. Returns None if no wavelengths are given or if
+            the given wavelengths are not found in :attr:`raw_spectra`.
         """
-        time_traces = {}
-        for wavelength in wavelengths:
-            if int(wavelength) not in range(window[0], window[1] + 1):
-                continue
+        wavelengths = [
+            wavelength for wavelength in wavelengths if wavelength in self.raw_spectra.index
+        ]
 
-            trace = self.raw_spectra.loc[int(wavelength)]
-            key = f'{int(wavelength)} (nm)'
-            time_traces[key] = trace
+        if wavelengths:
+            return self.raw_spectra.loc[wavelengths].transpose()
 
-        if time_traces:
-            chosen_traces = pd.DataFrame.from_dict(time_traces)
-            time_values = pd.Index(self.spectra_times, name='Time (s)')
-            chosen_traces.set_index(time_values, inplace=True)
-            return chosen_traces
         else:
             return None
 
@@ -313,5 +306,6 @@ class Dataset:
             start = min(self.trim)
             end = max(self.trim)
             self.trim = (start, end)
+
         except TypeError:
             pass

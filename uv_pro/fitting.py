@@ -38,17 +38,20 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
     for column in time_traces.columns:
         try:
             p0 = [time_traces[column].iloc[0], time_traces[column].iloc[-1], 0.1]
+
             popt, pcov = curve_fit(
                 f=exponential,
                 xdata=time_traces.index,
                 ydata=time_traces[column],
                 p0=p0
             )
+
             curve = pd.Series(
                 data=exponential(time_traces.index, *popt),
                 index=time_traces.index,
                 name=column
             )
+
             perr = np.sqrt(np.diag(pcov))
             r2 = rsquared(time_traces[column], curve)
             fit[column] = {'popt': popt, 'perr': perr, 'curve': curve, 'r2': r2}

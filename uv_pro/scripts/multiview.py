@@ -143,6 +143,10 @@ def multiview(files):
     try:
         with ThreadPoolExecutor(max_workers=50) as executor:
             executor.map(run_uvp_script, files)
+
+    except TypeError:
+        pass
+
     except Exception as e:
         print(f"An error occurred while processing the files: {str(e)}")
 
