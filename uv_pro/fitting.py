@@ -22,7 +22,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
 
     Parameters
     ----------
-    time_traces : :class:`pd.DataFrame`
+    time_traces : :class:`pandas.DataFrame`
         The time traces to fit.
 
     Returns
@@ -43,7 +43,8 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
                 f=exponential,
                 xdata=time_traces.index,
                 ydata=time_traces[column],
-                p0=p0
+                p0=p0,
+                bounds=(-1, [10, 10, np.inf])
             )
 
             curve = pd.Series(
@@ -57,7 +58,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
             fit[column] = {'popt': popt, 'perr': perr, 'curve': curve, 'r2': r2}
 
         except RuntimeError:
-            print(f'Unable to fit exponential to {column}.')
+            print(f'\033[31mUnable to fit exponential to {column} nm.\033[0m')
 
     if fit:
         return fit
@@ -65,6 +66,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
 
 
 def rsquared(data: pd.Series, fit: pd.Series) -> float:
+    """Calculate r-squared."""
     ss_res = np.sum((data - fit) ** 2)
     ss_tot = np.sum((data - np.mean(data)) ** 2)
     r2 = 1 - (ss_res / ss_tot)

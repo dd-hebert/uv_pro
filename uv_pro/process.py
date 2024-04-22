@@ -183,7 +183,7 @@ class Dataset:
 
             self.is_processed = True
 
-    def _process_spectra(self):
+    def _process_spectra(self) -> pd.DataFrame:
         processed_spectra = self.clean_data(self.raw_spectra, axis='columns')
 
         if self.trim is not None:
@@ -194,7 +194,7 @@ class Dataset:
 
         return processed_spectra
 
-    def _process_chosen_traces(self, wavelengths):
+    def _process_chosen_traces(self, wavelengths: list[int]) -> tuple[pd.DataFrame, pd.DataFrame] | tuple[None, None]:
         if wavelengths is None:
             return None, None
 
@@ -239,7 +239,7 @@ class Dataset:
         time_traces = self.raw_spectra.loc[window[0]:window[1]:interval].transpose()
         return time_traces[time_traces.median(axis='columns') < 1.75]
 
-    def get_chosen_traces(self, wavelengths: list[int]) -> pd.DataFrame:
+    def get_chosen_traces(self, wavelengths: list[int]) -> pd.DataFrame | None:
         """
         Get time traces of specific wavelengths.
 
@@ -256,14 +256,10 @@ class Dataset:
             the given wavelengths are not found in :attr:`raw_spectra`.
         """
         wavelengths = [
-            wavelength for wavelength in wavelengths if wavelength in self.raw_spectra.index
+            wavelength for wavelength in set(wavelengths) if wavelength in self.raw_spectra.index
         ]
 
-        if wavelengths:
-            return self.raw_spectra.loc[wavelengths].transpose()
-
-        else:
-            return None
+        return self.raw_spectra.loc[wavelengths].transpose() if wavelengths else None
 
     def clean_data(self, data: pd.DataFrame, axis: str) -> pd.DataFrame:
         """

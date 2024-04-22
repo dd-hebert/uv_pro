@@ -19,7 +19,7 @@ def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: fl
 
     Parameters
     ----------
-    time_traces : :class:`pd.DataFrame`
+    time_traces : :class:`pandas.DataFrame`
         Time traces to find outliers with.
     threshold : float
         The outlier threshold, values closer to 0 produce more outliers
@@ -39,7 +39,7 @@ def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: fl
     -------
     outliers : list
         A list of time values for outlier data points.
-    baseline : :class:`pd.Series`
+    baseline : :class:`pandas.Series`
         The baseline used for outlier detection.
     """
     outliers = []
@@ -67,14 +67,14 @@ def find_low_signal_outliers(data: pd.DataFrame, window: str) -> set[float]:
 
     Parameters
     ----------
-    data : :class:`pd.DataFrame`
+    data : :class:`pandas.DataFrame`
         The data to check for low signal outliers.
     window : str
         The width of the low signal outlier window. Either 'wide' or 'narrow'.
 
     Returns
     -------
-    outliers : set[float]
+    outliers : set[float, ...]
         A set of outlier x-axis values.
     """
     outlier_cutoff = len(data.columns) * 0.1
@@ -99,23 +99,21 @@ def compute_baseline(data: pd.DataFrame, lam: float, tol: float) -> pd.Series:
     return pd.Series(asls(data, lam=lam, tol=tol)[0], data.index)
 
 
-def find_baseline_outliers(data: pd.DataFrame, threshold: float) -> set:
+def find_baseline_outliers(data: pd.DataFrame, threshold: float) -> pd.Index:
     """
     Find outliers outside the given ``threshold`` from the baseline.
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : :class:`pandas.DataFrame`
         The data to find outliers with.
     threshold : float
         The outlier threshold.
 
     Returns
     -------
-    outliers : set
-        A set of outlier x-axis values.
+    :class:`pandas.Index`
+        Outlier x-axis values.
     """
     # Normalize data and get index of rows above threshold.
-    max_value = data.abs().max()
-    outliers = data[data.abs() / max_value > threshold].index
-    return outliers
+    return data[data.abs() / data.abs().max() > threshold].index

@@ -118,15 +118,16 @@ class KDFile:
         return self._spectra_dataframe(list_of_spectra, spectra_times)
 
     def _handle_spectratimes(self) -> pd.Series:
-        return pd.Series(
-            self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes),
-            name='Time (s)')
+        spectra_times = self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes)
+        if spectra_times is None:
+            raise Exception('Error parsing file. No spectra times found.')
+        return pd.Series(spectra_times, name='Time (s)')
 
     def _handle_cycletime(self) -> int:
-        cycle_time = int(self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0])
-        if cycle_time is None:
-            cycle_time = 1
-        return cycle_time
+        try:
+            return int(self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0])
+        except TypeError:
+            return None
 
     def _extract_data(self, header: dict, parse_func: callable) -> list:
         data_list = []
@@ -144,10 +145,7 @@ class KDFile:
             data_list.append(data)
             position = data_start + self.absorbance_table_length
 
-        if data_list == []:
-            return None
-
-        return data_list
+        return data_list if data_list else None
 
     def _parse_spectra(self, data_start: int) -> pd.Series:
         data_end = data_start + self.absorbance_table_length
@@ -156,12 +154,10 @@ class KDFile:
         return pd.Series(absorbance_values, index=self.wavelength_range)
 
     def _parse_spectratimes(self, data_start: int) -> float:
-        time_value = float(struct.unpack_from('<d', self.file_bytes, data_start)[0])
-        return time_value
+        return float(struct.unpack_from('<d', self.file_bytes, data_start)[0])
 
     def _parse_cycletime(self, data_start: int) -> int:
-        cycle_time = int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
-        return cycle_time
+        return int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
 
     def _spectra_dataframe(self, spectra: list, spectra_times: pd.Series) -> pd.DataFrame:
         df = pd.concat(spectra, axis=1)

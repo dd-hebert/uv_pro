@@ -49,11 +49,11 @@ class FilePicker:
 
         file_list = [(folder, files) for folder, files in file_list if files]
 
-        if not file_list:
-            print('No files found.')
-            return None
+        if file_list:
+            return file_list
 
-        return file_list
+        print('No files found.')
+        return None
 
     def pick_file(self) -> str:
         """
@@ -70,23 +70,22 @@ class FilePicker:
                 folder_choice = self._get_folder_choice()
 
                 if folder_choice is None:
-                    return None  # User wants to quit
+                    return None
 
                 folder_index, folder_name = folder_choice
                 self._print_files_in_folder(folder_index, folder_name)
                 file_choice = self._get_file_choice(folder_index, folder_name)
 
                 if file_choice is None:
-                    return None  # User wants to quit
+                    return None
 
                 elif file_choice == 'back':
-                    continue  # Go back to folder selection
+                    continue
 
                 else:
                     return self._print_selection(folder_name, file_choice)
 
     def _print_folders_in_root(self):
-        # Print list of folders in root directory
         print(f'\n{self.root}')
         max_digits = len(str(len(self.file_list)))
 
@@ -96,26 +95,24 @@ class FilePicker:
             print(f'[{index + 1}]{spacing}{entry[0]}')
 
     def _get_folder_choice(self) -> tuple[int, str] | None:
-        # Get user folder choice
-        user_folder = input('\nSelect a folder: ')
+        selection = input('\nSelect a folder: ')
         accepted_range = range(1, len(self.file_list) + 1)
 
-        if user_folder in ['q', 'Q']:
+        if selection in ['q', 'Q']:
             return None
 
-        elif user_folder.isnumeric() is False or int(user_folder) not in accepted_range:
+        elif selection.isnumeric() is False or int(selection) not in accepted_range:
             self._print_folders_in_root()
             print('\nInvalid selection. Input a folder number (shown in brackets)',
                   'or q to quit.')
             return self._get_folder_choice()
 
         else:
-            folder_index = int(user_folder) - 1
+            folder_index = int(selection) - 1
             folder_name = self.file_list[folder_index][0]
             return folder_index, folder_name
 
     def _print_files_in_folder(self, folder_index: int, folder_name: str) -> None:
-        # Print list of files in user selected folder
         max_digits = len(str(len(self.file_list[folder_index][1])))
         spacing = ' ' * (6 + max_digits)
         print(f'\n{spacing}{folder_name}:')
@@ -131,40 +128,34 @@ class FilePicker:
                 print(f'[{index + 1}]{spacing}└───{file}\t')
 
     def _get_file_choice(self, folder_index: int, folder_name: str) -> str | None:
-        # Get user file choice
-        user_file = input('\nSelect a file: ')
+        selection = input('\nSelect a file: ')
         accepted_range = range(1, len(self.file_list[folder_index][1]) + 1)
 
-        if user_file in ['q', 'Q']:
+        if selection in ['q', 'Q']:
             return None
 
-        elif user_file in ['b', 'B']:
-            return 'back'  # Indicates going back
+        elif selection in ['b', 'B']:
+            return 'back'
 
-        elif user_file.isnumeric() is False or int(user_file) not in accepted_range:
+        elif selection.isnumeric() is False or int(selection) not in accepted_range:
             self._print_files_in_folder(folder_index, folder_name)
             print('\nInvalid selection. Input a file number (shown in brackets)',
                   'or q (quit), b (back).')
             return self._get_file_choice(folder_index, folder_name)
 
         else:
-            file_index = int(user_file) - 1
-            file_name = self.file_list[folder_index][1][file_index]
-            return file_name
+            return self.file_list[folder_index][1][int(selection) - 1]
 
     def _print_selection(self, folder_name: str, file_name: str) -> str:
         print('┏' + '┅' * (len(file_name) + 17) + '┓')
         print(f'┇ File selected: {file_name} ┇')
         print('┗' + '┅' * (len(file_name) + 17) + '┛')
 
-        # Get file path
         if folder_name == 'root':
-            file_path = os.path.join(file_name)
+            return file_name
 
         else:
-            file_path = os.path.join(folder_name, file_name)
-
-        return file_path
+            return os.path.join(folder_name, file_name)
 
     def tree(self) -> None:
         """Print the root directory file tree to the console."""

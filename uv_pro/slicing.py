@@ -63,8 +63,5 @@ def _check_gradient_slice_coeff(coeff) -> None:
 
 def equal_slicing(spectra: DataFrame, num_slices: int) -> DataFrame:
     """Get equally-spaced slices from ``spectra``."""
-    step = round(len(spectra.columns) / num_slices)
-    if step == 0:
-        step = 1
-    columns_to_keep = list(range(0, len(spectra.columns), step))
-    return spectra.iloc[:, columns_to_keep]
+    step = max(1, len(spectra.columns) // num_slices)
+    return spectra.iloc[:, list(range(0, len(spectra.columns), step))]
