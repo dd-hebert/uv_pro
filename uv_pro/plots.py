@@ -210,10 +210,17 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
         title='Time Traces'
     )
 
+    color = None
+    linestyle = None
+    alpha = 1
+
     if dataset.fit:
         _plot_fit_curves(ax, dataset)
+        color = 'k'
+        linestyle = ':'
+        alpha = 0.8
 
-    ax.plot(time_traces)
+    ax.plot(time_traces, alpha=alpha, linestyle=linestyle, color=color, zorder=2)
 
 
 def _combined_time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
@@ -289,14 +296,13 @@ def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
 
 
 def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
-    for i, wavelength in enumerate(dataset.fit.keys()):
+    for i, wavelength in enumerate(dataset.fit['curves'].columns):
         linecolor = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
         ax.plot(
-            dataset.fit[wavelength]['curve'],
+            dataset.fit['curves'][wavelength],
             label=wavelength,
             color=linecolor,
-            linestyle=(0, (1, 0.2)),
-            alpha=0.3,
+            alpha=0.6,
             linewidth=6,
             zorder=1
         )
@@ -305,10 +311,10 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
             [
                 f'{wavelength}',
                 r'$k_{obs} =$',
-                f'{dataset.fit[wavelength]['popt'][2]:.2e}',
-                f'± {dataset.fit[wavelength]['perr'][2]:.2e}',
+                f'{dataset.fit['params'][wavelength]['kobs']:.2e}',
+                f'± {dataset.fit['params'][wavelength]['kobs err']:.2e}',
                 r'$r^2 =$',
-                f'{dataset.fit[wavelength]['r2']:.3f}'
+                f'{dataset.fit['params'][wavelength]['r2']:.3f}'
             ]
         )
 

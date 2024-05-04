@@ -8,7 +8,6 @@ can be found in the user's home directory.
 """
 
 import os
-import shutil
 from configparser import ConfigParser
 
 
@@ -49,7 +48,7 @@ class Config:
     def get_defaults(self) -> ConfigParser:
         """Get the default configuration."""
         default_config = ConfigParser()
-        default_config['Settings'] = {"root_directory": Config.directory}
+        default_config['Settings'] = {"root_directory": ""}
         return default_config
 
     def reset(self) -> None:
@@ -73,5 +72,9 @@ class Config:
         self.write_config(self.config)
 
     def delete(self) -> None:
-        """Delete the config file directory and everything inside it."""
-        shutil.rmtree(Config.directory)
+        """Delete the config file and directory."""
+        try:
+            os.remove(os.path.join(Config.directory, Config.filename))
+            os.rmdir(Config.directory)
+        except (OSError, FileNotFoundError):
+            pass

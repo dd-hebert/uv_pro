@@ -34,7 +34,7 @@ def print_dataset(dataset) -> None:
             equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
             print(f'Fit function: {equation}')
             print_fit(dataset.fit)
-            if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit.keys())):
+            if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
                 print(f'\033[31mUnable to fit: {", ".join(map(str, unable_to_fit))} nm.\033[0m')
 
     return ''
@@ -49,11 +49,11 @@ def print_fit(fit: dict) -> None:
     print(table_headings.format('λ', 'kobs', 'abs_0', 'abs_f', 'r2'))
     print('├' + '─' * table_width + '┤')
 
-    for wavelength, fit in fit.items():
-        abs_0 = '{:+.2e}'.format(fit['popt'][0])
-        abs_f = '{:+.2e}'.format(fit['popt'][1])
-        kobs = '{:.2e} ± {:.2e}'.format(fit['popt'][2], fit['perr'][2])
-        r2 = '{:.4f}'.format(fit['r2'])
+    for wavelength in fit['params'].columns:
+        abs_0 = '{:+.2e}'.format(fit['params'][wavelength]['abs_0'])
+        abs_f = '{:+.2e}'.format(fit['params'][wavelength]['abs_f'])
+        kobs = '{:.2e} ± {:.2e}'.format(fit['params'][wavelength]['kobs'], fit['params'][wavelength]['kobs err'])
+        r2 = '{:.4f}'.format(fit['params'][wavelength]['r2'])
         print('│ {:<4}   {}   {}   {}   {} │'.format(wavelength, kobs, abs_0, abs_f, r2))
 
     print('└' + '─' * table_width + '┘')

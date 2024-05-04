@@ -34,7 +34,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
         print('Fitting skipped. Not enough data points...\n')
         return None
 
-    fit = {}
+    fit = {'params': {}, 'curves': {}}
     for column in time_traces.columns:
         try:
             p0 = [time_traces[column].iloc[0], time_traces[column].iloc[-1], 0.1]
@@ -55,12 +55,23 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
 
             perr = np.sqrt(np.diag(pcov))
             r2 = rsquared(time_traces[column], curve)
-            fit[column] = {'popt': popt, 'perr': perr, 'curve': curve, 'r2': r2}
+            fit['curves'][column] = curve
+            fit['params'][column] = {
+                'abs_0': popt[0],
+                'abs_0 err': perr[0],
+                'abs_f': popt[1],
+                'abs_f err': perr[1],
+                'kobs': popt[2],
+                'kobs err': perr[2],
+                'r2': r2
+            }
 
         except RuntimeError:
             print(f'\033[31mUnable to fit exponential to {column} nm.\033[0m')
 
     if fit:
+        fit['params'] = pd.DataFrame(fit['params'])
+        fit['curves'] = pd.DataFrame(fit['curves'])
         return fit
     return None
 

@@ -95,15 +95,17 @@ Examples
 
 @author: David Hebert
 """
-
+import sys
 import argparse
 import os
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
-from uv_pro.io.export import export_csv
-from uv_pro.io.export import export_time_trace
+from uv_pro.io.export import prompt_for_export
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
+
+
+sys.tracebacklimit = 0
 
 
 class CLI:
@@ -328,7 +330,8 @@ class CLI:
         return parser.parse_args()
 
     def get_root_dir(self) -> str:
-        return self.config.config['Settings']['root_directory']
+        root_dir = self.config.config['Settings']['root_directory']
+        return root_dir if root_dir else None
 
     def modify_root_dir(self, directory: str) -> None:
         self.config.modify('Settings', 'root_directory', directory)
@@ -417,10 +420,10 @@ class CLI:
         for exporting.
         """
         if self.args.view is True:
-            data = Dataset(self.args.path, view_only=True)
+            dataset = Dataset(self.args.path, view_only=True)
 
         else:
-            data = Dataset(
+            dataset = Dataset(
                 self.args.path,
                 trim=self.args.trim,
                 slicing=self.handle_slicing(),
@@ -434,46 +437,21 @@ class CLI:
                 wavelengths=self.args.time_traces
             )
 
-        print(data)
+        print(dataset)
+        self._plot_and_export(dataset)
+
+    def _plot_and_export(self, dataset: Dataset) -> None:
+        """Plot a :class:`~uv_pro.process.Dataset` and prompt the user for export."""
         print('Plotting data...')
-        self._show_plots(data)
-
-        if data.is_processed is True and self.args.no_export is False:
-            files_exported = self._prompt_for_export(data)
-            if files_exported:
-                print(f'\nExport location: {os.path.dirname(self.args.path)}')
-                print('Files exported:')
-                [print(f'\t{file}') for file in files_exported]
-
-    def _prompt_for_export(self, dataset: Dataset) -> list:
-        files_exported = []
-        options = ['Cleaned spectra']
-        if dataset.chosen_traces is not None:
-            options.extend(['Time traces', 'Both'])
-
-        prompt = f'\nExport data?\n{'=' * 12}\n'
-        prompt += '\n'.join([f'({i}) {option}' for i, option in enumerate(options, start=1)])
-        prompt += '\n(q) Quit\n\nChoice: '
-
-        valid_choices = [str(i) for i in range(1, len(options) + 1)] + ['q']
-        user_input = input(prompt).strip().lower()
-
-        while user_input not in valid_choices:
-            print('\nUnrecognized input.')
-            user_input = input(prompt).strip().lower()
-
-        if user_input in ['1', '3']:
-            filename = export_csv(dataset, dataset.processed_spectra)
-            files_exported.append(filename)
-        if user_input in ['2', '3']:
-            filename = export_time_trace(dataset)
-            files_exported.append(filename)
-
-        return files_exported
-
-    def _show_plots(self, dataset: Dataset) -> None:
         if dataset.is_processed:
             uvplt.plot_2x2(dataset)
+
+            if self.args.no_export is False:
+                if files_exported := prompt_for_export(dataset):
+                    print(f'\nExport location: {os.path.dirname(self.args.path)}')
+                    print('Files exported:')
+                    [print(f'\t{file}') for file in files_exported]
+
         else:
             uvplt.plot_spectra(dataset, dataset.raw_spectra)
 
