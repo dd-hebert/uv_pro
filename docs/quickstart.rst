@@ -23,17 +23,47 @@ Alternatively, you could open a terminal session inside ``C:\mystuff\UV-Vis Data
 
 Trim Your Data
 --------------
-You can ``trim`` your data to keep only a portion between a given interval. For example, if in
-an experiment you collected spectra over 2000 seconds, but you only wish you keep the a portion
-of the spectra, you can ``trim`` the data with ``-tr`` or ``--trim``::
+You can ``trim`` your data to remove spectra outside a given time range. For example, if you collected
+spectra over 2000 seconds but only want to keep the data between 10 seconds and 100 seconds,
+you can use ``-tr 10 100`` or ``--trim 10 100``::
 
     # Trim data, keeping the spectra from 100 to 1000 seconds.
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -tr 100 1000
 
-Spectra outside of the time range values given with ``trim`` will be removed.
+Spectra outside of the time range given with ``trim`` will be removed.
+
+Data Slicing
+------------
+You can use slicing to reduce the data down to a selection of slices. Slices can be taken at equally- or
+unequally-spaced (gradient) intervals (see :func:`slice_spectra <uv_pro.slicing.slice_spectra>`.
+For example, if you collected 200 spectra but only want to plot 10, you can use ``-sl 10`` or
+``--slice_spectra 10``::
+
+    # Get 10 equally-spaced slices.
+    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -sl 10
+
+
+Alternatively, unequally-spaced slicing (gradient slicing ``-gsl`` or ``--gradient_slice``) can be performed.
+Gradient slicing works best in situations where the spectra change very rapidly at the beginning of an
+experiment and slowly at the end (or vice versa). For gradient slicing, the step size between slices
+is calculated by the equation:
+
+.. math::
+    \mathrm{step size} = a * x^b + 1.
+
+Gradient slicing requires two values, a coefficient (*a*) and an exponent (*b*). Use a small coefficient
+(<=1) and positive exponent (>1) for spectra that change rapidly in the beginning and slowly at the end.
+On the other hand, a large coefficient (>5) and negative exponent (<-1) work best for spectra that change
+slowly in the beginning and rapidly at the end.
+
+Example::
+
+    # Take unequally-spaced slices
+    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -gsl 0.5 2
+
 
 Removing Outliers
-----------------------------
+-----------------
 Often during a UV-Vis experiment, reagents are being added and the solution is being mixed,
 for example during a titration experiment. Mixing and adding reagents can cause big spikes or dips
 in the absorbance, and these "outlier" spectra should be removed from the final data plot.
@@ -56,7 +86,6 @@ The :func:`outlier_threshold <uv_pro.process.Dataset.__init__>` can be set using
 
 The default :func:`outlier_threshold <uv_pro.process.Dataset.__init__>` is 0.1.
 
-
 The outlier threshold is a float value from 0 to 1 and is represented by the blue-filled region in the
 **Combined Time Traces & Baseline** plot, shown in the image below: 
 
@@ -64,7 +93,7 @@ The outlier threshold is a float value from 0 to 1 and is represented by the blu
 
 Points along the **combined time trace** (black line) that fall outside the blue-filled region are
 considered :attr:`~uv_pro.process.Dataset.outliers` (marked with red X's in the
-:func:`2x2 plot <uv_pro.plots.plot_2x2()>`). 
+:func:`2x2 plot <uv_pro.plots.plot_2x2()>`).
 
     - *Increasing* the outlier threshold will catch *fewer* outliers.
     - *Decreasing* the outlier threshold will catch *more* outliers.
@@ -82,7 +111,7 @@ argument at the terminal::
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" --baseline_lambda 1000
 
 Higher ``-bll`` values give smoother baselines. Try values between 0.001 and 10000. The default is 10.
-See pybaselines.whittaker_ for more in-depth information. The image below shows how different values
+See `pybaselines.whittaker_` for more in-depth information. The image below shows how different values
 of ``-bll`` affect the :attr:`~uv_pro.process.Dataset.baseline`:
 
 .. image:: B3_lam_comparison.png
@@ -97,25 +126,25 @@ smooth and not follow the data closely enough. In general, the ``-bll`` value re
 baseline tolerance [-blt]
 `````````````````````````
 The :func:`baseline_tolerance <uv_pro.process.Dataset.__init__>` specifies the exit criteria of the
-:attr:`~uv_pro.process.Dataset.baseline` detection algorithm (see: pybaselines.whittaker.asls_), and
-can be set using the ``-blt`` or ``--baseline_tolerance`` argument at the terminal::
+:attr:`~uv_pro.process.Dataset.baseline` detection algorithm, and can be set using the ``-blt`` or
+``--baseline_tolerance`` argument at the terminal::
 
     # Set the baseline tolerance.
     uvp -p mydata.KD -blt 0.01
     uvp -p mydata.KD --baseline_tolerance 10
 
-Try ``-blt`` values between 0.001 and 10000. The default is 0.1.
-See pybaselines.whittaker_ for more in-depth information.
+Try ``-blt`` values between 0.001 and 10000. The default is 0.1. See `pybaselines.whittaker_` for
+more in-depth information.
 
 
 low signal window [-lsw]
 ````````````````````````
+Low signal outliers usually 
 The :func:`low_signal_window <uv_pro.process.Dataset.__init__>` sets the width of the low signal detection
-window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). A low signal outlier is a spectrum which has very
-low total absorbance across all captured wavelengths, which typically occurs when the sample is removed from the
-spectrometer. Removing low signal outliers is important because the baseline algorithm gives
-`preferential weighting to negative peaks`__. The presence of negative peaks in your data will significantly affect
-the data cleaning routine.
+window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). Low signal outliers typically occur when the
+cuvette is removed from the instrument during data collection, resulting in an abrupt dip in the time trace.
+Removing these outliers is important because their presence can significantly impact the baseline and outlier detection.
+
 You can set the size of the window using the ``-lsw`` or ``--low_signal_window`` argument at the terminal::
 
     # Set the low signal outlier window size.
@@ -123,14 +152,14 @@ You can set the size of the window using the ``-lsw`` or ``--low_signal_window``
     uvp -p mydata.KD --low_signal_window "narrow"  # default
 
 The default size is ``"narrow"``, meaning only the spectra with low total absorbance are considered
-low signal outliers. If the size is set to ``"wide"``, then the spectra immediately neighboring a low signal
-outlier are also considered :attr:`~uv_pro.process.Dataset.outliers`. The image below illustrates
+low signal outliers. If the size is set to ``"wide"``, the points neighboring a low signal
+outlier are also removed :attr:`~uv_pro.process.Dataset.outliers`. The image below illustrates
 the effect of changing the size of the low signal outlier window:
 
 .. image:: C2_lsw_comparison.png
 
-In the left plot, you'll notice that the baseline (depicted as the light blue region) doesn't closely follow
-the data due to certain problematic data points, indicated by magenta circles. These points aren't considered
+In the left plot, notice how the baseline (depicted as the light blue region) doesn't closely follow
+the data due to certain problematic data points, shown in the magenta circles. These points aren't considered
 low signal outliers (circled in green). In the right plot, we've adjusted the window size to ``"wide"``.
 As a result, the points immediately before and after each low signal outlier are also counted as
 :attr:`~uv_pro.process.Dataset.outliers`. Consequently, the :attr:`~uv_pro.process.Dataset.baseline` now follows
@@ -141,13 +170,25 @@ the situation, further adjustments to other :attr:`~uv_pro.process.Dataset.basel
 achieve a better fit.
 
 In general, the default ``"narrow"`` window size works well when the dips in the absorbance are sharp. If the
-dips are broader, a ``"wide"`` window may be necessary. Keep in mind that using a wider window has a side effect:
+dips are more broad, a ``"wide"`` window may be necessary. Keep in mind that using a wider window has a side effect:
 more spectra will be categorized as  :attr:`~uv_pro.process.Dataset.outliers` and removed from
 the final plot. However, this is primarily a concern when working with smaller datasets that contain fewer spectra.
 
-.. _pybaselines.whittaker: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html
-.. _pybaselines.whittaker.asls: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares
-__ pybaselines.whittaker.asls_
+Exponential Fitting
+-------------------
+You can perform exponential fitting on time traces using ``-fit`` or ``--fitting``. The wavelengths to fit must be
+given with ``-tt`` or ``--time_traces``::
+
+    # Perform exponential fitting on time traces at 450 nm and 780 nm
+    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -tt 450 780 -fit
+
+Exponential fitting is performed using `scipy.optimize.curve_fit_`, which attempts to fit the function
+
+.. math::
+    \mathrm{Abs}_t = \mathrm{Abs_f} + (\mathrm{Abs_0} - \mathrm{Abs_f})e^{-k_{obs}t}
+
+The fitting parameters are printed to the console and are also displayed in the **Time Traces** subplot
+(see :func:`2x2 plot <uv_pro.plots.plot_2x2()>`).
 
 Examples
 --------
@@ -163,3 +204,6 @@ parameters, show 25 slices, and get time traces for 780 nm and 1020 nm::
 
 The arguments are flexible and can be used in basically any order (except ``-p`` which must come first). However, each argument
 should only occur once.
+
+.. _pybaselines.whittaker: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html
+.. _scipy.optimize.curve_fit: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html

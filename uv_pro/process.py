@@ -47,6 +47,8 @@ class Dataset:
     processed_traces : :class:`pandas.DataFrame`
         The processed chosen traces with :attr:`outliers` removed and
         trimming applied.
+    fit : dict
+        The fitting curves and parameters.
     is_processed : bool
         Indicates if the data has been processed. Data is processed only if the \
         :class:`Dataset` was initialized with ``view_only=False`` \

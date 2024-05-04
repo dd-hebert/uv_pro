@@ -9,7 +9,7 @@ a full absolute path::
 
 Alternatively, you can open a terminal session inside a folder containing a data file and a relative path::
 
-    # Current working directory = C:\full\path\to\you\data
+    # Current working directory = C:\full\path\to\your\data
     uvp -p file.KD
 
 ``uv_pro`` has a helpful root directory feature ``-srd`` which you can use to shorten the file paths you type.
