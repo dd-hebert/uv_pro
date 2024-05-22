@@ -238,8 +238,8 @@ class Dataset:
         :class:`pandas.DataFrame`
             The raw time traces, where each column is a different wavelength.
         """
-        time_traces = self.raw_spectra.loc[window[0]:window[1]:interval].transpose()
-        return time_traces[time_traces.median(axis='columns') < 1.75]
+        time_traces = self.raw_spectra.loc[window[0]:window[1]:interval]
+        return time_traces[time_traces.median(axis='columns') < 1.75].transpose()
 
     def get_chosen_traces(self, wavelengths: list[int]) -> pd.DataFrame | None:
         """

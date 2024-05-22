@@ -334,7 +334,10 @@ class CLI:
         return root_dir if root_dir else None
 
     def modify_root_dir(self, directory: str) -> None:
-        self.config.modify('Settings', 'root_directory', directory)
+        if os.path.exists(directory):
+            self.config.modify('Settings', 'root_directory', directory)
+        else:
+            raise FileNotFoundError(f'The directory does not exist: {directory}')
 
     def reset_root_dir(self) -> None:
         self.config.reset()
