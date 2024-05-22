@@ -14,11 +14,13 @@ Contents
 
 Installation
 ------------
-``uv_pro`` can be installed directly from this repo using pip:
+If you have git installed on your system, you can directly install ``uv_pro`` from this repo using pip:
 
 ```
 pip install git+https://github.com/dd-hebert/uv_pro.git
 ```
+
+Otherwise, clone this repo and use [setuptools](https://setuptools.pypa.io/en/latest/userguide/quickstart.html) to build the package (``python -m build``) then use pip to install the resulting ``.whl`` file.
 
 Command Line Interface
 ----------------------
@@ -57,9 +59,6 @@ Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra th
 
 #### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
 Set the width of the low signal outlier detection window. Set to "wide" if low signals are interfering with the baseline.
-
-#### ``-ne``, ``--no_export`` : flag, optional
-Bypass the data export prompt at the end of the script.
 
 #### ``-ot``, ``--outlier_threshold`` : float between 0 and 1, optional
 The threshold by which spectra are considered outliers. Values closer to 0 will produce more outliers, while values closer to 1 will produce fewer outliers. A value of 1 will produce no outliers. The default value is 0.1.
@@ -126,6 +125,9 @@ Use ``-h`` to get help with command line arguments.
 
 #### ``-fp``, ``--file_picker`` : flag, optional
 Interactively pick a .KD file from the terminal. The file is opened in _view-only_ mode. The file must be located somewhere inside the root directory.
+
+#### ``-ne``, ``--no_export`` : flag, optional
+Bypass the data export prompt at the end of the script.
 
 #### ``--tree`` : flag, optional
 Print the root directory file tree to the console.
