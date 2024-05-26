@@ -78,11 +78,19 @@ def prompt_for_export(dataset) -> list[str]:
     prompt += '\n(q) Quit\n\nChoice: '
 
     valid_choices = [str(i) for i in range(1, len(options) + 1)] + ['q']
-    user_choice = [char for char in input(prompt).strip().lower() if char in valid_choices]
 
-    while not user_choice:
-        print('\nInvalid selection. Enter one or more of the displayed options.')
+    try:
         user_choice = [char for char in input(prompt).strip().lower() if char in valid_choices]
+
+        while not user_choice:
+            print('\nInvalid selection. Enter one or more of the displayed options.')
+            user_choice = [char for char in input(prompt).strip().lower() if char in valid_choices]
+
+    except EOFError:  # crtl-z
+        return []
+
+    except KeyboardInterrupt:  # ctrl-c
+        return []
 
     files_exported = []
     if '1' in user_choice:

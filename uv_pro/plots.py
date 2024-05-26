@@ -220,6 +220,19 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
         linestyle = ':'
         alpha = 0.8
 
+    else:
+        for i, wavelength in enumerate(time_traces.columns):
+            ax.text(
+                x=0.99,
+                y=0.99 - i * 0.04,
+                s=f'{wavelength} nm',
+                verticalalignment='top',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                color=f'C{i}',
+                fontsize=8
+            )
+
     ax.plot(time_traces, alpha=alpha, linestyle=linestyle, color=color, zorder=2)
 
 

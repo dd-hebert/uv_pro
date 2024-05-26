@@ -21,4 +21,4 @@ github: https://github.com/dd-hebert/uv_pro
 @author: David Hebert
 """
 __author__ = 'David Hebert'
-__version__ = '0.3.5'
+__version__ = '0.4.0'

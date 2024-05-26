@@ -45,6 +45,8 @@ Command Line Arguments
     The threshold by which spectra are considered outliers. Values closer to 0
     produce more outliers. Values closer to 1 produce fewer outliers. A value
     >> 1 will produce no outliers. The default value is 0.1.
+-qf, --quick_fig : flag, optional
+    Use the quick figure generator to create and export plot figures.
 -sl, --slice_spectra : int, optional
     The number of equally-spaced slices to plot or export. Example: if
     :attr:`~uv_pro.process.Dataset.processed_spectra` contains 100 spectra and
@@ -100,6 +102,7 @@ import argparse
 import os
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
+from uv_pro.utils.quickfig import QuickFig
 from uv_pro.io.export import prompt_for_export
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
@@ -157,7 +160,8 @@ class CLI:
                                       traces from the window min to max every 10 nm. Smaller intervals may
                                       increase loading times.''',
             'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.',
-            'no_export': 'Skip the export data prompt at the end of the script.'
+            'no_export': 'Skip the export data prompt at the end of the script.',
+            'quick_fig': 'Use the quick-figure generator.'
         }
 
         parser.add_argument(
@@ -326,6 +330,13 @@ class CLI:
             default=False,
             help=help_msg['no_export']
         )
+        parser.add_argument(
+            '-qf',
+            '--quick_fig',
+            action='store_true',
+            default=False,
+            help=help_msg['quick_fig']
+        )
 
         return parser.parse_args()
 
@@ -447,13 +458,21 @@ class CLI:
         """Plot a :class:`~uv_pro.process.Dataset` and prompt the user for export."""
         print('Plotting data...')
         if dataset.is_processed:
-            uvplt.plot_2x2(dataset)
+            files_exported = []
+
+            if self.args.quick_fig is True:
+                files_exported.extend(QuickFig(dataset).quick_figure())
+
+            else:
+                uvplt.plot_2x2(dataset)
 
             if self.args.no_export is False:
-                if files_exported := prompt_for_export(dataset):
-                    print(f'\nExport location: {os.path.dirname(self.args.path)}')
-                    print('Files exported:')
-                    [print(f'\t{file}') for file in files_exported]
+                files_exported.extend(prompt_for_export(dataset))
+
+            if files_exported:
+                print(f'\nExport location: {os.path.dirname(self.args.path)}')
+                print('Files exported:')
+                [print(f'\t{file}') for file in files_exported]
 
         else:
             uvplt.plot_spectra(dataset, dataset.raw_spectra)

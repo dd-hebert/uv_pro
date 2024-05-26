@@ -61,8 +61,8 @@ class FilePicker:
 
         Returns
         -------
-        file_path : str
-            Returns the path of the chosen file relative to the root directory.
+        file_path : str or None
+            The path of the chosen file relative to the root directory.
         """
         if self.file_list:
             while True:
@@ -95,8 +95,15 @@ class FilePicker:
             print(f'[{index + 1}]{spacing}{entry[0]}')
 
     def _get_folder_choice(self) -> tuple[int, str] | None:
-        selection = input('\nSelect a folder: ')
-        accepted_range = range(1, len(self.file_list) + 1)
+        try:
+            selection = input('\nSelect a folder: ')
+            accepted_range = range(1, len(self.file_list) + 1)
+
+        except EOFError:
+            return None
+
+        except KeyboardInterrupt:
+            return None
 
         if selection in ['q', 'Q']:
             return None
@@ -128,8 +135,15 @@ class FilePicker:
                 print(f'[{index + 1}]{spacing}└───{file}\t')
 
     def _get_file_choice(self, folder_index: int, folder_name: str) -> str | None:
-        selection = input('\nSelect a file: ')
-        accepted_range = range(1, len(self.file_list[folder_index][1]) + 1)
+        try:
+            selection = input('\nSelect a file: ')
+            accepted_range = range(1, len(self.file_list[folder_index][1]) + 1)
+
+        except EOFError:
+            return None
+
+        except KeyboardInterrupt:
+            return None
 
         if selection in ['q', 'Q']:
             return None
