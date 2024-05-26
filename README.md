@@ -129,6 +129,9 @@ Interactively pick a .KD file from the terminal. The file is opened in _view-onl
 #### ``-ne``, ``--no_export`` : flag, optional
 Bypass the data export prompt at the end of the script.
 
+#### ``-qf``, ``--quick_fig`` : flag, optional
+Generate (and optionally export) a quick figure with a custom plot title and other settings.
+
 #### ``--tree`` : flag, optional
 Print the root directory file tree to the console.
 
