@@ -362,12 +362,13 @@ class CLI:
         self.proc()
 
     def handle_file_picker(self, root_dir: str | None) -> None:
-        if self.args.file_picker is True and root_dir is not None:
-            self.args.path = FilePicker(root_dir, '.KD').pick_file()
-            self.args.view = True
+        if root_dir is not None:
+            if self.args.file_picker is True:
+                self.args.path = FilePicker(root_dir, '.KD').pick_file()
+                self.args.view = True
 
-        if self.args.tree is True:
-            FilePicker(root_dir, '.KD').tree()
+            if self.args.tree is True:
+                FilePicker(root_dir, '.KD').tree()
 
     def handle_path(self, root_dir: str | None) -> None:
         current_dir = os.getcwd()

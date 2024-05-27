@@ -35,7 +35,7 @@ Spectra outside of the time range given with ``trim`` will be removed.
 Data Slicing
 ------------
 You can use slicing to reduce the data down to a selection of slices. Slices can be taken at equally- or
-unequally-spaced (gradient) intervals (see :func:`slice_spectra <uv_pro.slicing.slice_spectra>`.
+unequally-spaced (gradient) intervals (see :func:`slice_spectra <uv_pro.slicing.slice_spectra>`).
 For example, if you collected 200 spectra but only want to plot 10, you can use ``-sl 10`` or
 ``--slice_spectra 10``::
 
@@ -79,7 +79,7 @@ in the absorbance, and these "outlier" spectra should be removed from the final 
 outlier threshold [-ot]
 ```````````````````````
 The :func:`outlier_threshold <uv_pro.process.Dataset.__init__>` can be set using the ``-ot`` or
-``--outlier_threshold`` argument at the terminal::
+``--outlier_threshold`` argument::
 
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -ot 0.8
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" --outlier_threshold 0.6
@@ -104,14 +104,14 @@ baseline lambda [-bll]
 ``````````````````````
 The :func:`baseline_lambda <uv_pro.process.Dataset.__init__>` is the smoothness of the
 :attr:`~uv_pro.process.Dataset.baseline`, and can be set using the ``-bll`` or ``--baseline_lambda``
-argument at the terminal::
+argument::
 
     # Set baseline smoothness.
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -bll 0.1
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" --baseline_lambda 1000
 
 Higher ``-bll`` values give smoother baselines. Try values between 0.001 and 10000. The default is 10.
-See `pybaselines.whittaker_` for more in-depth information. The image below shows how different values
+See pybaselines.whittaker_ for more in-depth information. The image below shows how different values
 of ``-bll`` affect the :attr:`~uv_pro.process.Dataset.baseline`:
 
 .. image:: B3_lam_comparison.png
@@ -119,21 +119,20 @@ of ``-bll`` affect the :attr:`~uv_pro.process.Dataset.baseline`:
 Notice that a smaller ``-bll`` value will give a :attr:`~uv_pro.process.Dataset.baseline` which follows
 the data more closely but as a result, may also include more undesirable outlier points. Alternatively,
 a value of ``-bll`` that is too large will give a :attr:`~uv_pro.process.Dataset.baseline` that is too
-smooth and not follow the data closely enough. In general, the ``-bll`` value required to fit the
-:attr:`~uv_pro.process.Dataset.baseline` will increase as the number of data points increases.
+smooth and not follow the data closely enough. The default value works fairly well in most cases.
 
 
 baseline tolerance [-blt]
 `````````````````````````
 The :func:`baseline_tolerance <uv_pro.process.Dataset.__init__>` specifies the exit criteria of the
 :attr:`~uv_pro.process.Dataset.baseline` detection algorithm, and can be set using the ``-blt`` or
-``--baseline_tolerance`` argument at the terminal::
+``--baseline_tolerance`` argument::
 
     # Set the baseline tolerance.
     uvp -p mydata.KD -blt 0.01
     uvp -p mydata.KD --baseline_tolerance 10
 
-Try ``-blt`` values between 0.001 and 10000. The default is 0.1. See `pybaselines.whittaker_` for
+Try ``-blt`` values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker_ for
 more in-depth information.
 
 
@@ -145,7 +144,7 @@ window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). Low signal outlie
 cuvette is removed from the instrument during data collection, resulting in an abrupt dip in the time trace.
 Removing these outliers is important because their presence can significantly impact the baseline and outlier detection.
 
-You can set the size of the window using the ``-lsw`` or ``--low_signal_window`` argument at the terminal::
+You can set the size of the window using the ``-lsw`` or ``--low_signal_window`` argument::
 
     # Set the low signal outlier window size.
     uvp -p mydata.KD -lsw "wide"
@@ -182,7 +181,7 @@ given with ``-tt`` or ``--time_traces``::
     # Perform exponential fitting on time traces at 450 nm and 780 nm
     uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -tt 450 780 -fit
 
-Exponential fitting is performed using `scipy.optimize.curve_fit_`, which attempts to fit the function
+Exponential fitting is performed using scipy.optimize.curve_fit_, which attempts to fit the function
 
 .. math::
     \mathrm{Abs}_t = \mathrm{Abs_f} + (\mathrm{Abs_0} - \mathrm{Abs_f})e^{-k_{obs}t}

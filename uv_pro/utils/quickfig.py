@@ -73,11 +73,6 @@ class QuickFig:
         x_bounds : list[int, int], optional
             The processed data plot x-axis bounds. Default is None \
             (bounds determined automatically).
-
-        Returns
-        -------
-        None
-            If user interaction is cancelled with ctrl-z or ctrl-c.
         """
         try:
             if title is None:
@@ -182,6 +177,7 @@ class QuickFig:
                 self.quick_figure(title=title)
 
     def save_figure(self, fig) -> str:
+        """Save the quick figure as .png to the same directory as the original UV-Vis data file."""
         save_path = os.path.join(os.path.dirname(self.dataset.path), f'{self.dataset.name}.png')
         fig.savefig(
             fname=save_path,
