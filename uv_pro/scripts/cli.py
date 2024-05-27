@@ -102,10 +102,10 @@ import argparse
 import os
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
-from uv_pro.utils.quickfig import QuickFig
 from uv_pro.io.export import prompt_for_export
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
+from uv_pro.utils.quickfig import QuickFig
 
 
 sys.tracebacklimit = 0
@@ -461,7 +461,11 @@ class CLI:
             files_exported = []
 
             if self.args.quick_fig is True:
-                files_exported.extend(QuickFig(dataset).quick_figure())
+                try:
+                    files_exported.append(getattr(QuickFig(dataset), 'exported_figure'))
+
+                except AttributeError:
+                    pass
 
             else:
                 uvplt.plot_2x2(dataset)

@@ -105,10 +105,7 @@ class FilePicker:
         except KeyboardInterrupt:
             return None
 
-        if selection in ['q', 'Q']:
-            return None
-
-        elif selection.isnumeric() is False or int(selection) not in accepted_range:
+        if selection.isnumeric() is False or int(selection) not in accepted_range:
             self._print_folders_in_root()
             print('\nInvalid selection. Input a folder number (shown in brackets)',
                   'or q to quit.')
@@ -145,10 +142,7 @@ class FilePicker:
         except KeyboardInterrupt:
             return None
 
-        if selection in ['q', 'Q']:
-            return None
-
-        elif selection in ['b', 'B']:
+        if selection in ['b', 'B']:
             return 'back'
 
         elif selection.isnumeric() is False or int(selection) not in accepted_range:

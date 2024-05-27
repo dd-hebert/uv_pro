@@ -197,41 +197,41 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
-    if dataset.chosen_traces is None:
-        time_traces = dataset.time_traces
-
-    else:
-        time_traces = dataset.chosen_traces
-
-    ax.set_xlim(0, time_traces.index[-1])
+    color = None
+    linestyle = None
+    alpha = 1
     ax.set(
         xlabel='Time (s)',
         ylabel='Absorbance (AU)',
         title='Time Traces'
     )
 
-    color = None
-    linestyle = None
-    alpha = 1
-
-    if dataset.fit:
-        _plot_fit_curves(ax, dataset)
-        color = 'k'
-        linestyle = ':'
-        alpha = 0.8
+    if dataset.chosen_traces is None:
+        time_traces = dataset.time_traces
+        ax.set_xlim(0, time_traces.index[-1])
 
     else:
-        for i, wavelength in enumerate(time_traces.columns):
-            ax.text(
-                x=0.99,
-                y=0.99 - i * 0.04,
-                s=f'{wavelength} nm',
-                verticalalignment='top',
-                horizontalalignment='right',
-                transform=ax.transAxes,
-                color=f'C{i}',
-                fontsize=8
-            )
+        time_traces = dataset.chosen_traces
+        ax.set_xlim(0, time_traces.index[-1])
+
+        if dataset.fit:
+            _plot_fit_curves(ax, dataset)
+            color = 'k'
+            linestyle = ':'
+            alpha = 0.8
+
+        else:
+            for i, wavelength in enumerate(time_traces.columns):
+                ax.text(
+                    x=0.99,
+                    y=0.99 - i * 0.04,
+                    s=f'{wavelength} nm',
+                    verticalalignment='top',
+                    horizontalalignment='right',
+                    transform=ax.transAxes,
+                    color=f'C{i}',
+                    fontsize=8
+                )
 
     ax.plot(time_traces, alpha=alpha, linestyle=linestyle, color=color, zorder=2)
 

@@ -6,6 +6,7 @@ Contains functions for exporting UV-vis data to .csv format.
 @author: David Hebert
 """
 import os
+from uv_pro.utils.printing import prompt_user
 
 
 def export_csv(dataset, data, suffix: str = None) -> str:
@@ -66,43 +67,27 @@ def prompt_for_export(dataset) -> list[str]:
     files_exported : list[str]
         The names of the exported files.
     """
-    options = ['Processed spectra']
+    header = 'Export data?'
+    options = [{'key': '1', 'name': 'Processed spectra'}]
+    files_exported = []
+
     if dataset.chosen_traces is not None:
-        options.append('Time traces')
+        options.append({'key': '2', 'name': 'Time traces'})
 
     if dataset.fit is not None:
-        options.append('Exponential fit')
+        options.append({'key': '3', 'name': 'Exponential fit'})
 
-    prompt = f'\nExport data?\n{'=' * 12}\n'
-    prompt += '\n'.join([f'({i}) {option}' for i, option in enumerate(options, start=1)])
-    prompt += '\n(q) Quit\n\nChoice: '
-
-    valid_choices = [str(i) for i in range(1, len(options) + 1)] + ['q']
-
-    try:
-        user_choice = [char for char in input(prompt).strip().lower() if char in valid_choices]
-
-        while not user_choice:
-            print('\nInvalid selection. Enter one or more of the displayed options.')
-            user_choice = [char for char in input(prompt).strip().lower() if char in valid_choices]
-
-    except EOFError:  # crtl-z
-        return []
-
-    except KeyboardInterrupt:  # ctrl-c
-        return []
-
-    files_exported = []
-    if '1' in user_choice:
-        files_exported.append(export_csv(dataset, dataset.processed_spectra))
-    if '2' in user_choice:
-        files_exported.append(export_csv(dataset, dataset.chosen_traces, suffix='Traces'))
-    if '3' in user_choice:
-        files_exported.extend(
-            [
-                export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
-                export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
-            ]
-        )
+    if user_choices := prompt_user(header=header, options=options):
+        if '1' in user_choices:
+            files_exported.append(export_csv(dataset, dataset.processed_spectra))
+        if '2' in user_choices:
+            files_exported.append(export_csv(dataset, dataset.chosen_traces, suffix='Traces'))
+        if '3' in user_choices:
+            files_exported.extend(
+                [
+                    export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
+                    export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
+                ]
+            )
 
     return files_exported

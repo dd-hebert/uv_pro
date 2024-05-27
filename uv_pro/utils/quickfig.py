@@ -11,22 +11,35 @@ dataset.
 import re
 import os
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 from matplotlib.artist import Artist
+from matplotlib.figure import Figure
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
+from uv_pro.utils.printing import prompt_user
 
 
 class QuickFig:
+    """
+    A QuickFig object. Contains methods for interactively creating UV-Vis figures.
+
+    Attributes
+    ----------
+    dataset : :class:`~uv_pro.process.Dataset`
+        The :class:`~uv_pro.process.Dataset` to create a quick figure with.
+    export_figure : str
+        The filename of the exported quick figure.
+    """
     def __init__(self, dataset: Dataset) -> None:
         self._print_logo()
         self.dataset = dataset
+        self.quick_figure()
 
     def _print_logo(self) -> None:
         print('\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓')
         print('┇ uv_pro Quick Figure ┇')
         print('┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛')
-        print('Enter ctrl-z or ctrl-c to quit.\n')
+        print('Enter ctrl-z to quit.\n')
 
     def _get_plot_title(self) -> str:
         title = input('Enter a plot title: ')
@@ -44,7 +57,7 @@ class QuickFig:
         x_bounds = [bound for bound in map(int, match.groups())]
         return x_bounds
 
-    def quick_figure(self, title=None, x_bounds=None) -> str | list:
+    def quick_figure(self, title=None, x_bounds=None) -> None:
         """
         Create a quick figure for exporting.
 
@@ -63,9 +76,8 @@ class QuickFig:
 
         Returns
         -------
-        str or list
-            The filename of the exported figure (if figure is exported).
-            Otherwise returns an empty list.
+        None
+            If user interaction is cancelled with ctrl-z or ctrl-c.
         """
         try:
             if title is None:
@@ -73,36 +85,49 @@ class QuickFig:
             if x_bounds is None:
                 x_bounds = self._get_plot_xbounds()
 
-            if self.dataset.chosen_traces is None:  # Processed data plot only
-                fig, ax_processed_data = plt.subplots()
-                uvplt._processed_data_subplot(ax_processed_data, self.dataset)
-                ax_processed_data.set(title=None)
-
-            else:  # 1x2 plot (processed data + traces)
-                fig, (ax_processed_data, ax_traces) = plt.subplots(
-                    nrows=1,
-                    ncols=2,
-                    figsize=(10, 5),
-                    layout='constrained',
-                    sharey=True
-                )
-                uvplt._processed_data_subplot(ax_processed_data, self.dataset)
-                uvplt._time_traces_subplot(ax_traces, self.dataset)
-                self._touchup_time_traces_plot(ax_traces)
-
-            fig.suptitle(title, fontweight='bold')
-            self._touchup_processed_data_plot(ax_processed_data, x_bounds)
-
-            print('Close plot window to continue...', end='\n')
-            plt.show()
-
-            return self._prompt_for_changes(fig, title, x_bounds)
-
         except EOFError:  # crtl-z
-            return []
+            return
 
         except KeyboardInterrupt:  # ctrl-c
-            return []
+            return
+
+        if self.dataset.chosen_traces is None:
+            fig, ax_processed_data = self._processed_data_plot()
+
+        else:
+            fig, (ax_processed_data, ax_traces) = self._1x2_plot()
+
+        fig.suptitle(title, fontweight='bold')
+        self._touchup_processed_data_plot(ax_processed_data, x_bounds)
+
+        print('Close plot window to continue...', end='\n')
+        plt.show()
+
+        self._prompt_for_changes(fig, title, x_bounds)
+
+    def _processed_data_plot(self) -> tuple[Figure, Axes]:
+        """Create processed data plot."""
+        fig, ax_processed_data = plt.subplots()
+        uvplt._processed_data_subplot(ax_processed_data, self.dataset)
+        ax_processed_data.set(title=None)
+
+        return fig, ax_processed_data
+
+    def _1x2_plot(self) -> tuple[Figure, tuple[Axes, Axes]]:
+        """Create 1x2 plot with processed data and time traces."""
+        fig, (ax_processed_data, ax_traces) = plt.subplots(
+            nrows=1,
+            ncols=2,
+            figsize=(10, 5),
+            layout='constrained',
+            sharey=True
+        )
+
+        uvplt._processed_data_subplot(ax_processed_data, self.dataset)
+        uvplt._time_traces_subplot(ax_traces, self.dataset)
+        self._touchup_time_traces_plot(ax_traces)
+
+        return fig, (ax_processed_data, ax_traces)
 
     def _touchup_processed_data_plot(self, ax, x_bounds) -> None:
         """Modify x-axis bounds and plot text."""
@@ -128,7 +153,7 @@ class QuickFig:
             int(self.dataset.processed_spectra.columns[-1])
         )
 
-    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple) -> str:
+    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple) -> None:
         """
         Prompt the user for plot changes or export.
 
@@ -140,31 +165,21 @@ class QuickFig:
             The quick figure plot title.
         x_bounds : tuple
             The x-axis bounds for the processed dataa plot.
-
-        Returns
-        -------
-        str
-            The filename of the exported quick figure.
         """
-        options = ['Save plot', 'Change title', 'Change x-axis bounds']
+        header = 'Make changes?'
+        options = [
+            {'key': '1', 'name': 'Save plot'},
+            {'key': '2', 'name': 'Change title'},
+            {'key': '3', 'name': 'Change x-axis bounds'}
+        ]
 
-        prompt = f'\nMake changes?\n{'=' * 13}\n'
-        prompt += '\n'.join([f'({i}) {option}' for i, option in enumerate(options, start=1)])
-        prompt += '\n(q) Quit\n\nChoice: '
-
-        valid_choices = [str(i) for i in range(1, len(options) + 1)] + ['q']
-        user_choice = [char for char in input(prompt).strip().lower() if char in valid_choices]
-
-        while not user_choice:
-            print('\nInvalid selection. Enter one or more of the displayed options.')
-            user_choice = [char for char in input(prompt).strip().lower() if char in valid_choices]
-
-        if '1' in user_choice:
-            return self.save_figure(fig)
-        if '2' in user_choice:
-            self.quick_figure(title=title)
-        if '3' in user_choice:
-            self.quick_figure(x_bounds=x_bounds)
+        if user_choices := prompt_user(header=header, options=options):
+            if '1' in user_choices:
+                self.exported_figure = self.save_figure(fig)
+            if '2' in user_choices:
+                self.quick_figure(x_bounds=x_bounds)
+            if '3' in user_choices:
+                self.quick_figure(title=title)
 
     def save_figure(self, fig) -> str:
         save_path = os.path.join(os.path.dirname(self.dataset.path), f'{self.dataset.name}.png')
