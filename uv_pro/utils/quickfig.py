@@ -9,7 +9,6 @@ dataset.
 """
 
 import re
-import os
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.artist import Artist
@@ -17,6 +16,7 @@ from matplotlib.figure import Figure
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
 from uv_pro.utils.printing import prompt_user
+from uv_pro.io.export import export_figure
 
 
 class QuickFig:
@@ -170,18 +170,11 @@ class QuickFig:
 
         if user_choices := prompt_user(header=header, options=options):
             if '1' in user_choices:
-                self.exported_figure = self.save_figure(fig)
+                self.exported_figure = self.export(fig)
             if '2' in user_choices:
                 self.quick_figure(x_bounds=x_bounds)
             if '3' in user_choices:
                 self.quick_figure(title=title)
 
-    def save_figure(self, fig) -> str:
-        """Save the quick figure as .png to the same directory as the original UV-Vis data file."""
-        save_path = os.path.join(os.path.dirname(self.dataset.path), f'{self.dataset.name}.png')
-        fig.savefig(
-            fname=save_path,
-            format='png',
-            dpi=600
-        )
-        return f'{self.dataset.name}.png'
+    def export(self, fig) -> str:
+        return export_figure(self.dataset, fig)
