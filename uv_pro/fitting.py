@@ -37,14 +37,14 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
     fit = {'params': {}, 'curves': {}}
     for column in time_traces.columns:
         try:
-            p0 = [time_traces[column].iloc[0], time_traces[column].iloc[-1], 0.1]
+            p0 = [time_traces[column].iloc[0], time_traces[column].iloc[-1], 0.02]
 
             popt, pcov = curve_fit(
                 f=exponential,
                 xdata=time_traces.index,
                 ydata=time_traces[column],
                 p0=p0,
-                bounds=(-1, [10, 10, np.inf])
+                bounds=([-5, -5, -1], [5, 5, np.inf])
             )
 
             curve = pd.Series(

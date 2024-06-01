@@ -457,7 +457,7 @@ class CLI:
 
     def _plot_and_export(self, dataset: Dataset) -> None:
         """Plot a :class:`~uv_pro.process.Dataset` and prompt the user for export."""
-        print('Plotting data...')
+        print('\nPlotting data...')
         if dataset.is_processed:
             files_exported = []
 
