@@ -93,8 +93,5 @@ def prompt_user(header: str, options: list[dict]):
 
         return user_choices
 
-    except EOFError:  # crtl-z
-        return []
-
-    except KeyboardInterrupt:  # ctrl-c
+    except (EOFError, KeyboardInterrupt):  # crtl-z or ctrl-c
         return []

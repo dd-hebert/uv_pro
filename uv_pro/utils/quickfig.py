@@ -9,6 +9,7 @@ dataset.
 """
 
 import re
+import os
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.artist import Artist
@@ -27,7 +28,7 @@ class QuickFig:
     ----------
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to create a quick figure with.
-    export_figure : str
+    exported_figure : str
         The filename of the exported quick figure.
     """
     def __init__(self, dataset: Dataset) -> None:
@@ -57,7 +58,7 @@ class QuickFig:
         x_bounds = [bound for bound in map(int, match.groups())]
         return x_bounds
 
-    def quick_figure(self, title=None, x_bounds=None) -> None:
+    def quick_figure(self, title: str = None, x_bounds: list[int] = None) -> None:
         """
         Create a quick figure for exporting.
 
@@ -80,10 +81,7 @@ class QuickFig:
             if x_bounds is None:
                 x_bounds = self._get_plot_xbounds()
 
-        except EOFError:  # crtl-z
-            return
-
-        except KeyboardInterrupt:  # ctrl-c
+        except (EOFError, KeyboardInterrupt):  # crtl-z
             return
 
         if self.dataset.chosen_traces is None:
@@ -148,7 +146,7 @@ class QuickFig:
             int(self.dataset.processed_spectra.columns[-1])
         )
 
-    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple) -> None:
+    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: list[int]) -> None:
         """
         Prompt the user for plot changes or export.
 
@@ -158,8 +156,8 @@ class QuickFig:
             The current quick figure.
         title : str
             The quick figure plot title.
-        x_bounds : tuple
-            The x-axis bounds for the processed dataa plot.
+        x_bounds : list[int]
+            The x-axis bounds for the processed data plot.
         """
         header = 'Make changes?'
         options = [
@@ -177,4 +175,6 @@ class QuickFig:
                 self.quick_figure(title=title)
 
     def export(self, fig) -> str:
-        return export_figure(self.dataset, fig)
+        output_dir = os.path.dirname(self.dataset.path)
+        filename = os.path.splitext(self.dataset.name)[0]
+        return export_figure(fig, output_dir, filename)

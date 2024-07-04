@@ -108,7 +108,7 @@ from uv_pro.utils.filepicker import FilePicker
 from uv_pro.utils.quickfig import QuickFig
 
 
-sys.tracebacklimit = 0
+# sys.tracebacklimit = 0
 
 
 class CLI:
@@ -150,7 +150,10 @@ class CLI:
             'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
             'low_signal_window': '''"narrow" or "wide". Set the width of the low signal outlier detection window.
                                      Default: "narrow"''',
-            'fitting': 'Perform exponential fitting of specified time traces. Default: False.',
+            'fit_exp': 'Perform exponential fitting of specified time traces. Default: False.',
+            'init_rate': '''Perform linear regression of specified time traces for initial rates. Default False.
+                            If performing initial rates fitting, you can supply an optional float value for
+                            the change in absorbance cutoff. Default cutoff is 0.1 (10% change in absorbance).''',
             'tree': 'Show the root directory file tree.',
             'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
             'test_mode': 'For testing purposes.',
@@ -267,12 +270,23 @@ class CLI:
             metavar='',
             help=help_msg['low_signal_window']
         )
-        parser.add_argument(
+        fitting_args = parser.add_mutually_exclusive_group()
+        fitting_args.add_argument(
             '-fit',
-            '--fitting',
+            '--fit_exp',
             action='store_true',
             default=False,
-            help=help_msg['fitting']
+            help=help_msg['fit_exp']
+        )
+        fitting_args.add_argument(
+            '-ir',
+            '--init_rate',
+            action='store',
+            type=float,
+            nargs='?',
+            const='0.1',
+            default=False,
+            help=help_msg['init_rate']
         )
         parser.add_argument(
             '--tree',
@@ -364,7 +378,7 @@ class CLI:
     def handle_file_picker(self, root_dir: str | None) -> None:
         if root_dir is not None:
             if self.args.file_picker is True:
-                self.args.path = FilePicker(root_dir, '.KD').pick_file()
+                self.args.path = FilePicker(root_dir, '.KD').pick_file()[0]
                 self.args.view = True
 
             if self.args.tree is True:
@@ -442,7 +456,8 @@ class CLI:
                 self.args.path,
                 trim=self.args.trim,
                 slicing=self.handle_slicing(),
-                fitting=self.args.fitting,
+                fit_exp=self.args.fit_exp,
+                fit_init_rate=self.args.init_rate,
                 outlier_threshold=self.args.outlier_threshold,
                 baseline_lambda=self.args.baseline_lambda,
                 baseline_tolerance=self.args.baseline_tolerance,

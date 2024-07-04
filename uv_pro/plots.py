@@ -220,6 +220,12 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
             linestyle = ':'
             alpha = 0.8
 
+        if dataset.init_rate:
+            _plot_init_rate_lines(ax, dataset)
+            color = 'k'
+            linestyle = ':'
+            alpha = 0.8
+
         else:
             for i, wavelength in enumerate(time_traces.columns):
                 ax.text(
@@ -348,6 +354,49 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
         right_bound = dataset.trim[1] + xaxis_padding
         ax.set_xlim(left=left_bound, right=right_bound)
 
+
+def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
+    for i, wavelength in enumerate(dataset.init_rate['lines'].columns):
+        linecolor = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
+        ax.plot(
+            dataset.init_rate['lines'][wavelength],
+            label=wavelength,
+            color=linecolor,
+            alpha=0.6,
+            linewidth=3,
+            zorder=1
+        )
+
+        rates_text = ' '.join(
+            [
+                f'{wavelength}',
+                'rate =',
+                f'{dataset.init_rate['params'][wavelength]['slope']:.2e}',
+                f'± {dataset.init_rate['params'][wavelength]['slope err']:.2e}',
+                'intercept =',
+                f'{dataset.init_rate['params'][wavelength]['intercept']:.2e}',
+                f'± {dataset.init_rate['params'][wavelength]['intercept err']:.2e}',
+                r'$r^2 =$',
+                f'{dataset.init_rate['params'][wavelength]['r2']:.3f}'
+            ]
+        )
+
+        ax.text(
+            x=0.99,
+            y=0.99 - i * 0.04,
+            s=rates_text,
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color=linecolor,
+            fontsize=8
+        )
+
+    if dataset.trim:
+        xaxis_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
+        left_bound = max(dataset.trim[0] - xaxis_padding, 0)
+        right_bound = dataset.trim[1] + xaxis_padding
+        ax.set_xlim(left=left_bound, right=right_bound)
 
 def _get_linestyles(dataframe: DataFrame) -> cycler:
     num_lines = len(dataframe.columns)

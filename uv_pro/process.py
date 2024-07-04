@@ -11,7 +11,7 @@ import os
 import pandas as pd
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
-from uv_pro.fitting import fit_exponential
+from uv_pro.fitting import fit_exponential, initial_rates
 from uv_pro.slicing import slice_spectra
 from uv_pro.utils.printing import print_dataset
 
@@ -56,10 +56,10 @@ class Dataset:
     """
 
     def __init__(self, path: str, trim: list[int, int] | None = None,
-                 slicing: dict | None = None, fitting: bool = False,
-                 outlier_threshold: float = 0.1, baseline_lambda: float = 10,
-                 baseline_tolerance: float = 0.1, low_signal_window: str = 'narrow',
-                 time_trace_window: tuple[int, int] = (300, 1060),
+                 slicing: dict | None = None, fit_exp: bool = False,
+                 fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
+                 baseline_lambda: float = 10, baseline_tolerance: float = 0.1,
+                 low_signal_window: str = 'narrow', time_trace_window: tuple[int, int] = (300, 1060),
                  time_trace_interval: int = 10, wavelengths: list | None = None,
                  view_only: bool = False) -> None:
         """
@@ -83,8 +83,11 @@ class Dataset:
             equally- or unequally-spaced (gradient) intervals.
             For equal slicing: ``{'mode': 'equal', 'slices': int}``.
             For gradient slicing: ``{'mode': 'gradient', 'coeff': float, 'expo': float}``.
-        fitting : bool, optional
-            Perform exponential fitting on the time traces specified with ``wavelengths``
+        fit_exp : bool, optional
+            Perform exponential fitting on the time traces specified with ``wavelengths``.
+        fit_init_rate : float or None, optional
+            Perform initial rates linear regression fitting on the time traces specified \
+            with ``wavelengths``.
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
@@ -124,7 +127,8 @@ class Dataset:
         self.name = os.path.basename(self.path)
         self.trim = trim
         self.slicing = slicing
-        self.fitting = fitting
+        self.fit_exp = fit_exp
+        self.fit_init_rate = fit_init_rate
         self.time_trace_window = time_trace_window
         self.time_trace_interval = time_trace_interval
         self.wavelengths = wavelengths
@@ -176,12 +180,15 @@ class Dataset:
             self._check_trim_values()
             self.processed_spectra = self._process_spectra()
             self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
+            self.fit = None
+            self.init_rate = None
 
-            if self.fitting is True and self.processed_traces is not None:
-                self.fit = fit_exponential(self.processed_traces)
+            if self.processed_traces is not None:
+                if self.fit_exp is True:
+                    self.fit = fit_exponential(self.processed_traces)
 
-            else:
-                self.fit = None
+                if self.fit_init_rate is not None:
+                    self.init_rate = initial_rates(self.processed_traces, cutoff=self.fit_init_rate)
 
             self.is_processed = True
 
