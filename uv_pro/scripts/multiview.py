@@ -86,7 +86,7 @@ def run_uvp_script(file: str) -> None:
     """
     try:
         subprocess.run(
-            ['uvp', '-p', file, '-v'],
+            ['uvp', 'process', file, '-v'],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT
         )

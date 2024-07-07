@@ -22,7 +22,7 @@ from uv_pro.io.export import export_figure
 
 class QuickFig:
     """
-    A QuickFig object. Contains methods for interactively creating UV-Vis figures.
+    Contains methods for interactively creating UV-Vis figures.
 
     Attributes
     ----------
@@ -35,28 +35,6 @@ class QuickFig:
         self._print_logo()
         self.dataset = dataset
         self.quick_figure()
-
-    def _print_logo(self) -> None:
-        print('\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓')
-        print('┇ uv_pro Quick Figure ┇')
-        print('┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛')
-        print('Enter ctrl-z to quit.\n')
-
-    def _get_plot_title(self) -> str:
-        title = input('Enter a plot title: ')
-        return title
-
-    def _get_plot_xbounds(self) -> list[int, int]:
-        pattern = re.compile('([0-9]+)[ ]+([0-9]+)')
-        x_bounds = input('Enter x-axis bounds [min max]: ').strip()
-        match = re.search(pattern, x_bounds)
-
-        while match is None:
-            x_bounds = input('Invalid input. Enter x-axis bounds [min max]: ').strip()
-            match = re.search(pattern, x_bounds)
-
-        x_bounds = [bound for bound in map(int, match.groups())]
-        return x_bounds
 
     def quick_figure(self, title: str = None, x_bounds: list[int] = None) -> None:
         """
@@ -81,7 +59,7 @@ class QuickFig:
             if x_bounds is None:
                 x_bounds = self._get_plot_xbounds()
 
-        except (EOFError, KeyboardInterrupt):  # crtl-z
+        except (EOFError, KeyboardInterrupt):
             return
 
         if self.dataset.chosen_traces is None:
@@ -97,6 +75,27 @@ class QuickFig:
         plt.show()
 
         self._prompt_for_changes(fig, title, x_bounds)
+
+    def export(self, fig) -> str:
+        output_dir = os.path.dirname(self.dataset.path)
+        filename = os.path.splitext(self.dataset.name)[0]
+        return export_figure(fig, output_dir, filename)
+
+    def _get_plot_title(self) -> str:
+        title = input('Enter a plot title: ')
+        return title
+
+    def _get_plot_xbounds(self) -> list[int, int]:
+        pattern = re.compile('([0-9]+)[ ]+([0-9]+)')
+        x_bounds = input('Enter x-axis bounds [min max]: ').strip()
+        match = re.search(pattern, x_bounds)
+
+        while match is None:
+            x_bounds = input('Invalid input. Enter x-axis bounds [min max]: ').strip()
+            match = re.search(pattern, x_bounds)
+
+        x_bounds = [bound for bound in map(int, match.groups())]
+        return x_bounds
 
     def _processed_data_plot(self) -> tuple[Figure, Axes]:
         """Create processed data plot."""
@@ -174,7 +173,8 @@ class QuickFig:
             if '3' in user_choices:
                 self.quick_figure(title=title)
 
-    def export(self, fig) -> str:
-        output_dir = os.path.dirname(self.dataset.path)
-        filename = os.path.splitext(self.dataset.name)[0]
-        return export_figure(fig, output_dir, filename)
+    def _print_logo(self) -> None:
+        print('\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓')
+        print('┇ uv_pro Quick Figure ┇')
+        print('┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛')
+        print('Enter ctrl-c to quit.\n')

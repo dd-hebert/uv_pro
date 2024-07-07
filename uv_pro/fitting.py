@@ -13,6 +13,10 @@ import pandas as pd
 warnings.filterwarnings('ignore', message='overflow encountered in exp')
 
 
+def exponential(t: float, abs_0: float, abs_f: float, kobs: float) -> float:
+    return abs_f + (abs_0 - abs_f) * np.exp(-kobs * t)
+
+
 def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
     """
     Fit exponential function to time traces.
@@ -31,7 +35,6 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
         print('Fitting skipped. Not enough data points...\n')
         return None
 
-    exponential = lambda t, abs_0, abs_f, kobs: abs_f + (abs_0 - abs_f) * np.exp(-kobs * t)
     fit = {'params': {}, 'curves': {}}
 
     for column in time_traces.columns:
@@ -115,7 +118,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
         init_rates['params'][column] = {
             'abs_0': abs_0,
             'abs_f': abs_f,
-            'delta_abs_%': 100 * (abs_f - abs_0) / abs_0,
+            'delta_abs_%': (abs_f - abs_0) / abs_0,
             'delta_t': trace.index[-1] - trace.index[0],
             'slope': m,
             'slope err': m_err,

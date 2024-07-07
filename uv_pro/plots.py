@@ -118,12 +118,12 @@ def plot_2x2(dataset: Dataset) -> None:
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
-    fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_combined)) = plt.subplots(2, 2, figsize=(16, 8), constrained_layout=True)
+    fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_outliers)) = plt.subplots(2, 2, figsize=(16, 8), constrained_layout=True)
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset)
     _time_traces_subplot(ax_time_traces, dataset)
-    _combined_time_traces_subplot(ax_combined, dataset)
+    _outliers_subplot(ax_outliers, dataset)
 
     print('Close plot window to continue...')
     plt.show()
@@ -214,37 +214,26 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
         time_traces = dataset.chosen_traces
         ax.set_xlim(0, time_traces.index[-1])
 
-        if dataset.fit:
-            _plot_fit_curves(ax, dataset)
+        if dataset.fit or dataset.init_rate:
             color = 'k'
             linestyle = ':'
             alpha = 0.8
 
-        if dataset.init_rate:
-            _plot_init_rate_lines(ax, dataset)
-            color = 'k'
-            linestyle = ':'
-            alpha = 0.8
+            for func in [_plot_init_rate_lines, _plot_fit_curves]:
+                try:
+                    func(ax, dataset)
 
-        else:
-            for i, wavelength in enumerate(time_traces.columns):
-                ax.text(
-                    x=0.99,
-                    y=0.99 - i * 0.04,
-                    s=f'{wavelength} nm',
-                    verticalalignment='top',
-                    horizontalalignment='right',
-                    transform=ax.transAxes,
-                    color=f'C{i}',
-                    fontsize=8
-                )
+                except TypeError:
+                    continue
+
+    _time_trace_plot_text(ax, dataset)
 
     ax.plot(time_traces, alpha=alpha, linestyle=linestyle, color=color, zorder=2)
 
 
-def _combined_time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
+def _outliers_subplot(ax: Axes, dataset: Dataset) -> None:
     """
-    Create combined time traces subplot.
+    Create outliers subplot.
 
     Parameters
     ----------
@@ -257,7 +246,7 @@ def _combined_time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
     ax.set(
         xlabel='Time (s)',
         ylabel='Intensity (arb. units)',
-        title='Combined Time Traces & Baseline'
+        title='Baseline & Outliers'
     )
 
     _plot_baseline(ax, dataset)
@@ -315,7 +304,7 @@ def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
 
 
 def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
-    for i, wavelength in enumerate(dataset.fit['curves'].columns):
+    for wavelength in dataset.fit['curves'].columns:
         linecolor = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
         ax.plot(
             dataset.fit['curves'][wavelength],
@@ -326,37 +315,15 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
             zorder=1
         )
 
-        kobs_text = ' '.join(
-            [
-                f'{wavelength}',
-                r'$k_{obs} =$',
-                f'{dataset.fit['params'][wavelength]['kobs']:.2e}',
-                f'± {dataset.fit['params'][wavelength]['kobs err']:.2e}',
-                r'$r^2 =$',
-                f'{dataset.fit['params'][wavelength]['r2']:.3f}'
-            ]
-        )
-
-        ax.text(
-            x=0.99,
-            y=0.99 - i * 0.04,
-            s=kobs_text,
-            verticalalignment='top',
-            horizontalalignment='right',
-            transform=ax.transAxes,
-            color=linecolor,
-            fontsize=8
-        )
-
     if dataset.trim:
-        xaxis_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
-        left_bound = max(dataset.trim[0] - xaxis_padding, 0)
-        right_bound = dataset.trim[1] + xaxis_padding
+        x_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
+        left_bound = max(dataset.trim[0] - x_padding, 0)
+        right_bound = min(dataset.trim[1] + x_padding, dataset.chosen_traces.index[-1])
         ax.set_xlim(left=left_bound, right=right_bound)
 
 
 def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
-    for i, wavelength in enumerate(dataset.init_rate['lines'].columns):
+    for wavelength in dataset.init_rate['lines'].columns:
         linecolor = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
         ax.plot(
             dataset.init_rate['lines'][wavelength],
@@ -364,39 +331,15 @@ def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
             color=linecolor,
             alpha=0.6,
             linewidth=3,
-            zorder=1
-        )
-
-        rates_text = ' '.join(
-            [
-                f'{wavelength}',
-                'rate =',
-                f'{dataset.init_rate['params'][wavelength]['slope']:.2e}',
-                f'± {dataset.init_rate['params'][wavelength]['slope err']:.2e}',
-                'intercept =',
-                f'{dataset.init_rate['params'][wavelength]['intercept']:.2e}',
-                f'± {dataset.init_rate['params'][wavelength]['intercept err']:.2e}',
-                r'$r^2 =$',
-                f'{dataset.init_rate['params'][wavelength]['r2']:.3f}'
-            ]
-        )
-
-        ax.text(
-            x=0.99,
-            y=0.99 - i * 0.04,
-            s=rates_text,
-            verticalalignment='top',
-            horizontalalignment='right',
-            transform=ax.transAxes,
-            color=linecolor,
-            fontsize=8
+            zorder=2
         )
 
     if dataset.trim:
-        xaxis_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
-        left_bound = max(dataset.trim[0] - xaxis_padding, 0)
-        right_bound = dataset.trim[1] + xaxis_padding
+        x_padding = (dataset.init_rate['lines'].index[-1] - dataset.init_rate['lines'].index[0]) * 10
+        left_bound = max(dataset.init_rate['lines'].index[0] - x_padding, 0)
+        right_bound = min(dataset.init_rate['lines'].index[-1] + x_padding, dataset.chosen_traces.index[-1])
         ax.set_xlim(left=left_bound, right=right_bound)
+
 
 def _get_linestyles(dataframe: DataFrame) -> cycler:
     num_lines = len(dataframe.columns)
@@ -404,3 +347,54 @@ def _get_linestyles(dataframe: DataFrame) -> cycler:
     linewidths = [3] + [1] * (num_lines - 2) + [3]
     line_styles = cycler(color=colors) + cycler(linewidth=linewidths)
     return line_styles
+
+
+def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
+
+    def _add_text(text: list[str], row_number: int, text_color: str) -> None:
+        ax.text(
+            x=0.99,
+            y=0.99 - row_number * 0.04,
+            s=text,
+            verticalalignment='top',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            color=text_color,
+            fontsize=8
+        )
+
+    row_number = 0
+    if dataset.init_rate:
+        for wavelength in dataset.init_rate['lines'].columns:
+            text_color = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
+            text = [
+                f'{wavelength}',
+                'rate =',
+                f'{dataset.init_rate['params'][wavelength]['slope']:.2e}',
+                f'± {dataset.init_rate['params'][wavelength]['slope err']:.2e}',
+                r'$r^2 =$',
+                f'{dataset.init_rate['params'][wavelength]['r2']:.3f}'
+            ]
+
+            _add_text(' '.join(text), row_number, text_color)
+            row_number += 1
+
+    if dataset.fit:
+        for wavelength in dataset.fit['curves'].columns:
+            text_color = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
+            text = [
+                f'{wavelength}',
+                r'$k_{obs} =$',
+                f'{dataset.fit['params'][wavelength]['kobs']:.2e}',
+                f'± {dataset.fit['params'][wavelength]['kobs err']:.2e}',
+                r'$r^2 =$',
+                f'{dataset.fit['params'][wavelength]['r2']:.3f}'
+            ]
+
+            _add_text(' '.join(text), row_number, text_color)
+            row_number += 1
+
+    if not dataset.fit and not dataset.init_rate:
+        for i, wavelength in enumerate(dataset.chosen_traces.columns):
+            _add_text(f'{wavelength} nm', row_number, f'C{i}')
+            row_number += 1

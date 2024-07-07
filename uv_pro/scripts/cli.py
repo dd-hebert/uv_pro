@@ -4,11 +4,33 @@ Run ``uv_pro`` from the command line.
 With the ``uv_pro`` package installed, this script can be called directly from
 the command line with::
 
-    uvp -p myfile.KD
+    uvp process myfile.KD
 
-Command Line Arguments
-----------------------
--p, --path : str, required
+The accepted commands and their options are given below. The shorthand for commands
+are given in parenthesis.
+
+Commands
+========
+
+root (rt)
+---------
+Usage: ``uvp rt <options>`` or ``uvp root <options>``
+
+-clear, --clear_root_dir : flag, optional
+    Clear the current root directory.
+-get, --get_root_dir : flag, optional
+    Print the current root directory to the console.
+-set, --set_root_dir : str, optional
+    Set a root directory to simplify file path entry. For instance, if
+    you store all your UV-vis data files in a common folder, you can designate
+    it as the root directory. Subsequently, you can omit the root directory
+    portion of the path when processing data and just provide a relative path.
+
+process (p, proc)
+-----------------
+Usage: ``uvp p <path> <options>``, ``uvp proc <path> <options>``, or ``uvp process <path> <options>``
+
+path : str, required
     The path to a .KD file. Paths containing spaces should be wrapped in double
     quotes "". The script will first look for the file inside the current
     working directory, then look at the absolute path, and lastly
@@ -21,20 +43,13 @@ Command Line Arguments
     Set the exit criteria for the baseline algorithm. Try values between
     0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
     for more information.
--crd, --clear_root_dir : flag, optional
-    Clear the current root directory.
 -fit, --fitting : flag, optional
     Perform exponential fitting on time traces given by ``-tt``.
--fp, --file_picker : flag, optional
-    Interactively pick a .KD file from the console. The file is opened in view-
-    only mode. The .KD file must be located inside the root directory.
 -gsl, --gradient_slice : float float, optional
     Slice the data in non-equally spaced slices. Give a coefficient
     and an exponent. The data slicing will be determined by the equation
     y = coefficient*x^exponent + 1, where y is the step size between slices.
     The default is None, where all spectra are plotted or exported.
--grd, --get_root_dir : flag, optional
-    Print the current root directory to the console.
 -lsw, --low_signal_window : ``"narrow"`` or ``"wide"``, optional
     Set the width of the low signal outlier detection window (see
     :func:`~uv_pro.outliers.find_outliers()`). Set to ``"wide"`` if low
@@ -47,21 +62,14 @@ Command Line Arguments
     >> 1 will produce no outliers. The default value is 0.1.
 -qf, --quick_fig : flag, optional
     Use the quick figure generator to create and export plot figures.
--sl, --slice_spectra : int, optional
+-sl, --slice : int, optional
     The number of equally-spaced slices to plot or export. Example: if
     :attr:`~uv_pro.process.Dataset.processed_spectra` contains 100 spectra and
-    ``slice_spectra`` is 10, then every tenth spectrum will be kept. The
+    ``slice`` is 10, then every tenth spectrum will be kept. The
     default is None, where all spectra are plotted or exported.
--srd, --set_root_dir : str, optional
-    Set a root directory to simplify file path entry. For instance, if
-    you store all your UV-vis data files in a common folder, you can designate
-    it as the root directory. Subsequently, you can omit the root directory
-    portion of the path provided with ``-p`` and just provide a relative path.
 -tr, --trim : int int, optional
     Trim data outside a given time range: ``[trim_before, trim_after]``.
     Default value is None (no trimming).
---tree : flag, optional
-    Print the root directory file tree to the console.
 -tt, --time_traces : arbitrary number of ints, optional
     A list of specific wavelengths (in nm) to create time traces for.
     These time traces are independent from the time traces created by
@@ -79,21 +87,43 @@ Command Line Arguments
     Enable view-only mode. No data processing is performed and a plot of
     the data set is shown. Default is False.
 
+plot
+----
+Usage: ``uvp plot <options>``
+
+-k2 : flag, optional
+    Generate a second-order rate constant plot from exponential fit data.
+
+select (sel)
+------------
+Usage: ``uvp select``
+
+Interactively pick a .KD file from the console. The file is opened in view-
+only mode. The .KD file must be located inside the root directory.
+
+tree
+----
+Usage: ``uvp tree``
+
+Print the root directory file tree to the console.
+
 Examples
 --------
 ::
 
     # Open myfile.KD in view-only mode.
-    uvp -p C:/Desktop/myfile.KD -v
+    uvp process C:/Desktop/myfile.KD -v
+    # or use abbreviation `p`
+    uvp p C:/Desktop/myfile.KD -v
 
     # Set a root directory.
-    uvp -srd C:/Desktop
+    uvp root -set C:/Desktop
     # Now C:/Desktop can be omitted from the given path.
 
     # Open C:/Desktop/myfile.KD, show 10 spectra from 50 to 250 seconds
     # with outlier threshold of 0.2. Get time traces at 780 nm and 1020 nm.
     # Fit exponential to time traces at 780 nm and 1020 nm.
-    uvp -p myfile.KD -tr 50 250 -ot 0.2 -sl 10 -tt 780 1020 -fit
+    uvp p myfile.KD -tr 50 250 -ot 0.2 -sl 10 -tt 780 1020 -fit
 
 @author: David Hebert
 """
@@ -106,9 +136,10 @@ from uv_pro.io.export import prompt_for_export
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
 from uv_pro.utils.quickfig import QuickFig
+from uv_pro.utils.k2_plot import K2Plot
 
 
-# sys.tracebacklimit = 0
+sys.tracebacklimit = 0
 
 
 class CLI:
@@ -128,22 +159,50 @@ class CLI:
         self.config = Config()
         self.main()
 
+        try:
+            self.args.func()
+
+        except AttributeError:
+            pass
+
     def get_args(self) -> argparse.Namespace:
-        parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
+        """Collect all command-line args."""
+        main_parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
         help_msg = {
-            'path': '''Process UV-vis data at the given path.
-                       Either a .KD file or a folder (.csv format).''',
-            'set_root_dir': '''Set a root directory where data files are located so you
-                               don't have to type a full path every time.''',
-            'get_root_dir': '''Print the root directory to the console.''',
-            'clear_root_dir': '''Clear the current root directory.''',
-            'view': '''Enable view only mode (no data processing).''',
+            'test_mode': 'For testing purposes.',
+        }
+
+        main_parser.add_argument(
+            '-qq',
+            '--test_mode',
+            action='store_true',
+            default=False,
+            help=help_msg['test_mode']
+        )
+
+        subparsers = main_parser.add_subparsers(
+            help='Subcommands'
+        )
+
+        self._process_args(subparsers)
+        self._plot_args(subparsers)
+        self._root_args(subparsers)
+        self._select_args(subparsers)
+        self._tree_args(subparsers)
+
+        return main_parser.parse_args()
+
+    def _process_args(self, subparsers: argparse._SubParsersAction) -> None:
+        """Get args for ``process`` subcommand."""
+        help_msg = {
+            'path': '''A path to a UV-vis Data File (.KD format).''',
+            'view': '''Enable view-only mode (no data processing).''',
             'trim': '''2 args: trim data from __ to __.
                        Trim the data to remove spectra outside the given time range.''',
             'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
                                     Values closer to 0 result in higher sensitivity (more outliers).
                                     Values closer to 1 result in lower sensitivity (fewer outliers).''',
-            'slice_spectra': 'Set the number of slices to plot. Default: None (no slicing).',
+            'slice': 'Set the number of slices to plot. Default: None (no slicing).',
             'gradient_slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
                                  Default: None (no slicing).''',
             'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
@@ -153,11 +212,8 @@ class CLI:
             'fit_exp': 'Perform exponential fitting of specified time traces. Default: False.',
             'init_rate': '''Perform linear regression of specified time traces for initial rates. Default False.
                             If performing initial rates fitting, you can supply an optional float value for
-                            the change in absorbance cutoff. Default cutoff is 0.1 (10% change in absorbance).''',
-            'tree': 'Show the root directory file tree.',
-            'file_picker': 'Choose a .KD file interactively from the command line instead of using -p.',
-            'test_mode': 'For testing purposes.',
-            'time_trace_window': '''Set the (min, max) wavelength (in nm) window for time traces used for
+                            the change in absorbance cutoff. Default cutoff is 0.1 (10%% change in absorbance).''',
+            'time_trace_window': '''Set the (min, max) wavelength (in nm) window for the time traces used in
                                     outlier detection''',
             'time_trace_interval': '''Set the interval (in nm) for time traces. An interval of 10 will create time
                                       traces from the window min to max every 10 nm. Smaller intervals may
@@ -167,44 +223,31 @@ class CLI:
             'quick_fig': 'Use the quick-figure generator.'
         }
 
-        parser.add_argument(
-            '-p',
-            '--path',
+        process_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'process',
+            description='Process UV-vis Data',
+            aliases=['p', 'proc'],
+            help='Process .KD UV-vis data files.'
+        )
+
+        process_subparser.set_defaults(
+            func=self.process
+        )
+
+        process_subparser.add_argument(
+            'path',
             action='store',
             default=None,
-            metavar='',
             help=help_msg['path']
         )
-        parser.add_argument(
-            '-srd',
-            '--set_root_dir',
-            action='store',
-            default=None,
-            metavar='',
-            help=help_msg['set_root_dir']
-        )
-        parser.add_argument(
-            '-grd',
-            '--get_root_dir',
-            action='store_true',
-            default=False,
-            help=help_msg['get_root_dir']
-        )
-        parser.add_argument(
-            '-crd',
-            '--clear_root_dir',
-            action='store_true',
-            default=False,
-            help=help_msg['clear_root_dir']
-        )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-v',
             '--view',
             action='store_true',
             default=False,
             help=help_msg['view']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-tr',
             '--trim',
             action='store',
@@ -214,7 +257,7 @@ class CLI:
             metavar='',
             help=help_msg['trim']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-ot',
             '--outlier_threshold',
             action='store',
@@ -223,15 +266,15 @@ class CLI:
             metavar='',
             help=help_msg['outlier_threshold']
         )
-        slicing_args = parser.add_mutually_exclusive_group()
+        slicing_args = process_subparser.add_mutually_exclusive_group()
         slicing_args.add_argument(
             '-sl',
-            '--slice_spectra',
+            '--slice',
             action='store',
             type=int,
             default=None,
             metavar='',
-            help=help_msg['slice_spectra']
+            help=help_msg['slice']
         )
         slicing_args.add_argument(
             '-gsl',
@@ -243,7 +286,7 @@ class CLI:
             metavar='',
             help=help_msg['gradient_slice']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-bll',
             '--baseline_lambda',
             action='store',
@@ -252,7 +295,7 @@ class CLI:
             metavar='',
             help=help_msg['baseline_lambda']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-blt',
             '--baseline_tolerance',
             action='store',
@@ -261,7 +304,7 @@ class CLI:
             metavar='',
             help=help_msg['baseline_tolerance']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-lsw',
             '--low_signal_window',
             action='store',
@@ -270,45 +313,25 @@ class CLI:
             metavar='',
             help=help_msg['low_signal_window']
         )
-        fitting_args = parser.add_mutually_exclusive_group()
-        fitting_args.add_argument(
+        process_subparser.add_argument(
             '-fit',
             '--fit_exp',
             action='store_true',
             default=False,
             help=help_msg['fit_exp']
         )
-        fitting_args.add_argument(
+        process_subparser.add_argument(
             '-ir',
             '--init_rate',
             action='store',
             type=float,
             nargs='?',
             const='0.1',
-            default=False,
+            default=None,
+            metavar='',
             help=help_msg['init_rate']
         )
-        parser.add_argument(
-            '--tree',
-            action='store_true',
-            default=False,
-            help=help_msg['tree']
-        )
-        parser.add_argument(
-            '-fp',
-            '--file_picker',
-            action='store_true',
-            default=False,
-            help=help_msg['file_picker']
-        )
-        parser.add_argument(
-            '-qq',
-            '--test_mode',
-            action='store_true',
-            default=False,
-            help=help_msg['test_mode']
-        )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-ttw',
             '--time_trace_window',
             action='store',
@@ -318,7 +341,7 @@ class CLI:
             metavar='',
             help=help_msg['time_trace_window']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-tti',
             '--time_trace_interval',
             action='store',
@@ -327,7 +350,7 @@ class CLI:
             metavar='',
             help=help_msg['time_trace_interval']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-tt',
             '--time_traces',
             action='store',
@@ -337,14 +360,14 @@ class CLI:
             metavar='',
             help=help_msg['time_traces']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-ne',
             '--no_export',
             action='store_true',
             default=False,
             help=help_msg['no_export']
         )
-        parser.add_argument(
+        process_subparser.add_argument(
             '-qf',
             '--quick_fig',
             action='store_true',
@@ -352,7 +375,163 @@ class CLI:
             help=help_msg['quick_fig']
         )
 
-        return parser.parse_args()
+    def _plot_args(self, subparsers: argparse._SubParsersAction) -> None:
+        """Get args for ``plot`` subcommand."""
+        help_msg = {
+            'k2_plot': 'Generate a second-order rate constant plot from exponential fit data.'
+        }
+
+        plot_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'plot',
+            description='Generate plots.',
+            help='Generate plots.'
+        )
+
+        plot_subparser.set_defaults(
+            func=self.plot
+        )
+
+        plot_subparser.add_argument(
+            '-k2',
+            '--k2_plot',
+            action='store_true',
+            default=False,
+            help=help_msg['k2_plot']
+        )
+
+    def _root_args(self, subparsers: argparse._SubParsersAction) -> None:
+        """Get args for ``root`` subcommand."""
+        help_msg = {
+            'set_root_dir': '''Set a root directory where data files are located to enable \
+                               typing shorter relative paths.''',
+            'get_root_dir': '''Print the root directory to the console.''',
+            'clear_root_dir': '''Clear the current root directory.''',
+        }
+
+        rootdir_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'root',
+            description='Root directory settings',
+            aliases=['rt'],
+            help='Root directory settings.'
+        )
+
+        rootdir_subparser.set_defaults(
+            func=self.root
+        )
+
+        mutually_exclusive = rootdir_subparser.add_mutually_exclusive_group()
+        mutually_exclusive.add_argument(
+            '-set',
+            action='store',
+            default=None,
+            metavar='',
+            help=help_msg['set_root_dir']
+        )
+        mutually_exclusive.add_argument(
+            '-get',
+            action='store_true',
+            default=False,
+            help=help_msg['get_root_dir']
+        )
+        mutually_exclusive.add_argument(
+            '-clear',
+            action='store_true',
+            default=False,
+            help=help_msg['clear_root_dir']
+        )
+
+    def _select_args(self, subparsers: argparse._SubParsersAction) -> None:
+        """Get args for ``select`` subcommand."""
+        help_msg = {
+            'select': 'Select a .KD file from the root directory in the terminal and open it in \
+                            view-only mode.',
+        }
+
+        filepicker_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'select',
+            description='Select a .KD file from the root directory in the terminal \
+                         and open it in view-only mode.',
+            help=help_msg['select']
+        )
+
+        filepicker_subparser.set_defaults(
+            func=self._handle_file_picker,
+            select=True
+        )
+
+    def _tree_args(self, subparsers: argparse._SubParsersAction) -> None:
+        """Get args for ``tree`` subcommand."""
+        help_msg = {
+            'tree': 'Show the root directory file tree.'
+        }
+
+        tree_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'tree',
+            description='Show the root directory file tree.',
+            help=help_msg['tree']
+        )
+
+        tree_subparser.set_defaults(
+            func=self._handle_file_picker,
+            tree=True
+        )
+
+    def _test_args(self, subparsers: argparse._SubParsersAction) -> None:
+        help_msg = {
+            'test_mode': 'For testing purposes.',
+        }
+
+        test_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'tree',
+            description='Show the root directory file tree.',
+            help=help_msg['tree']
+        )
+
+        test_subparser.set_defaults(
+            func=self._handle_test_mode,
+            tree=True
+        )
+
+    def main(self) -> None:
+        """
+        Prehandles command line args.
+
+        Handles the args ``-qq``, ``-crd``, ``-srd``, ``-grd``, ``--tree``, and ``-fp``.
+        Then handles the path before starting the processing routine
+        :meth:`~uv_pro.scripts.cli.CLI.proc()`.
+        """
+        if self.args.test_mode is True:
+            self._handle_test_mode()  # [-qq]
+            return
+
+    def _handle_test_mode(self) -> None:
+        r"""Test mode `-qq` only works from inside the repo \...\uv_pro\uv_pro."""
+        test_data = os.path.normpath(
+            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD')
+        )
+        self.args.path = test_data
+        self.process()
+
+    def _handle_file_picker(self) -> None:
+        if root_dir := self.get_root_dir():
+            if self.args.select is True:
+                if file := FilePicker(root_dir, '.KD').pick_file():
+                    self.args.path = file[0]
+                    self.args.view = True
+                    self.process()
+
+            if self.args.tree is True:
+                FilePicker(root_dir, '.KD').tree()
+
+    def root(self):
+        if self.args.set is not None:
+            self.modify_root_dir(self.args.set)  # [-srd]
+
+        if self.args.clear is True:
+            self.reset_root_dir()  # [-crd]
+
+        if self.args.get is True:
+            print(f'root directory: {self.get_root_dir()}')  # [-gdr]
 
     def get_root_dir(self) -> str:
         root_dir = self.config.config['Settings']['root_directory']
@@ -367,80 +546,7 @@ class CLI:
     def reset_root_dir(self) -> None:
         self.config.reset()
 
-    def handle_test_mode(self) -> None:
-        r"""Test mode `-qq` only works from inside the repo \...\uv_pro\uv_pro."""
-        test_data = os.path.normpath(
-            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD')
-        )
-        self.args.path = test_data
-        self.proc()
-
-    def handle_file_picker(self, root_dir: str | None) -> None:
-        if root_dir is not None:
-            if self.args.file_picker is True:
-                self.args.path = FilePicker(root_dir, '.KD').pick_file()[0]
-                self.args.view = True
-
-            if self.args.tree is True:
-                FilePicker(root_dir, '.KD').tree()
-
-    def handle_path(self, root_dir: str | None) -> None:
-        current_dir = os.getcwd()
-        path_exists = os.path.exists(os.path.join(current_dir, self.args.path))
-
-        if path_exists:
-            self.args.path = os.path.join(current_dir, self.args.path)
-
-        elif root_dir is not None and os.path.exists(os.path.join(root_dir, self.args.path)):
-            self.args.path = os.path.join(root_dir, self.args.path)
-
-        else:
-            raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
-
-    def handle_slicing(self) -> dict | None:
-        if self.args.slice_spectra is None and self.args.gradient_slice is None:
-            return None
-
-        elif self.args.slice_spectra:
-            return {'mode': 'equal', 'slices': self.args.slice_spectra}
-
-        elif self.args.gradient_slice:
-            return {'mode': 'gradient',
-                    'coeff': self.args.gradient_slice[0],
-                    'expo': self.args.gradient_slice[1]
-                    }
-        return None
-
-    def main(self) -> None:
-        """
-        Prehandles command line args.
-
-        Handles the args ``-qq``, ``-crd``, ``-srd``, ``-grd``, ``--tree``, and ``-fp``.
-        Then handles the path before starting the processing routine
-        :meth:`~uv_pro.scripts.cli.CLI.proc()`.
-        """
-        if self.args.test_mode is True:
-            self.handle_test_mode()  # [-qq]
-            return
-
-        if self.args.set_root_dir is not None:
-            self.modify_root_dir(self.args.set_root_dir)  # [-srd]
-
-        if self.args.clear_root_dir is True:
-            self.reset_root_dir()  # [-crd]
-
-        root_dir = self.get_root_dir()
-
-        if self.args.get_root_dir is True:
-            print(f'root directory: {root_dir}')  # [-gdr]
-
-        self.handle_file_picker(root_dir)  # [-fp] [--tree]
-
-        if self.args.path is not None:
-            self.handle_path(root_dir)
-            self.proc()
-
-    def proc(self) -> None:
+    def process(self) -> None:
         """
         Process data.
 
@@ -448,6 +554,8 @@ class CLI:
         given ``args``, plots the result, and prompts the user
         for exporting.
         """
+        self._handle_path(self.get_root_dir())
+
         if self.args.view is True:
             dataset = Dataset(self.args.path, view_only=True)
 
@@ -455,7 +563,7 @@ class CLI:
             dataset = Dataset(
                 self.args.path,
                 trim=self.args.trim,
-                slicing=self.handle_slicing(),
+                slicing=self._handle_slicing(),
                 fit_exp=self.args.fit_exp,
                 fit_init_rate=self.args.init_rate,
                 outlier_threshold=self.args.outlier_threshold,
@@ -469,6 +577,33 @@ class CLI:
 
         print(dataset)
         self._plot_and_export(dataset)
+
+    def _handle_path(self, root_dir: str | None) -> None:
+        current_dir = os.getcwd()
+        path_exists = os.path.exists(os.path.join(current_dir, self.args.path))
+
+        if path_exists:
+            self.args.path = os.path.join(current_dir, self.args.path)
+
+        elif root_dir is not None and os.path.exists(os.path.join(root_dir, self.args.path)):
+            self.args.path = os.path.join(root_dir, self.args.path)
+
+        else:
+            raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
+
+    def _handle_slicing(self) -> dict | None:
+        if self.args.slice is None and self.args.gradient_slice is None:
+            return None
+
+        elif self.args.slice:
+            return {'mode': 'equal', 'slices': self.args.slice}
+
+        elif self.args.gradient_slice:
+            return {'mode': 'gradient',
+                    'coeff': self.args.gradient_slice[0],
+                    'expo': self.args.gradient_slice[1]
+                    }
+        return None
 
     def _plot_and_export(self, dataset: Dataset) -> None:
         """Plot a :class:`~uv_pro.process.Dataset` and prompt the user for export."""
@@ -496,6 +631,10 @@ class CLI:
 
         else:
             uvplt.plot_spectra(dataset, dataset.raw_spectra)
+
+    def plot(self) -> None:
+        if self.args.k2_plot is True:
+            K2Plot()
 
 
 def main() -> None:

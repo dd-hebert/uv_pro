@@ -63,7 +63,7 @@ class FilePicker:
         Parameters
         ----------
         mode : str
-            Specify selection of a single or multiple files. Either \ 
+            Specify selection of a single or multiple files. Either \
             'single' or 'multi'. Default is 'single'.
 
         Returns
