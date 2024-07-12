@@ -324,10 +324,10 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
             [
                 f'{wavelength}',
                 r'$k_{obs} =$',
-                f'{dataset.fit['params'][wavelength]['kobs']:.2e}',
-                f'± {dataset.fit['params'][wavelength]['kobs err']:.2e}',
+                f'{dataset.fit["params"][wavelength]["kobs"]:.2e}',
+                f'± {dataset.fit["params"][wavelength]["kobs err"]:.2e}',
                 r'$r^2 =$',
-                f'{dataset.fit['params'][wavelength]['r2']:.3f}'
+                f'{dataset.fit["params"][wavelength]["r2"]:.3f}'
             ]
         )
 

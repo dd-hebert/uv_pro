@@ -23,10 +23,10 @@ def print_dataset(dataset) -> None:
             out.append(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
 
         else:
-            out.append(f'Slicing mode: {dataset.slicing['mode']}')
+            out.append(f'Slicing mode: {dataset.slicing["mode"]}')
             if dataset.slicing['mode'] == 'gradient':
-                out.append(f'Coefficient: {dataset.slicing['coeff']}')
-                out.append(f'Exponent: {dataset.slicing['expo']}')
+                out.append(f'Coefficient: {dataset.slicing["coeff"]}')
+                out.append(f'Exponent: {dataset.slicing["expo"]}')
 
             out.append(f'Slices: {len(dataset.processed_spectra.columns)}')
 
@@ -78,8 +78,8 @@ def prompt_user(header: str, options: list[dict]):
     list[str]
         The user's input selections.
     """
-    prompt = f'\n{header}\n{'=' * len(header)}\n'
-    prompt += '\n'.join([f'({option['key']}) {option['name']}' for option in options])
+    prompt = f'\n{header}\n{"=" * len(header)}\n'
+    prompt += '\n'.join([f'({option["key"]}) {option["name"]}' for option in options])
     prompt += '\n\nChoice: '
 
     valid_choices = [option['key'] for option in options]

@@ -240,6 +240,15 @@ class CLI:
             metavar='',
             help=help_msg['gradient_slice']
         )
+        slicing_args.add_argument(
+                '-ss',
+                '--specific_slices',
+                action='store',
+                nargs='*',
+                type=int,
+                default=None,
+                metavar=''
+        )
         parser.add_argument(
             '-bll',
             '--baseline_lambda',
@@ -384,10 +393,8 @@ class CLI:
             raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
 
     def handle_slicing(self) -> dict | None:
-        if self.args.slice_spectra is None and self.args.gradient_slice is None:
-            return None
 
-        elif self.args.slice_spectra:
+        if self.args.slice_spectra:
             return {'mode': 'equal', 'slices': self.args.slice_spectra}
 
         elif self.args.gradient_slice:
@@ -395,6 +402,9 @@ class CLI:
                     'coeff': self.args.gradient_slice[0],
                     'expo': self.args.gradient_slice[1]
                     }
+        elif self.args.specific_slices:
+            return {'mode': 'specific',
+                    'times': self.args.specific_slices}
         return None
 
     def main(self) -> None:
