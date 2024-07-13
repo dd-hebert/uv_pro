@@ -37,6 +37,7 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
 
     elif slicing['mode'] == 'specific':
         sliced_spectra = specific_slicing(spectra, slicing['times'])
+
     else:
         sliced_spectra = equal_slicing(spectra, slicing['slices'])
 
@@ -68,6 +69,7 @@ def equal_slicing(spectra: DataFrame, num_slices: int) -> DataFrame:
     step = max(1, len(spectra.columns) // num_slices)
     return spectra.iloc[:, list(range(0, len(spectra.columns), step))]
 
-def specific_slicing(spectra: DataFrame, slices: list[int]) -> DataFrame:
+
+def specific_slicing(spectra: DataFrame, times: list[int]) -> DataFrame:
     """Get specific slices of the sepctra"""
-    return spectra[slices]
+    return spectra[times]
