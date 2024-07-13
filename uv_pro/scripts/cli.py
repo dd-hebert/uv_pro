@@ -94,9 +94,9 @@ Usage: ``uvp plot <options>``
 -k2 : flag, optional
     Generate a second-order rate constant plot from exponential fit data.
 
-select (sel)
-------------
-Usage: ``uvp select``
+browse (br)
+-----------
+Usage: ``uvp browse`` or ``uvp br``
 
 Interactively pick a .KD file from the console. The file is opened in view-
 only mode. The .KD file must be located inside the root directory.
@@ -136,7 +136,6 @@ from uv_pro.io.export import prompt_for_export
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
 from uv_pro.utils.quickfig import QuickFig
-from uv_pro.utils.k2_plot import K2Plot
 
 
 sys.tracebacklimit = 0
@@ -157,7 +156,6 @@ class CLI:
     def __init__(self):
         self.args = self.get_args()
         self.config = Config()
-        self.main()
 
         try:
             self.args.func()
@@ -168,27 +166,16 @@ class CLI:
     def get_args(self) -> argparse.Namespace:
         """Collect all command-line args."""
         main_parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
-        help_msg = {
-            'test_mode': 'For testing purposes.',
-        }
-
-        main_parser.add_argument(
-            '-qq',
-            '--test_mode',
-            action='store_true',
-            default=False,
-            help=help_msg['test_mode']
-        )
 
         subparsers = main_parser.add_subparsers(
             help='Subcommands'
         )
 
         self._process_args(subparsers)
-        self._plot_args(subparsers)
         self._root_args(subparsers)
-        self._select_args(subparsers)
+        self._browse_args(subparsers)
         self._tree_args(subparsers)
+        self._test_args(subparsers)
 
         return main_parser.parse_args()
 
@@ -375,30 +362,6 @@ class CLI:
             help=help_msg['quick_fig']
         )
 
-    def _plot_args(self, subparsers: argparse._SubParsersAction) -> None:
-        """Get args for ``plot`` subcommand."""
-        help_msg = {
-            'k2_plot': 'Generate a second-order rate constant plot from exponential fit data.'
-        }
-
-        plot_subparser: argparse.ArgumentParser = subparsers.add_parser(
-            'plot',
-            description='Generate plots.',
-            help='Generate plots.'
-        )
-
-        plot_subparser.set_defaults(
-            func=self.plot
-        )
-
-        plot_subparser.add_argument(
-            '-k2',
-            '--k2_plot',
-            action='store_true',
-            default=False,
-            help=help_msg['k2_plot']
-        )
-
     def _root_args(self, subparsers: argparse._SubParsersAction) -> None:
         """Get args for ``root`` subcommand."""
         help_msg = {
@@ -440,23 +403,24 @@ class CLI:
             help=help_msg['clear_root_dir']
         )
 
-    def _select_args(self, subparsers: argparse._SubParsersAction) -> None:
-        """Get args for ``select`` subcommand."""
+    def _browse_args(self, subparsers: argparse._SubParsersAction) -> None:
+        """Get args for ``browse`` subcommand."""
         help_msg = {
-            'select': 'Select a .KD file from the root directory in the terminal and open it in \
-                            view-only mode.',
+            'browse': 'Browse for a .KD file in the root directory \
+                       and open it in view-only mode.',
         }
 
         filepicker_subparser: argparse.ArgumentParser = subparsers.add_parser(
-            'select',
-            description='Select a .KD file from the root directory in the terminal \
+            'browse',
+            description='Browse for a .KD file in the root directory \
                          and open it in view-only mode.',
-            help=help_msg['select']
+            aliases=['br'],
+            help=help_msg['browse']
         )
 
         filepicker_subparser.set_defaults(
-            func=self._handle_file_picker,
-            select=True
+            func=self.browse,
+            selectfile=True
         )
 
     def _tree_args(self, subparsers: argparse._SubParsersAction) -> None:
@@ -472,7 +436,7 @@ class CLI:
         )
 
         tree_subparser.set_defaults(
-            func=self._handle_file_picker,
+            func=self.tree,
             tree=True
         )
 
@@ -482,69 +446,15 @@ class CLI:
         }
 
         test_subparser: argparse.ArgumentParser = subparsers.add_parser(
-            'tree',
-            description='Show the root directory file tree.',
-            help=help_msg['tree']
+            'test',
+            description='For testing purposes.',
+            help=help_msg['test_mode']
         )
 
         test_subparser.set_defaults(
-            func=self._handle_test_mode,
-            tree=True
+            func=self.test_mode,
+            test=True
         )
-
-    def main(self) -> None:
-        """
-        Prehandles command line args.
-
-        Handles the args ``-qq``, ``-crd``, ``-srd``, ``-grd``, ``--tree``, and ``-fp``.
-        Then handles the path before starting the processing routine
-        :meth:`~uv_pro.scripts.cli.CLI.proc()`.
-        """
-        if self.args.test_mode is True:
-            self._handle_test_mode()  # [-qq]
-            return
-
-    def _handle_test_mode(self) -> None:
-        r"""Test mode `-qq` only works from inside the repo \...\uv_pro\uv_pro."""
-        test_data = os.path.normpath(
-            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD')
-        )
-        self.args.path = test_data
-        self.process()
-
-    def _handle_file_picker(self) -> None:
-        if root_dir := self.get_root_dir():
-            if self.args.select is True:
-                if file := FilePicker(root_dir, '.KD').pick_file():
-                    self.args.path = file[0]
-                    self.args.view = True
-                    self.process()
-
-            if self.args.tree is True:
-                FilePicker(root_dir, '.KD').tree()
-
-    def root(self):
-        if self.args.set is not None:
-            self.modify_root_dir(self.args.set)  # [-srd]
-
-        if self.args.clear is True:
-            self.reset_root_dir()  # [-crd]
-
-        if self.args.get is True:
-            print(f'root directory: {self.get_root_dir()}')  # [-gdr]
-
-    def get_root_dir(self) -> str:
-        root_dir = self.config.config['Settings']['root_directory']
-        return root_dir if root_dir else None
-
-    def modify_root_dir(self, directory: str) -> None:
-        if os.path.exists(directory):
-            self.config.modify('Settings', 'root_directory', directory)
-        else:
-            raise FileNotFoundError(f'The directory does not exist: {directory}')
-
-    def reset_root_dir(self) -> None:
-        self.config.reset()
 
     def process(self) -> None:
         """
@@ -632,11 +542,48 @@ class CLI:
         else:
             uvplt.plot_spectra(dataset, dataset.raw_spectra)
 
-    def plot(self) -> None:
-        if self.args.k2_plot is True:
-            K2Plot()
+    def root(self):
+        if self.args.set is not None:
+            self.modify_root_dir(self.args.set)
+
+        if self.args.clear is True:
+            self.reset_root_dir()
+
+        if self.args.get is True:
+            print(f'root directory: {self.get_root_dir()}')
+
+    def get_root_dir(self) -> str:
+        root_dir = self.config.config['Settings']['root_directory']
+        return root_dir if root_dir else None
+
+    def modify_root_dir(self, directory: str) -> None:
+        if os.path.exists(directory):
+            self.config.modify('Settings', 'root_directory', directory)
+        else:
+            raise FileNotFoundError(f'The directory does not exist: {directory}')
+
+    def reset_root_dir(self) -> None:
+        self.config.reset()
+
+    def browse(self) -> None:
+        if root_dir := self.get_root_dir():
+            if file := FilePicker(root_dir, '.KD').pick_file():
+                self.args.path = file[0]
+                self.args.view = True
+                self.process()
+
+    def tree(self) -> None:
+        if root_dir := self.get_root_dir():
+            FilePicker(root_dir, '.KD').tree()
+
+    def test_mode(self) -> None:
+        r"""Test mode `-qq` only works from inside the repo \...\uv_pro\uv_pro."""
+        test_data = os.path.normpath(
+            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD')
+        )
+        self.args.path = test_data
+        self.process()
 
 
 def main() -> None:
-    """Run the CLI."""
     CLI()

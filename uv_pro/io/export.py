@@ -126,7 +126,7 @@ def prompt_for_export(dataset) -> list[str]:
                 files_exported.extend(
                     [
                         export_csv(dataset, dataset.init_rate['lines'], suffix='Init rate lines'),
-                        export_csv(dataset, dataset.init_rate['params'], suffix='Init rate params'),
+                        export_csv(dataset, dataset.init_rate['params'].transpose(), suffix='Init rate params'),
                     ]
                 )
 

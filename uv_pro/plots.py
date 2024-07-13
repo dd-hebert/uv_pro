@@ -118,7 +118,7 @@ def plot_2x2(dataset: Dataset) -> None:
     dataset : :class:`~uv_pro.process.Dataset`
         The :class:`~uv_pro.process.Dataset` to be plotted.
     """
-    fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_outliers)) = plt.subplots(2, 2, figsize=(16, 8), constrained_layout=True)
+    fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_outliers)) = plt.subplots(2, 2, figsize=(10, 5), constrained_layout=True)
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset)
@@ -226,7 +226,7 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset) -> None:
                 except TypeError:
                     continue
 
-    _time_trace_plot_text(ax, dataset)
+        _time_trace_plot_text(ax, dataset)
 
     ax.plot(time_traces, alpha=alpha, linestyle=linestyle, color=color, zorder=2)
 
