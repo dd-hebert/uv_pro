@@ -273,6 +273,15 @@ class CLI:
             metavar='',
             help=help_msg['gradient_slice']
         )
+        slicing_args.add_argument(
+                '-ssl',
+                '--specific_slice',
+                action='store',
+                nargs='*',
+                type=int,
+                default=None,
+                metavar=''
+        )
         process_subparser.add_argument(
             '-bll',
             '--baseline_lambda',

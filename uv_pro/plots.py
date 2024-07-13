@@ -370,10 +370,10 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
             text = [
                 f'{wavelength}',
                 'rate =',
-                f'{dataset.init_rate['params'][wavelength]['slope']:.2e}',
-                f'± {dataset.init_rate['params'][wavelength]['slope err']:.2e}',
+                f'{dataset.init_rate["params"][wavelength]["slope"]:.2e}',
+                f'± {dataset.init_rate["params"][wavelength]["slope err"]:.2e}',
                 r'$r^2 =$',
-                f'{dataset.init_rate['params'][wavelength]['r2']:.3f}'
+                f'{dataset.init_rate["params"][wavelength]["r2"]:.3f}'
             ]
 
             _add_text(' '.join(text), row_number, text_color)
@@ -385,10 +385,10 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
             text = [
                 f'{wavelength}',
                 r'$k_{obs} =$',
-                f'{dataset.fit['params'][wavelength]['kobs']:.2e}',
-                f'± {dataset.fit['params'][wavelength]['kobs err']:.2e}',
+                f'{dataset.fit["params"][wavelength]["kobs"]:.2e}',
+                f'± {dataset.fit["params"][wavelength]["kobs err"]:.2e}',
                 r'$r^2 =$',
-                f'{dataset.fit['params'][wavelength]['r2']:.3f}'
+                f'{dataset.fit["params"][wavelength]["r2"]:.3f}'
             ]
 
             _add_text(' '.join(text), row_number, text_color)

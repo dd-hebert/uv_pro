@@ -152,3 +152,8 @@ cython_debug/
 #.idea/
 pkgupdate.bat
 bumpy.toml
+
+
+
+#Mac bullshit
+.DS_Store
