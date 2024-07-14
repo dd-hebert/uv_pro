@@ -16,7 +16,7 @@ from matplotlib.artist import Artist
 from matplotlib.figure import Figure
 from uv_pro.process import Dataset
 import uv_pro.plots as uvplt
-from uv_pro.utils.printing import prompt_user
+from uv_pro.utils.printing import prompt_user_choice
 from uv_pro.io.export import export_figure
 
 
@@ -76,7 +76,7 @@ class QuickFig:
 
         self._prompt_for_changes(fig, title, x_bounds)
 
-    def export(self, fig) -> str:
+    def export(self, fig: Figure) -> str:
         output_dir = os.path.dirname(self.dataset.path)
         filename = os.path.splitext(self.dataset.name)[0]
         return export_figure(fig, output_dir, filename)
@@ -116,13 +116,14 @@ class QuickFig:
         )
 
         uvplt._processed_data_subplot(ax_processed_data, self.dataset)
-        uvplt._time_traces_subplot(ax_traces, self.dataset)
+        uvplt._time_traces_subplot(ax_traces, self.dataset, show_slices=False)
         self._touchup_time_traces_plot(ax_traces)
 
         return fig, (ax_processed_data, ax_traces)
 
-    def _touchup_processed_data_plot(self, ax, x_bounds) -> None:
+    def _touchup_processed_data_plot(self, ax: Axes, x_bounds: list[int, int]) -> None:
         """Modify x-axis bounds and plot text."""
+        ax.set_title('UV-vis Spectra', fontstyle='normal')
         ax.set_xbound(*x_bounds)
         Artist.remove(ax.texts[0])
         delta_t = int(self.dataset.processed_spectra.columns[-1]) - int(self.dataset.processed_spectra.columns[0])
@@ -137,8 +138,9 @@ class QuickFig:
             fontsize=8
         )
 
-    def _touchup_time_traces_plot(self, ax) -> None:
+    def _touchup_time_traces_plot(self, ax: Axes) -> None:
         """Modify plot tick labels and x-axis bounds."""
+        ax.set_title('Time Traces', fontstyle='normal')
         ax.tick_params(labelleft=True)
         ax.set_xbound(
             int(self.dataset.processed_spectra.columns[0]),
@@ -165,7 +167,7 @@ class QuickFig:
             {'key': '3', 'name': 'Change x-axis bounds'}
         ]
 
-        if user_choices := prompt_user(header=header, options=options):
+        if user_choices := prompt_user_choice(header=header, options=options):
             if '1' in user_choices:
                 self.exported_figure = self.export(fig)
             if '2' in user_choices:

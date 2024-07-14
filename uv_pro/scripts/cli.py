@@ -12,20 +12,6 @@ are given in parenthesis.
 Commands
 ========
 
-root (rt)
----------
-Usage: ``uvp rt <options>`` or ``uvp root <options>``
-
--clear, --clear_root_dir : flag, optional
-    Clear the current root directory.
--get, --get_root_dir : flag, optional
-    Print the current root directory to the console.
--set, --set_root_dir : str, optional
-    Set a root directory to simplify file path entry. For instance, if
-    you store all your UV-vis data files in a common folder, you can designate
-    it as the root directory. Subsequently, you can omit the root directory
-    portion of the path when processing data and just provide a relative path.
-
 process (p, proc)
 -----------------
 Usage: ``uvp p <path> <options>``, ``uvp proc <path> <options>``, or ``uvp process <path> <options>``
@@ -67,6 +53,9 @@ path : str, required
     :attr:`~uv_pro.process.Dataset.processed_spectra` contains 100 spectra and
     ``slice`` is 10, then every tenth spectrum will be kept. The
     default is None, where all spectra are plotted or exported.
+-ssl, --specific_slice : list[int], optional
+    Get slices at specific times. Takes an arbitrary number of floats.
+    The default is None, where all spectra are plotted or exported.
 -tr, --trim : int int, optional
     Trim data outside a given time range: ``[trim_before, trim_after]``.
     Default value is None (no trimming).
@@ -87,19 +76,59 @@ path : str, required
     Enable view-only mode. No data processing is performed and a plot of
     the data set is shown. Default is False.
 
-plot
-----
-Usage: ``uvp plot <options>``
-
--k2 : flag, optional
-    Generate a second-order rate constant plot from exponential fit data.
-
 browse (br)
 -----------
 Usage: ``uvp browse`` or ``uvp br``
 
 Interactively pick a .KD file from the console. The file is opened in view-
 only mode. The .KD file must be located inside the root directory.
+
+multiview (mv)
+--------------
+Usage: ``uvp multiview <options>`` or ``uvp mv <options>``
+
+View multiple .KD files from the command line.
+
+-f, --search_filters : arbitrary number of strings, optional
+    A sequence of search filter strings. For example, passing ``-f copper A``
+    will open .KD files which contain 'copper' OR 'A' in their filename.
+    Passing no filters opens all .KD files in the current working directory.
+-a, --and_filter: flag, optional
+    Enable AND filter mode. For example, passing ``-f copper A -a`` will open
+    .KD files which contain both 'copper' AND 'A' in their filename. Default False.
+-o, --or_filter: flag, optional
+    Enable OR filter mode (the default filter mode). For example, passing
+    ``-f copper A -a`` will open .KD files which contain both 'copper' OR 'A'
+    in their filename. Default True.
+
+root (rt)
+---------
+Usage: ``uvp rt <options>`` or ``uvp root <options>``
+
+-clear : flag, optional
+    Clear the current root directory.
+-get : flag, optional
+    Print the current root directory to the console.
+-set : str, optional
+    Set a root directory to simplify file path entry. For instance, if
+    you store all your UV-vis data files in a common folder, you can designate
+    it as the root directory. Subsequently, you can omit the root directory
+    portion of the path when processing data and just provide a relative path.
+
+config (cfg)
+------------
+Usage: ``uvp config <option>`` or ``uvp cfg <option>``
+
+View, edit, or reset the script configuration settings.
+
+-get : flag, optional
+    Print the current configuration settings to the console.
+-reset : flag, optional
+    Reset a configuration setting back to the default value. Will prompt the user
+    for a selection of configuration settings to reset.
+-set : flag, optional
+    Edit and set a configuration setting. Will prompt the user for a selection of
+    configuration settings to edit.
 
 tree
 ----
@@ -135,7 +164,9 @@ import uv_pro.plots as uvplt
 from uv_pro.io.export import prompt_for_export
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
+from uv_pro.utils.printing import prompt_user_choice, prompt_for_value
 from uv_pro.utils.quickfig import QuickFig
+from uv_pro.scripts.multiview import multiview
 
 
 sys.tracebacklimit = 0
@@ -149,13 +180,13 @@ class CLI:
     ----------
     args : :class:`argparse.Namespace`
         Parsed command-line arguments.
-    config : :class:`configparser.ConfigParser`
+    cfg : :class:`~uv_pro.utils.config.Config`
         The current CLI settings configuration.
     """
 
     def __init__(self):
+        self.cfg = Config()
         self.args = self.get_args()
-        self.config = Config()
 
         try:
             self.args.func()
@@ -172,9 +203,11 @@ class CLI:
         )
 
         self._process_args(subparsers)
-        self._root_args(subparsers)
         self._browse_args(subparsers)
+        self._multiview_args(subparsers)
         self._tree_args(subparsers)
+        self._root_args(subparsers)
+        self._config_args(subparsers)
         self._test_args(subparsers)
 
         return main_parser.parse_args()
@@ -192,10 +225,11 @@ class CLI:
             'slice': 'Set the number of slices to plot. Default: None (no slicing).',
             'gradient_slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
                                  Default: None (no slicing).''',
+            'specific_slice': '''Get spectra slices from specific times. Takes an arbitrary number of floats.''',
             'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
             'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
-            'low_signal_window': '''"narrow" or "wide". Set the width of the low signal outlier detection window.
-                                     Default: "narrow"''',
+            'low_signal_window': '''"narrow", "wide", or "none". Set the width of the low signal outlier detection window.
+                                     Default: "narrow". If "none", low signal outlier detection is skipped.''',
             'fit_exp': 'Perform exponential fitting of specified time traces. Default: False.',
             'init_rate': '''Perform linear regression of specified time traces for initial rates. Default False.
                             If performing initial rates fitting, you can supply an optional float value for
@@ -274,13 +308,14 @@ class CLI:
             help=help_msg['gradient_slice']
         )
         slicing_args.add_argument(
-                '-ssl',
-                '--specific_slice',
-                action='store',
-                nargs='*',
-                type=int,
-                default=None,
-                metavar=''
+            '-ssl',
+            '--specific_slice',
+            action='store',
+            nargs='*',
+            type=float,
+            default=None,
+            metavar='',
+            help=help_msg['specific_slice']
         )
         process_subparser.add_argument(
             '-bll',
@@ -305,7 +340,7 @@ class CLI:
             '--low_signal_window',
             action='store',
             default='narrow',
-            choices=['narrow', 'wide'],
+            choices=['narrow', 'wide', 'none'],
             metavar='',
             help=help_msg['low_signal_window']
         )
@@ -371,47 +406,6 @@ class CLI:
             help=help_msg['quick_fig']
         )
 
-    def _root_args(self, subparsers: argparse._SubParsersAction) -> None:
-        """Get args for ``root`` subcommand."""
-        help_msg = {
-            'set_root_dir': '''Set a root directory where data files are located to enable \
-                               typing shorter relative paths.''',
-            'get_root_dir': '''Print the root directory to the console.''',
-            'clear_root_dir': '''Clear the current root directory.''',
-        }
-
-        rootdir_subparser: argparse.ArgumentParser = subparsers.add_parser(
-            'root',
-            description='Root directory settings',
-            aliases=['rt'],
-            help='Root directory settings.'
-        )
-
-        rootdir_subparser.set_defaults(
-            func=self.root
-        )
-
-        mutually_exclusive = rootdir_subparser.add_mutually_exclusive_group()
-        mutually_exclusive.add_argument(
-            '-set',
-            action='store',
-            default=None,
-            metavar='',
-            help=help_msg['set_root_dir']
-        )
-        mutually_exclusive.add_argument(
-            '-get',
-            action='store_true',
-            default=False,
-            help=help_msg['get_root_dir']
-        )
-        mutually_exclusive.add_argument(
-            '-clear',
-            action='store_true',
-            default=False,
-            help=help_msg['clear_root_dir']
-        )
-
     def _browse_args(self, subparsers: argparse._SubParsersAction) -> None:
         """Get args for ``browse`` subcommand."""
         help_msg = {
@@ -432,6 +426,52 @@ class CLI:
             selectfile=True
         )
 
+    def _multiview_args(self, subparsers: argparse._SubParsersAction) -> None:
+        help_msg = {
+        'search_filters': '''An arbitrary number of search filters''',
+        'and_filter': '``and`` filter mode.',
+        'or_filter': '``or`` filter mode.'
+        }
+
+        multiview_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'multiview',
+            description='Open multiple UV-vis data files in view-only mode.',
+            aliases=['mv'],
+            help='Open multiple UV-vis data files in view-only mode.'
+        )
+
+        multiview_subparser.set_defaults(
+            filter_mode='or',
+            func=self.multiview
+        )
+
+        multiview_subparser.add_argument(
+            '-f',
+            '--search_filters',
+            action='store',
+            nargs='*',
+            default='*',
+            metavar='',
+            help=help_msg['search_filters']
+        )
+        filter_args = multiview_subparser.add_mutually_exclusive_group(required=False)
+        filter_args.add_argument(
+            '-a',
+            '--and_filter',
+            dest='filter_mode',
+            action='store_const',
+            const='and',
+            help=help_msg['and_filter']
+        )
+        filter_args.add_argument(
+            '-o',
+            '--or_filter',
+            dest='filter_mode',
+            action='store_const',
+            const='or',
+            help=help_msg['or_filter']
+        )
+
     def _tree_args(self, subparsers: argparse._SubParsersAction) -> None:
         """Get args for ``tree`` subcommand."""
         help_msg = {
@@ -447,6 +487,85 @@ class CLI:
         tree_subparser.set_defaults(
             func=self.tree,
             tree=True
+        )
+
+    def _root_args(self, subparsers: argparse._SubParsersAction) -> None:
+        """Get args for ``root`` subcommand."""
+        help_msg = {
+            'set': '''Set a root directory where data files are located to enable
+                      typing shorter relative file paths.''',
+            'get': '''Print the root directory to the console.''',
+            'clear': '''Clear the current root directory.''',
+        }
+
+        rootdir_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'root',
+            description='Root directory settings.',
+            aliases=['rt'],
+            help='Root directory settings.',
+        )
+
+        rootdir_subparser.set_defaults(
+            func=self.root
+        )
+
+        mutually_exclusive = rootdir_subparser.add_mutually_exclusive_group()
+        mutually_exclusive.add_argument(
+            '-clear',
+            action='store_true',
+            default=False,
+            help=help_msg['clear']
+        )
+        mutually_exclusive.add_argument(
+            '-get',
+            action='store_true',
+            default=False,
+            help=help_msg['get']
+        )
+        mutually_exclusive.add_argument(
+            '-set',
+            action='store',
+            default=None,
+            metavar='',
+            help=help_msg['set']
+        )
+
+    def _config_args(self, subparsers: argparse._SubParsersAction) -> None:
+        help_msg = {
+            'set': '''Edit config settings.''',
+            'get': '''Print the current config settings to the console.''',
+            'reset': '''Reset config settings back to their default value.''',
+        }
+
+        config_subparser: argparse.ArgumentParser = subparsers.add_parser(
+            'config',
+            description='View and modify config settings. Available config settings: root_directory, plot_size',
+            aliases=['cfg'],
+            help='View and modify config settings.'
+        )
+
+        config_subparser.set_defaults(
+            func=self.config
+        )
+
+        mutually_exclusive = config_subparser.add_mutually_exclusive_group()
+        mutually_exclusive.add_argument(
+            '-set',
+            action='store_true',
+            default=False,
+            help=help_msg['set']
+        )
+        mutually_exclusive.add_argument(
+            '-get',
+            action='store_true',
+            default=False,
+            help=help_msg['get']
+        )
+        mutually_exclusive.add_argument(
+            '-reset',
+            action='store_true',
+            default=False,
+            help=help_msg['reset']
         )
 
     def _test_args(self, subparsers: argparse._SubParsersAction) -> None:
@@ -511,17 +630,22 @@ class CLI:
             raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
 
     def _handle_slicing(self) -> dict | None:
-        if self.args.slice is None and self.args.gradient_slice is None:
-            return None
-
-        elif self.args.slice:
+        if self.args.slice:
             return {'mode': 'equal', 'slices': self.args.slice}
 
         elif self.args.gradient_slice:
-            return {'mode': 'gradient',
-                    'coeff': self.args.gradient_slice[0],
-                    'expo': self.args.gradient_slice[1]
-                    }
+            return {
+                'mode': 'gradient',
+                'coeff': self.args.gradient_slice[0],
+                'expo': self.args.gradient_slice[1]
+            }
+
+        elif self.args.specific_slice:
+            return {
+                'mode': 'specific',
+                'times': self.args.specific_slice
+            }
+
         return None
 
     def _plot_and_export(self, dataset: Dataset) -> None:
@@ -538,7 +662,7 @@ class CLI:
                     pass
 
             else:
-                uvplt.plot_2x2(dataset)
+                uvplt.plot_2x2(dataset, figsize=self._get_figsize())
 
             if self.args.no_export is False:
                 files_exported.extend(prompt_for_export(dataset))
@@ -551,28 +675,8 @@ class CLI:
         else:
             uvplt.plot_spectra(dataset, dataset.raw_spectra)
 
-    def root(self):
-        if self.args.set is not None:
-            self.modify_root_dir(self.args.set)
-
-        if self.args.clear is True:
-            self.reset_root_dir()
-
-        if self.args.get is True:
-            print(f'root directory: {self.get_root_dir()}')
-
-    def get_root_dir(self) -> str:
-        root_dir = self.config.config['Settings']['root_directory']
-        return root_dir if root_dir else None
-
-    def modify_root_dir(self, directory: str) -> None:
-        if os.path.exists(directory):
-            self.config.modify('Settings', 'root_directory', directory)
-        else:
-            raise FileNotFoundError(f'The directory does not exist: {directory}')
-
-    def reset_root_dir(self) -> None:
-        self.config.reset()
+    def _get_figsize(self) -> tuple[int, int]:
+        return tuple(map(int, self.cfg.get('Settings', 'plot_size').split()))
 
     def browse(self) -> None:
         if root_dir := self.get_root_dir():
@@ -581,9 +685,85 @@ class CLI:
                 self.args.view = True
                 self.process()
 
+    def multiview(self):
+        multiview(
+            search_filters=self.args.search_filters,
+            filter_mode=self.args.filter_mode
+        )
+
     def tree(self) -> None:
         if root_dir := self.get_root_dir():
             FilePicker(root_dir, '.KD').tree()
+
+    def root(self):
+        if self.args.set is not None:
+            self.modify_root_dir(self.args.set)
+
+        if self.args.clear:
+            self.clear_root_dir()
+
+        if self.args.get:
+            print(f'root directory: {self.get_root_dir()}')
+
+    def get_root_dir(self) -> str:
+        root_dir = self.cfg.get('Root Directory', 'root_directory')
+        return root_dir if root_dir else None
+
+    def modify_root_dir(self, directory: str) -> None:
+        if os.path.exists(directory):
+            self.cfg.modify('Root Directory', 'root_directory', directory)
+        else:
+            raise FileNotFoundError(f'The directory does not exist: {directory}')
+
+    def clear_root_dir(self) -> None:
+        self.cfg.reset()
+
+    def config(self) -> None:
+        if self.args.get:
+            print('\nConfig settings')
+            print('===============')
+            for setting, value in self.cfg.items('Settings'):
+                print(f'{setting}: {value}')
+            print('')
+
+        else:
+            if self.args.set:
+                header = 'Set config settings'
+                func = self._config_set
+            if self.args.reset:
+                header = 'Reset config settings'
+                func = self._config_reset
+
+            options = []
+            settings_keys = {}
+            for key, (setting, value) in enumerate(self.cfg.items('Settings'), start=1):
+                options.append({'key': str(key), 'name': f'{setting}: {value}'})
+                settings_keys[str(key)] = setting
+
+            if user_choices := prompt_user_choice(header=header, options=options):
+                for choice in user_choices:
+                    func(settings_keys[choice])
+
+    def _config_set(self, setting: str) -> None:
+        if value := prompt_for_value(title=setting, prompt='Enter a new value: '):
+            if self.cfg.modify(
+                section='Settings',
+                key=setting,
+                value=value
+            ):
+
+                return
+
+            else:
+                print(f'Invalid config value format.')
+                self._config_set(setting)
+
+    def _config_reset(self, setting: str):
+        self.cfg.modify(
+            'Settings',
+            setting,
+            self.cfg.defaults[setting]
+        )
 
     def test_mode(self) -> None:
         r"""Test mode `-qq` only works from inside the repo \...\uv_pro\uv_pro."""

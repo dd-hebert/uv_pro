@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uv_pro"
-version = "0.4.1"
+version = "0.5.0"
 authors = [
   { name="David Hebert", email="david@ddhebert.com" },
 ]

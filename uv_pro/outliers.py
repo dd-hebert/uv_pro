@@ -26,7 +26,8 @@ def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: fl
         while values closer to 1 produce fewer outliers. A value >>1 will
         produce no outliers.
     lsw : str
-        The width of the low signal outlier window. Either 'wide' or 'narrow'.
+        The width of the low signal outlier window. Either 'wide', 'narrow', or 'none'.
+        If 'none', low signal outlier detection will be skipped.
     lam : float
         The smoothness of the baseline. Larger numbers result in a smoother
         baseline. Try values between 0.001 and 10000.
@@ -43,14 +44,15 @@ def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: fl
         The baseline used for outlier detection.
     """
     outliers = []
-    low_signal_outliers = find_low_signal_outliers(data=time_traces, window=lsw)
-    time_traces = time_traces.drop(low_signal_outliers)
+    if lsw != 'none':
+        low_signal_outliers = find_low_signal_outliers(data=time_traces, window=lsw)
+        time_traces = time_traces.drop(low_signal_outliers)
+        outliers.extend(low_signal_outliers)
 
     baseline = compute_baseline(data=time_traces.sum(1), lam=lam, tol=tol)
     baselined_traces = time_traces.sum(1) - baseline
     baseline_outliers = find_baseline_outliers(data=baselined_traces, threshold=threshold)
 
-    outliers.extend(low_signal_outliers)
     outliers.extend(baseline_outliers)
     return outliers, baseline
 

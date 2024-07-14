@@ -80,9 +80,10 @@ class Dataset:
             Default value is None (no trimming).
         slicing : dict or None, optional
             Reduce the data down to a selection of slices. Slices can be taken in \
-            equally- or unequally-spaced (gradient) intervals.
+            equally- or unequally-spaced (gradient) intervals, or at specific times.
             For equal slicing: ``{'mode': 'equal', 'slices': int}``.
             For gradient slicing: ``{'mode': 'gradient', 'coeff': float, 'expo': float}``.
+            For specific slicing: ``{'mode': 'specific', 'times': list[float]}``.
         fit_exp : bool, optional
             Perform exponential fitting on the time traces specified with ``wavelengths``.
         fit_init_rate : float or None, optional
@@ -136,6 +137,8 @@ class Dataset:
         self.low_signal_window = low_signal_window
         self.baseline_lambda = baseline_lambda
         self.baseline_tolerance = baseline_tolerance
+        self.fit = None
+        self.init_rate = None
         self.is_processed = False
 
         self._import_data()
@@ -180,8 +183,6 @@ class Dataset:
             self._check_trim_values()
             self.processed_spectra = self._process_spectra()
             self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
-            self.fit = None
-            self.init_rate = None
 
             if self.processed_traces is not None:
                 if self.fit_exp is True:

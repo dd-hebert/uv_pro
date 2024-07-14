@@ -8,6 +8,7 @@ can be found in the user's home directory.
 """
 
 import os
+import re
 from configparser import ConfigParser
 
 
@@ -30,12 +31,17 @@ class Config:
     name = 'uv_pro'
     directory = os.path.join(os.path.expanduser("~"), ".config", f"{name}")
     filename = "settings.ini"
+    defaults = {
+        "Root Directory": {"root_directory": ""},
+        "Settings": {"plot_size": "10 5"}
+    }
 
     def __init__(self) -> None:
         if not self.exists():
             self.create()
             self.write_config(self.get_defaults())
-        self.config = self.get_config()
+        self.config = self.read_config()
+        self.validate()
 
     def exists(self) -> bool:
         """Check if config file exists."""
@@ -45,10 +51,17 @@ class Config:
         """Create the config file directory."""
         os.makedirs(Config.directory, exist_ok=True)
 
+    def get(self, section: str, option: str) -> str:
+        return self.config.get(section, option)
+
+    def items(self, section: str) -> list[tuple[str, str]]:
+        return self.config.items(section)
+
     def get_defaults(self) -> ConfigParser:
         """Get the default configuration."""
         default_config = ConfigParser()
-        default_config['Settings'] = {"root_directory": ""}
+        default_config['Root Directory'] = Config.defaults['Root Directory']
+        default_config['Settings'] = Config.defaults['Settings']
         return default_config
 
     def reset(self) -> None:
@@ -60,16 +73,31 @@ class Config:
         with open(os.path.join(Config.directory, Config.filename), "w") as f:
             config.write(f)
 
-    def get_config(self) -> ConfigParser:
+    def read_config(self) -> ConfigParser:
         """Get the current configuration."""
         config = ConfigParser()
         config.read(os.path.join(Config.directory, Config.filename))
         return config
 
-    def modify(self, section: str, key: str, value: str) -> None:
-        """Modify a config value."""
+    def modify(self, section: str, key: str, value: str) -> bool:
+        """Modify a config value. Return True if successful."""
         self.config.set(section, key, value)
-        self.write_config(self.config)
+
+        if self.validate():
+            self.write_config(self.config)
+            return True
+
+        return False
+
+    def validate(self) -> bool:
+        """Validate config values. Return True if validated."""
+        pattern = re.compile(r'[\d]+\s*[\d]+')
+        if not re.match(pattern, self.config.get('Settings', 'plot_size')):
+            self.config.set('Settings', 'plot_size', Config.defaults['plot_size'])
+            self.write_config(self.config)
+            return False
+
+        return True
 
     def delete(self) -> None:
         """Delete the config file and directory."""

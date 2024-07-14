@@ -85,7 +85,7 @@ def print_init_rate(init_rate: dict) -> None:
     return '\n'.join(out)
 
 
-def prompt_user(header: str, options: list[dict]):
+def prompt_user_choice(header: str, options: list[dict]) -> list[str]:
     """
     Prompt the user for input.
 
@@ -109,13 +109,28 @@ def prompt_user(header: str, options: list[dict]):
     valid_choices = [option['key'] for option in options]
 
     try:
-        user_choices = [char for char in input(prompt).strip() if char in valid_choices]
+        user_choices = [key for key in input(prompt).strip().split() if key in valid_choices]
 
         while not user_choices:
             print('\nInvalid selection. Enter one or more of the displayed options or ctrl-c to quit.')
-            user_choices = [char for char in input(prompt).strip() if char in valid_choices]
+            user_choices = [key for key in input(prompt).strip().split() if key in valid_choices]
 
         return user_choices
 
     except (EOFError, KeyboardInterrupt):  # ctrl-c
         return []
+
+def prompt_for_value(title: str, prompt: str, func: callable = None):
+    """Prompt the user for some value."""
+    print(f'\n{title}')
+
+    try:
+        value = input(prompt)
+        return func(value) if func else value
+
+    except (ValueError, NameError, SyntaxError):
+        print('Invalid entry.')
+        return
+
+    except (EOFError, KeyboardInterrupt):
+        return
