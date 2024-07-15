@@ -1,0 +1,356 @@
+import argparse
+
+
+def _browse_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``browse`` subcommand."""
+    filepicker_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'browse',
+        description='Browse for a .KD file in the root directory and open it in view-only mode.',
+        aliases=['br'],
+        help='Browse for a .KD file in the root directory and open it in view-only mode.'
+    )
+
+    filepicker_subparser.set_defaults(func=func)
+
+
+def _config_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``config`` subcommand."""
+    help_msg = {
+        'edit': '''Edit config settings.''',
+        'get': '''Print the current config settings to the console.''',
+        'reset': '''Reset config settings back to their default value.''',
+    }
+
+    config_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'config',
+        description='View and modify config settings. Available config settings: root_directory, plot_size',
+        aliases=['cfg'],
+        help='View and modify config settings.'
+    )
+
+    config_subparser.set_defaults(func=func)
+
+    mutually_exclusive = config_subparser.add_mutually_exclusive_group()
+    mutually_exclusive.add_argument(
+        '-edit',
+        action='store_true',
+        default=False,
+        help=help_msg['edit']
+    )
+    mutually_exclusive.add_argument(
+        '-get',
+        action='store_true',
+        default=False,
+        help=help_msg['get']
+    )
+    mutually_exclusive.add_argument(
+        '-reset',
+        action='store_true',
+        default=False,
+        help=help_msg['reset']
+    )
+
+
+def _multiview_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``multiview`` subcommand."""
+    help_msg = {
+        'search_filters': '''An arbitrary number of search filters''',
+        'and_filter': '``and`` filter mode.',
+        'or_filter': '``or`` filter mode.'
+    }
+
+    multiview_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'multiview',
+        description='Open multiple UV-vis data files in view-only mode.',
+        aliases=['mv'],
+        help='Open multiple UV-vis data files in view-only mode.'
+    )
+
+    multiview_subparser.set_defaults(
+        filter_mode='or',
+        func=func
+    )
+
+    multiview_subparser.add_argument(
+        '-f',
+        '--search_filters',
+        action='store',
+        nargs='*',
+        default='*',
+        metavar='',
+        help=help_msg['search_filters']
+    )
+    filter_args = multiview_subparser.add_mutually_exclusive_group(required=False)
+    filter_args.add_argument(
+        '-a',
+        '--and_filter',
+        dest='filter_mode',
+        action='store_const',
+        const='and',
+        help=help_msg['and_filter']
+    )
+    filter_args.add_argument(
+        '-o',
+        '--or_filter',
+        dest='filter_mode',
+        action='store_const',
+        const='or',
+        help=help_msg['or_filter']
+    )
+
+
+def _process_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``process`` subcommand."""
+    help_msg = {
+        'path': '''A path to a UV-vis Data File (.KD format).''',
+        'view': '''Enable view-only mode (no data processing).''',
+        'trim': '''2 args: trim data from __ to __.
+                    Trim the data to remove spectra outside the given time range.''',
+        'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
+                                Values closer to 0 result in higher sensitivity (more outliers).
+                                Values closer to 1 result in lower sensitivity (fewer outliers).''',
+        'slice': 'Set the number of slices to plot. Default: None (no slicing).',
+        'gradient_slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
+                                Default: None (no slicing).''',
+        'specific_slice': '''Get spectra slices from specific times. Takes an arbitrary number of floats.''',
+        'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
+        'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
+        'low_signal_window': '''"narrow", "wide", or "none". Set the width of the low signal outlier detection window.
+                                    Default: "narrow". If "none", low signal outlier detection is skipped.''',
+        'fit_exp': 'Perform exponential fitting of specified time traces. Default: False.',
+        'init_rate': '''Perform linear regression of specified time traces for initial rates. Default False.
+                        If performing initial rates fitting, you can supply an optional float value for
+                        the change in absorbance cutoff. Default cutoff is 0.1 (10%% change in absorbance).''',
+        'time_trace_window': '''Set the (min, max) wavelength (in nm) window for the time traces used in
+                                outlier detection''',
+        'time_trace_interval': '''Set the interval (in nm) for time traces. An interval of 10 will create time
+                                    traces from the window min to max every 10 nm. Smaller intervals may
+                                    increase loading times.''',
+        'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.',
+        'no_export': 'Skip the export data prompt at the end of the script.',
+        'quick_fig': 'Use the quick-figure generator.'
+    }
+
+    process_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'process',
+        description='Process UV-vis Data',
+        aliases=['p', 'proc'],
+        help='Process .KD UV-vis data files.'
+    )
+
+    process_subparser.set_defaults(func=func)
+
+    process_subparser.add_argument(
+        'path',
+        action='store',
+        default=None,
+        help=help_msg['path']
+    )
+    process_subparser.add_argument(
+        '-v',
+        '--view',
+        action='store_true',
+        default=False,
+        help=help_msg['view']
+    )
+    process_subparser.add_argument(
+        '-tr',
+        '--trim',
+        action='store',
+        type=int,
+        nargs=2,
+        default=None,
+        metavar='',
+        help=help_msg['trim']
+    )
+    process_subparser.add_argument(
+        '-ot',
+        '--outlier_threshold',
+        action='store',
+        type=float,
+        default=0.1,
+        metavar='',
+        help=help_msg['outlier_threshold']
+    )
+    slicing_args = process_subparser.add_mutually_exclusive_group()
+    slicing_args.add_argument(
+        '-sl',
+        '--slice',
+        action='store',
+        type=int,
+        default=None,
+        metavar='',
+        help=help_msg['slice']
+    )
+    slicing_args.add_argument(
+        '-gsl',
+        '--gradient_slice',
+        action='store',
+        type=float,
+        nargs=2,
+        default=None,
+        metavar='',
+        help=help_msg['gradient_slice']
+    )
+    slicing_args.add_argument(
+        '-ssl',
+        '--specific_slice',
+        action='store',
+        nargs='*',
+        type=float,
+        default=None,
+        metavar='',
+        help=help_msg['specific_slice']
+    )
+    process_subparser.add_argument(
+        '-bll',
+        '--baseline_lambda',
+        action='store',
+        type=float,
+        default=10,
+        metavar='',
+        help=help_msg['baseline_lambda']
+    )
+    process_subparser.add_argument(
+        '-blt',
+        '--baseline_tolerance',
+        action='store',
+        type=float,
+        default=0.1,
+        metavar='',
+        help=help_msg['baseline_tolerance']
+    )
+    process_subparser.add_argument(
+        '-lsw',
+        '--low_signal_window',
+        action='store',
+        default='narrow',
+        choices=['narrow', 'wide', 'none'],
+        metavar='',
+        help=help_msg['low_signal_window']
+    )
+    process_subparser.add_argument(
+        '-fit',
+        '--fit_exp',
+        action='store_true',
+        default=False,
+        help=help_msg['fit_exp']
+    )
+    process_subparser.add_argument(
+        '-ir',
+        '--init_rate',
+        action='store',
+        type=float,
+        nargs='?',
+        const='0.1',
+        default=None,
+        metavar='',
+        help=help_msg['init_rate']
+    )
+    process_subparser.add_argument(
+        '-ttw',
+        '--time_trace_window',
+        action='store',
+        type=int,
+        nargs=2,
+        default=[300, 1060],
+        metavar='',
+        help=help_msg['time_trace_window']
+    )
+    process_subparser.add_argument(
+        '-tti',
+        '--time_trace_interval',
+        action='store',
+        type=int,
+        default=10,
+        metavar='',
+        help=help_msg['time_trace_interval']
+    )
+    process_subparser.add_argument(
+        '-tt',
+        '--time_traces',
+        action='store',
+        nargs='*',
+        type=int,
+        default=None,
+        metavar='',
+        help=help_msg['time_traces']
+    )
+    process_subparser.add_argument(
+        '-ne',
+        '--no_export',
+        action='store_true',
+        default=False,
+        help=help_msg['no_export']
+    )
+    process_subparser.add_argument(
+        '-qf',
+        '--quick_fig',
+        action='store_true',
+        default=False,
+        help=help_msg['quick_fig']
+    )
+
+
+def _root_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``root`` subcommand."""
+    help_msg = {
+        'set': '''Set a root directory where data files are located to enable typing shorter relative file paths.''',
+        'get': '''Print the root directory to the console.''',
+        'clear': '''Clear the current root directory.''',
+    }
+
+    rootdir_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'root',
+        description='Root directory settings.',
+        aliases=['rt'],
+        help='Root directory settings.',
+    )
+
+    rootdir_subparser.set_defaults(func=func)
+
+    mutually_exclusive = rootdir_subparser.add_mutually_exclusive_group()
+    mutually_exclusive.add_argument(
+        '-clear',
+        action='store_true',
+        default=False,
+        help=help_msg['clear']
+    )
+    mutually_exclusive.add_argument(
+        '-get',
+        action='store_true',
+        default=False,
+        help=help_msg['get']
+    )
+    mutually_exclusive.add_argument(
+        '-set',
+        action='store',
+        default=None,
+        metavar='',
+        help=help_msg['set']
+    )
+
+
+def _tree_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``tree`` subcommand."""
+    tree_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'tree',
+        description='Show the root directory file tree.',
+        help='Show the root directory file tree.'
+    )
+
+    tree_subparser.set_defaults(func=func)
+
+
+def _test_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``test`` subcommand."""
+    test_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'test',
+        description='For testing purposes.',
+        help='For testing purposes.'
+    )
+
+    test_subparser.set_defaults(
+        func=func,
+        test=True
+    )
