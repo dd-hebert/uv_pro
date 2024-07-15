@@ -120,6 +120,7 @@ def prompt_user_choice(header: str, options: list[dict]) -> list[str]:
     except (EOFError, KeyboardInterrupt):  # ctrl-c
         return []
 
+
 def prompt_for_value(title: str, prompt: str, func: callable = None):
     """Prompt the user for some value."""
     print(f'\n{title}')

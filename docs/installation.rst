@@ -4,7 +4,7 @@ If you have git installed on your system, you can install ``uv_pro`` directly fr
 
     pip install git+https://github.com/dd-hebert/uv_pro.git
 
-Otherwise, clone the repo and build the package using ``setuptools``::
+Otherwise, clone the repo and build the package using ``setuptools`` and ``build``::
 
     # From inside repo
     python -m build

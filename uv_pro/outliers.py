@@ -45,19 +45,19 @@ def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: fl
     """
     outliers = []
     if lsw != 'none':
-        low_signal_outliers = find_low_signal_outliers(data=time_traces, window=lsw)
+        low_signal_outliers = _find_low_signal_outliers(data=time_traces, window=lsw)
         time_traces = time_traces.drop(low_signal_outliers)
         outliers.extend(low_signal_outliers)
 
-    baseline = compute_baseline(data=time_traces.sum(1), lam=lam, tol=tol)
+    baseline = _compute_baseline(data=time_traces.sum(1), lam=lam, tol=tol)
     baselined_traces = time_traces.sum(1) - baseline
-    baseline_outliers = find_baseline_outliers(data=baselined_traces, threshold=threshold)
+    baseline_outliers = _find_baseline_outliers(data=baselined_traces, threshold=threshold)
 
     outliers.extend(baseline_outliers)
     return outliers, baseline
 
 
-def find_low_signal_outliers(data: pd.DataFrame, window: str) -> set[float]:
+def _find_low_signal_outliers(data: pd.DataFrame, window: str) -> set[float]:
     """
     Detect anomalous low signals in data.
 
@@ -96,12 +96,12 @@ def find_low_signal_outliers(data: pd.DataFrame, window: str) -> set[float]:
     return outliers
 
 
-def compute_baseline(data: pd.DataFrame, lam: float, tol: float) -> pd.Series:
+def _compute_baseline(data: pd.DataFrame, lam: float, tol: float) -> pd.Series:
     # lam=smoothing factor, tol=exit criteria
     return pd.Series(asls(data, lam=lam, tol=tol)[0], data.index)
 
 
-def find_baseline_outliers(data: pd.DataFrame, threshold: float) -> pd.Index:
+def _find_baseline_outliers(data: pd.DataFrame, threshold: float) -> pd.Index:
     """
     Find outliers outside the given ``threshold`` from the baseline.
 

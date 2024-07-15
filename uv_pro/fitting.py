@@ -13,7 +13,7 @@ import pandas as pd
 warnings.filterwarnings('ignore', message='overflow encountered in exp')
 
 
-def exponential(t: float, abs_0: float, abs_f: float, kobs: float) -> float:
+def _exponential(t: float, abs_0: float, abs_f: float, kobs: float) -> float:
     return abs_f + (abs_0 - abs_f) * np.exp(-kobs * t)
 
 
@@ -42,7 +42,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
             p0 = [time_traces[column].iloc[0], time_traces[column].iloc[-1], 0.02]
 
             popt, pcov = curve_fit(
-                f=exponential,
+                f=_exponential,
                 xdata=time_traces.index,
                 ydata=time_traces[column],
                 p0=p0,
@@ -50,7 +50,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
             )
 
             curve = pd.Series(
-                data=exponential(time_traces.index, *popt),
+                data=_exponential(time_traces.index, *popt),
                 index=time_traces.index,
                 name=column
             )
@@ -79,6 +79,23 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
 
 
 def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None:
+    """
+    Perform a linear regression on time traces to determine initial rates.
+
+    Parameters
+    ----------
+    time_traces : :class:`pandas.DataFrame`
+        The time traces to fit.
+    cutoff : float, optional
+        The cutoff value for the change in absorbance. A cutoff of 0.1 would
+        limit the initial rate fitting to the first 10% change in absorbance
+        of the time traces.
+
+    Returns
+    -------
+    fit : dict or None
+        The fitting parameters for the given time traces.
+    """
     if len(time_traces.index) < 3:
         print('Fitting skipped. Not enough data points...\n')
         return None

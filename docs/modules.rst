@@ -9,8 +9,8 @@ API Reference
    plots
    process
    slicing
+   quickfig
    export
    import_kd
    config
    filepicker
-   quickfig

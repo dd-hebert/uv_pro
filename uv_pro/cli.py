@@ -121,14 +121,14 @@ Usage: ``uvp config <option>`` or ``uvp cfg <option>``
 
 View, edit, or reset the script configuration settings.
 
+-edit : flag, optional
+    Edit configuration settings. Will prompt the user for a selection of
+    configuration settings to edit.
 -get : flag, optional
     Print the current configuration settings to the console.
 -reset : flag, optional
-    Reset a configuration setting back to the default value. Will prompt the user
+    Reset configuration settings back to their default value. Will prompt the user
     for a selection of configuration settings to reset.
--set : flag, optional
-    Edit and set a configuration setting. Will prompt the user for a selection of
-    configuration settings to edit.
 
 tree
 ----
@@ -165,8 +165,8 @@ from uv_pro.io.export import prompt_for_export
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
 from uv_pro.utils.printing import prompt_user_choice, prompt_for_value
-from uv_pro.utils.quickfig import QuickFig
-from uv_pro.scripts.multiview import multiview
+from uv_pro.quickfig import QuickFig
+from uv_pro.multiview import multiview
 
 
 sys.tracebacklimit = 0
@@ -428,9 +428,9 @@ class CLI:
 
     def _multiview_args(self, subparsers: argparse._SubParsersAction) -> None:
         help_msg = {
-        'search_filters': '''An arbitrary number of search filters''',
-        'and_filter': '``and`` filter mode.',
-        'or_filter': '``or`` filter mode.'
+            'search_filters': '''An arbitrary number of search filters''',
+            'and_filter': '``and`` filter mode.',
+            'or_filter': '``or`` filter mode.'
         }
 
         multiview_subparser: argparse.ArgumentParser = subparsers.add_parser(
@@ -532,7 +532,7 @@ class CLI:
 
     def _config_args(self, subparsers: argparse._SubParsersAction) -> None:
         help_msg = {
-            'set': '''Edit config settings.''',
+            'edit': '''Edit config settings.''',
             'get': '''Print the current config settings to the console.''',
             'reset': '''Reset config settings back to their default value.''',
         }
@@ -550,10 +550,10 @@ class CLI:
 
         mutually_exclusive = config_subparser.add_mutually_exclusive_group()
         mutually_exclusive.add_argument(
-            '-set',
+            '-edit',
             action='store_true',
             default=False,
-            help=help_msg['set']
+            help=help_msg['edit']
         )
         mutually_exclusive.add_argument(
             '-get',
@@ -727,9 +727,9 @@ class CLI:
             print('')
 
         else:
-            if self.args.set:
-                header = 'Set config settings'
-                func = self._config_set
+            if self.args.edit:
+                header = 'Edit config settings'
+                func = self._config_edit
             if self.args.reset:
                 header = 'Reset config settings'
                 func = self._config_reset
@@ -744,19 +744,14 @@ class CLI:
                 for choice in user_choices:
                     func(settings_keys[choice])
 
-    def _config_set(self, setting: str) -> None:
+    def _config_edit(self, setting: str) -> None:
         if value := prompt_for_value(title=setting, prompt='Enter a new value: '):
-            if self.cfg.modify(
-                section='Settings',
-                key=setting,
-                value=value
-            ):
-
+            if self.cfg.modify(section='Settings', key=setting, value=value):
                 return
 
             else:
-                print(f'Invalid config value format.')
-                self._config_set(setting)
+                print('Invalid config value format.')
+                self._config_edit(setting)
 
     def _config_reset(self, setting: str):
         self.cfg.modify(

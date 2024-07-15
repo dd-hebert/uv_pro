@@ -49,6 +49,7 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
 
     raise ValueError(f'Invalid slicing mode: `{slicing.get("mode", None)}`.')
 
+
 def gradient_slicing(spectra: DataFrame, coeff: float, expo: float) -> DataFrame:
     """Get unequally-spaced slices from ``spectra``."""
     _check_gradient_slice_coeff(coeff)
