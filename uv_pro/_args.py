@@ -1,7 +1,13 @@
+"""
+Helper functions for argparse boilerplate.
+
+@author: David Hebert
+"""
+
 import argparse
 
 
-def _browse_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def browse_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``browse`` subcommand."""
     filepicker_subparser: argparse.ArgumentParser = subparser.add_parser(
         'browse',
@@ -13,11 +19,12 @@ def _browse_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     filepicker_subparser.set_defaults(func=func)
 
 
-def _config_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def config_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``config`` subcommand."""
     help_msg = {
+        'delete': '''Delete the config file.''',
         'edit': '''Edit config settings.''',
-        'get': '''Print the current config settings to the console.''',
+        'list': '''Print the current config settings to the console.''',
         'reset': '''Reset config settings back to their default value.''',
     }
 
@@ -32,16 +39,22 @@ def _config_args(subparser: argparse._SubParsersAction, func: callable) -> None:
 
     mutually_exclusive = config_subparser.add_mutually_exclusive_group()
     mutually_exclusive.add_argument(
+        '-delete',
+        action='store_true',
+        default=False,
+        help=help_msg['delete']
+    )
+    mutually_exclusive.add_argument(
         '-edit',
         action='store_true',
         default=False,
         help=help_msg['edit']
     )
     mutually_exclusive.add_argument(
-        '-get',
+        '-list',
         action='store_true',
         default=False,
-        help=help_msg['get']
+        help=help_msg['list']
     )
     mutually_exclusive.add_argument(
         '-reset',
@@ -51,7 +64,7 @@ def _config_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     )
 
 
-def _multiview_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def multiview_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``multiview`` subcommand."""
     help_msg = {
         'search_filters': '''An arbitrary number of search filters''',
@@ -99,7 +112,7 @@ def _multiview_args(subparser: argparse._SubParsersAction, func: callable) -> No
     )
 
 
-def _process_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def process_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``process`` subcommand."""
     help_msg = {
         'path': '''A path to a UV-vis Data File (.KD format).''',
@@ -292,46 +305,7 @@ def _process_args(subparser: argparse._SubParsersAction, func: callable) -> None
     )
 
 
-def _root_args(subparser: argparse._SubParsersAction, func: callable) -> None:
-    """Get args for ``root`` subcommand."""
-    help_msg = {
-        'set': '''Set a root directory where data files are located to enable typing shorter relative file paths.''',
-        'get': '''Print the root directory to the console.''',
-        'clear': '''Clear the current root directory.''',
-    }
-
-    rootdir_subparser: argparse.ArgumentParser = subparser.add_parser(
-        'root',
-        description='Root directory settings.',
-        aliases=['rt'],
-        help='Root directory settings.',
-    )
-
-    rootdir_subparser.set_defaults(func=func)
-
-    mutually_exclusive = rootdir_subparser.add_mutually_exclusive_group()
-    mutually_exclusive.add_argument(
-        '-clear',
-        action='store_true',
-        default=False,
-        help=help_msg['clear']
-    )
-    mutually_exclusive.add_argument(
-        '-get',
-        action='store_true',
-        default=False,
-        help=help_msg['get']
-    )
-    mutually_exclusive.add_argument(
-        '-set',
-        action='store',
-        default=None,
-        metavar='',
-        help=help_msg['set']
-    )
-
-
-def _tree_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def tree_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``tree`` subcommand."""
     tree_subparser: argparse.ArgumentParser = subparser.add_parser(
         'tree',
@@ -342,7 +316,7 @@ def _tree_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     tree_subparser.set_defaults(func=func)
 
 
-def _test_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def test_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``test`` subcommand."""
     test_subparser: argparse.ArgumentParser = subparser.add_parser(
         'test',

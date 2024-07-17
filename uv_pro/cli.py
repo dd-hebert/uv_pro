@@ -101,30 +101,19 @@ View multiple .KD files from the command line.
     ``-f copper A -a`` will open .KD files which contain both 'copper' OR 'A'
     in their filename. Default True.
 
-root (rt)
----------
-Usage: ``uvp rt <options>`` or ``uvp root <options>``
-
--clear : flag, optional
-    Clear the current root directory.
--get : flag, optional
-    Print the current root directory to the console.
--set : str, optional
-    Set a root directory to simplify file path entry. For instance, if
-    you store all your UV-vis data files in a common folder, you can designate
-    it as the root directory. Subsequently, you can omit the root directory
-    portion of the path when processing data and just provide a relative path.
-
 config (cfg)
 ------------
 Usage: ``uvp config <option>`` or ``uvp cfg <option>``
 
-View, edit, or reset the script configuration settings.
+List, edit, reset, or delete the script configuration settings.
 
 -edit : flag, optional
     Edit configuration settings. Will prompt the user for a selection of
     configuration settings to edit.
--get : flag, optional
+-delete : flag, optional
+    Delete the config file and directory. The config directory will only be deleted
+    if it is empty.
+-list : flag, optional
     Print the current configuration settings to the console.
 -reset : flag, optional
     Reset configuration settings back to their default value. Will prompt the user
@@ -146,7 +135,11 @@ Examples
     uvp p C:/Desktop/myfile.KD -v
 
     # Set a root directory.
-    uvp root -set C:/Desktop
+    uvp cfg -edit
+
+    # Select the root directory config setting
+    # Then, enter a file path
+    C:/Desktop
     # Now C:/Desktop can be omitted from the given path.
 
     # Open C:/Desktop/myfile.KD, show 10 spectra from 50 to 250 seconds
@@ -159,7 +152,7 @@ Examples
 import sys
 import argparse
 import os
-import uv_pro._args as uv_args
+import uv_pro._args as subcommands
 from uv_pro.multiview import multiview
 from uv_pro.plots import plot_spectra, plot_2x2
 from uv_pro.process import Dataset
@@ -203,13 +196,12 @@ class CLI:
             help='Subcommands'
         )
 
-        uv_args._process_args(subparsers, self.process)
-        uv_args._browse_args(subparsers, self.browse)
-        uv_args._multiview_args(subparsers, self.multiview)
-        uv_args._tree_args(subparsers, self.tree)
-        uv_args._root_args(subparsers, self.root)
-        uv_args._config_args(subparsers, self.config)
-        uv_args._test_args(subparsers, self.test)
+        subcommands.browse_args(subparsers, self.browse)
+        subcommands.config_args(subparsers, self.config)
+        subcommands.multiview_args(subparsers, self.multiview)
+        subcommands.process_args(subparsers, self.process)
+        subcommands.tree_args(subparsers, self.tree)
+        subcommands.test_args(subparsers, self.test)
 
         return main_parser.parse_args()
 
@@ -224,43 +216,61 @@ class CLI:
         if self.args.edit or self.args.reset:
             if self.args.edit:
                 header = 'Edit config settings'
-                func = self._config_edit
+                func = self._edit_config
             if self.args.reset:
                 header = 'Reset config settings'
-                func = self._config_reset
+                func = self._reset_config
 
-            options = []
-            settings_keys = {}
-            for key, (setting, value) in enumerate(self.cfg.items('Settings'), start=1):
-                options.append({'key': str(key), 'name': f'{setting}: {value}'})
-                settings_keys[str(key)] = setting
+            self._config_prompt(header, func)
 
-            if user_choices := prompt_user_choice(header=header, options=options):
-                for choice in user_choices:
-                    func(settings_keys[choice])
+        elif self.args.list:
+            self._print_config()
 
-        else:
-            print('\nConfig settings')
-            print('===============')
-            for setting, value in self.cfg.items('Settings'):
-                print(f'{setting}: {value}')
-            print('')
+        elif self.args.delete:
+            self._delete_config()
 
-    def _config_edit(self, setting: str) -> None:
+    def _config_prompt(self, header: str, func: callable) -> None:
+        options = []
+        settings_keys = {}
+        for key, (setting, value) in enumerate(self.cfg.items('Settings'), start=1):
+            options.append({'key': str(key), 'name': f'{setting}: {value}'})
+            settings_keys[str(key)] = setting
+
+        if user_choices := prompt_user_choice(header=header, options=options):
+            for choice in user_choices:
+                func(settings_keys[choice])
+
+    def _delete_config(self) -> None:
+        if input('Delete config file? (Y/N): ').lower() == 'y':
+            delete = self.cfg.delete()
+            if isinstance(delete, BaseException):
+                print('Error deleting config.')
+                print(delete)
+
+            else:
+                print('Config deleted.')
+
+    def _edit_config(self, setting: str) -> None:
         if value := prompt_for_value(title=setting, prompt='Enter a new value: '):
             if self.cfg.modify(section='Settings', key=setting, value=value):
                 return
 
             else:
-                print('Invalid config value format.')
-                self._config_edit(setting)
+                self._edit_config(setting)
 
-    def _config_reset(self, setting: str) -> None:
+    def _reset_config(self, setting: str) -> None:
         self.cfg.modify(
             'Settings',
             setting,
             self.cfg.defaults['Settings'][setting]
         )
+
+    def _print_config(self) -> None:
+        print('\nConfig settings')
+        print('===============')
+        for setting, value in self.cfg.items('Settings'):
+            print(f'{setting}: {value}')
+        print('')
 
     def multiview(self) -> None:
         multiview(
@@ -346,7 +356,7 @@ class CLI:
                     pass
 
             else:
-                plot_2x2(dataset, figsize=self._get_figsize())
+                plot_2x2(dataset, figsize=self._get_plot_size())
 
             if self.args.no_export is False:
                 files_exported.extend(prompt_for_export(dataset))
@@ -359,35 +369,12 @@ class CLI:
         else:
             plot_spectra(dataset, dataset.raw_spectra)
 
-    def _get_figsize(self) -> tuple[int, int]:
+    def _get_plot_size(self) -> tuple[int, int]:
         return tuple(map(int, self.cfg.get('Settings', 'plot_size').split()))
 
-    def root(self) -> None:
-        if self.args.set is not None:
-            self._set_root_dir(self.args.set)
-
-        if self.args.clear:
-            self._clear_root_dir()
-
-        if self.args.get:
-            print(f'root directory: {self._get_root_dir()}')
-
     def _get_root_dir(self) -> str:
-        root_dir = self.cfg.get('Root Directory', 'root_directory')
+        root_dir = self.cfg.get('Settings', 'root_directory')
         return root_dir if root_dir else None
-
-    def _set_root_dir(self, directory: str) -> None:
-        if os.path.exists(directory):
-            self.cfg.modify('Root Directory', 'root_directory', directory)
-        else:
-            raise FileNotFoundError(f'The directory does not exist: {directory}')
-
-    def _clear_root_dir(self) -> None:
-        self.cfg.modify(
-            'Root Directory',
-            'root_directory',
-            self.cfg.defaults['Root Directory']['root_directory']
-        )
 
     def tree(self) -> None:
         if root_dir := self._get_root_dir():

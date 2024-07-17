@@ -8,8 +8,8 @@ can be found in the user's home directory.
 """
 
 import os
-import re
 from configparser import ConfigParser
+from uv_pro.utils._config_validator import validate_root_dir, validate_plot_size
 
 
 class Config:
@@ -20,6 +20,8 @@ class Config:
     ----------
     config : :class:`configparser.ConfigParser`
         The current configuration.
+    defaults : dict
+        The default config values.
     directory : str
         The path to the configuration file directory.
     filename : str
@@ -32,16 +34,17 @@ class Config:
     directory = os.path.join(os.path.expanduser("~"), ".config", f"{name}")
     filename = "settings.ini"
     defaults = {
-        "Root Directory": {"root_directory": ""},
-        "Settings": {"plot_size": "10 5"}
+        "root_directory": "",
+        "plot_size": "10 5"
     }
 
     def __init__(self) -> None:
         if not self.exists():
             self.create()
-            self.write_config(self.get_defaults())
-        self.config = self.read_config()
-        self.validate()
+            self.write(self.get_defaults())
+
+        self.config = self.read()
+        self.validate(self.config, fallback=Config.defaults, verbose=True)
 
     def exists(self) -> bool:
         """Check if config file exists."""
@@ -60,49 +63,54 @@ class Config:
     def get_defaults(self) -> ConfigParser:
         """Get the default configuration."""
         default_config = ConfigParser()
-        default_config['Root Directory'] = Config.defaults['Root Directory']
-        default_config['Settings'] = Config.defaults['Settings']
+        default_config['Settings'] = Config.defaults
         return default_config
 
     def reset(self) -> None:
         """Reset the configuration to the default values."""
-        self.write_config(self.get_defaults())
+        self.write(self.get_defaults())
 
-    def write_config(self, config: ConfigParser) -> None:
+    def write(self, config: ConfigParser) -> None:
         """Write settings to the config file."""
         with open(os.path.join(Config.directory, Config.filename), "w") as f:
             config.write(f)
 
-    def read_config(self) -> ConfigParser:
+    def read(self) -> ConfigParser:
         """Get the current configuration."""
         config = ConfigParser()
         config.read(os.path.join(Config.directory, Config.filename))
         return config
 
     def modify(self, section: str, key: str, value: str) -> bool:
-        """Modify a config value. Return True if successful."""
-        self.config.set(section, key, value)
+        """Modify a config value and write to file if valid. Return True if successful."""
+        new_config = self.read()
+        new_config.set(section, key, value)
+        return self.validate(new_config, fallback=dict(self.config['Settings']))
 
-        if self.validate():
-            self.write_config(self.config)
-            return True
-
-        return False
-
-    def validate(self) -> bool:
+    def validate(self, config: ConfigParser, fallback: dict, verbose: bool = False) -> bool:
         """Validate config values. Return True if validated."""
-        pattern = re.compile(r'[\d]+\s*[\d]+')
-        if not re.match(pattern, self.config.get('Settings', 'plot_size')):
-            self.config.set('Settings', 'plot_size', Config.defaults['plot_size'])
-            self.write_config(self.config)
-            return False
+        valid = True
+        root_dir = config.get('Settings', 'root_directory')
+        plot_size = config.get('Settings', 'plot_size')
 
-        return True
+        if not validate_root_dir(root_dir, verbose):
+            config.set('Settings', 'root_directory', fallback['root_directory'])
+            valid = False
 
-    def delete(self) -> None:
+        if not validate_plot_size(plot_size, verbose):
+            config.set('Settings', 'plot_size', fallback['plot_size'])
+            valid = False
+
+        self.write(config)
+
+        return valid
+
+    def delete(self) -> Exception | None:
         """Delete the config file and directory."""
         try:
             os.remove(os.path.join(Config.directory, Config.filename))
             os.rmdir(Config.directory)
-        except (OSError, FileNotFoundError):
-            pass
+            return
+
+        except (OSError, FileNotFoundError) as e:
+            return e
