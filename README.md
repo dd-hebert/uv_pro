@@ -100,11 +100,9 @@ Batch export UV-vis data from .KD files in the current working directory. Curren
 **Usage:** ``uvp batch <wavelengths> <options>``
 
 #### ``wavelengths`` : arbitrary number of ints, required
-    A list of time trace wavelengths (in nm) to export.
+A list of time trace wavelengths (in nm) to export.
 #### ``-f``, ``--search_filters`` : arbitrary number of strings, optional
-    A sequence of search filter strings. For example, passing ``-f copper A``
-    will select .KD files which contain 'copper' OR 'A' in their filename.
-    Passing no filters selects all .KD files in the current working directory.
+A sequence of search filter strings. For example, passing ``-f copper A`` will select .KD files which contain 'copper' OR 'A' in their filename. Passing no filters selects all .KD files in the current working directory.
 
 ### User Config Args (config, cfg)
 View, edit, or reset user-configured settings with the ``config`` subcommand.
