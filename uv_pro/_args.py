@@ -7,7 +7,41 @@ Helper functions for argparse boilerplate.
 import argparse
 
 
-def browse_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def batch(subparser: argparse._SubParsersAction, func: callable) -> None:
+    """Get args for ``batch`` subcommand."""
+    help_msg = {
+        'search_filters': '''An arbitrary number of search filters''',
+        'wavelengths': 'The time trace wavelengths (in nm) to batch export.'
+    }
+
+    batch_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'batch',
+        description='Batch exporting of multiple .KD files.',
+        help='Batch exporting of multiple .KD files.'
+    )
+
+    batch_subparser.add_argument(
+        'wavelengths',
+        action='store',
+        nargs='+',
+        type=int,
+        default=None,
+        help=help_msg['wavelengths']
+    )
+    batch_subparser.add_argument(
+        '-f',
+        '--search_filters',
+        action='store',
+        nargs='*',
+        default='*',
+        metavar='',
+        help=help_msg['search_filters']
+    )
+
+    batch_subparser.set_defaults(func=func)
+
+
+def browse(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``browse`` subcommand."""
     filepicker_subparser: argparse.ArgumentParser = subparser.add_parser(
         'browse',
@@ -19,7 +53,7 @@ def browse_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     filepicker_subparser.set_defaults(func=func)
 
 
-def config_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def config(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``config`` subcommand."""
     help_msg = {
         'delete': '''Delete the config file.''',
@@ -64,7 +98,7 @@ def config_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     )
 
 
-def multiview_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def multiview(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``multiview`` subcommand."""
     help_msg = {
         'search_filters': '''An arbitrary number of search filters''',
@@ -112,7 +146,7 @@ def multiview_args(subparser: argparse._SubParsersAction, func: callable) -> Non
     )
 
 
-def process_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def process(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``process`` subcommand."""
     help_msg = {
         'path': '''A path to a UV-vis Data File (.KD format).''',
@@ -139,7 +173,7 @@ def process_args(subparser: argparse._SubParsersAction, func: callable) -> None:
         'time_trace_interval': '''Set the interval (in nm) for time traces. An interval of 10 will create time
                                     traces from the window min to max every 10 nm. Smaller intervals may
                                     increase loading times.''',
-        'time_traces': 'A list of specific wavelengths (in nm) to create time traces for.',
+        'time_traces': 'Specific wavelengths (in nm) to create time traces for.',
         'no_export': 'Skip the export data prompt at the end of the script.',
         'quick_fig': 'Use the quick-figure generator.'
     }
@@ -305,7 +339,7 @@ def process_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     )
 
 
-def tree_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def tree(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``tree`` subcommand."""
     tree_subparser: argparse.ArgumentParser = subparser.add_parser(
         'tree',
@@ -316,7 +350,7 @@ def tree_args(subparser: argparse._SubParsersAction, func: callable) -> None:
     tree_subparser.set_defaults(func=func)
 
 
-def test_args(subparser: argparse._SubParsersAction, func: callable) -> None:
+def test(subparser: argparse._SubParsersAction, func: callable) -> None:
     """Get args for ``test`` subcommand."""
     test_subparser: argparse.ArgumentParser = subparser.add_parser(
         'test',

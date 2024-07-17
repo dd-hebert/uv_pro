@@ -29,6 +29,7 @@ uvp p path\to\your\data.KD
 Command Line Arguments
 ----------------------
 - [Data Processing Args (process, proc, p)](#data-processing-args-process-proc-p)
+- [Batch Exporting Args (batch)](#batch-exporting-args-batch)
 - [User Config Args (config, cfg)](#user-config-args-config-cfg)
 - [Other Args](#other-args)
 
@@ -91,7 +92,19 @@ Set the time trace wavelength interval (in nm). An interval of 20 would create t
 Set the time trace wavelength range (min, max) (in nm). The default is (300, 1060).
 
 #### ``-v`` : flag, optional
-Enable _view-only_ mode. No data processing is performed and a plot of the data is shown.
+Enable *view-only* mode. No data processing is performed and a plot of the data is shown.
+
+### Batch Exporting Args (batch)
+Batch export UV-vis data from .KD files in the current working directory. Currently, only batch exporting of time traces is supported.
+
+**Usage:** ``uvp batch <wavelengths> <options>``
+
+#### ``wavelengths`` : arbitrary number of ints, required
+    A list of time trace wavelengths (in nm) to export.
+#### ``-f``, ``--search_filters`` : arbitrary number of strings, optional
+    A sequence of search filter strings. For example, passing ``-f copper A``
+    will select .KD files which contain 'copper' OR 'A' in their filename.
+    Passing no filters selects all .KD files in the current working directory.
 
 ### User Config Args (config, cfg)
 View, edit, or reset user-configured settings with the ``config`` subcommand.

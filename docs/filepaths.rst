@@ -15,11 +15,14 @@ Alternatively, you can open a terminal session inside a directory containing a d
 The Root Directory
 ------------------
 
-``uv_pro`` has a helpful root directory feature ``root`` or ``rt`` which you can use to shorten the file paths you type.
+``uv_pro`` has a helpful root directory feature which you can use to shorten the file paths you type.
 The ``uv_pro`` workflow works best when you keep all of your data files inside a common root folder. If this is
 the case, you can set the root directory at the terminal::
 
-    uvp rt -set C:\full\path\to\your\data
+    uvp cfg -e
+
+    # Select the root directory setting and enter a path, for example:
+    C:\full\path\to\your\data
 
 With the root directory set, you can now use shorter paths (relative to the root directory) from *anywhere*::
 
@@ -27,11 +30,12 @@ With the root directory set, you can now use shorter paths (relative to the root
     uvp p file.KD
 
 .. Note::
-    You can check the path of the current root directory with ``-get``::
+    You can check the path of the current root directory with ``-list`` or ``-l``::
 
-        uvp rt -get
+        uvp cfg -l
 
-    You can clear the root directory with ``-clear``::
+    You can clear the root directory with ``-reset`` or ``-r``::
 
-        uvp rt -clear
+        uvp cfg -r
 
+        # Then, select the root directory setting

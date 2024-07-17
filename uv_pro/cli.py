@@ -83,6 +83,19 @@ Usage: ``uvp browse`` or ``uvp br``
 Interactively pick a .KD file from the console. The file is opened in view-
 only mode. The .KD file must be located inside the root directory.
 
+batch
+-----
+Usage: ``uvp batch <wavelengths> <options>``
+
+Batch export time traces from .KD files in the current working directory.
+
+wavelengths : arbitrary number of ints, required
+    A list of time trace wavelengths (in nm) to export.
+-f, --search_filters : arbitrary number of strings, optional
+    A sequence of search filter strings. For example, passing ``-f copper A``
+    will select .KD files which contain 'copper' OR 'A' in their filename.
+    Passing no filters selects all .KD files in the current working directory.
+
 multiview (mv)
 --------------
 Usage: ``uvp multiview <options>`` or ``uvp mv <options>``
@@ -137,8 +150,7 @@ Examples
     # Set a root directory.
     uvp cfg -edit
 
-    # Select the root directory config setting
-    # Then, enter a file path
+    # Select the root directory config setting and enter a file path
     C:/Desktop
     # Now C:/Desktop can be omitted from the given path.
 
@@ -153,17 +165,17 @@ import sys
 import argparse
 import os
 import uv_pro._args as subcommands
-from uv_pro.multiview import multiview
+from uv_pro.multiview import multiview, filter_files
 from uv_pro.plots import plot_spectra, plot_2x2
 from uv_pro.process import Dataset
 from uv_pro.quickfig import QuickFig
-from uv_pro.io.export import prompt_for_export
+from uv_pro.io.export import prompt_for_export, export_csv
 from uv_pro.utils.config import Config
 from uv_pro.utils.filepicker import FilePicker
 from uv_pro.utils.printing import prompt_user_choice, prompt_for_value
 
 
-sys.tracebacklimit = 0
+# sys.tracebacklimit = 0
 
 
 class CLI:
@@ -196,14 +208,37 @@ class CLI:
             help='Subcommands'
         )
 
-        subcommands.browse_args(subparsers, self.browse)
-        subcommands.config_args(subparsers, self.config)
-        subcommands.multiview_args(subparsers, self.multiview)
-        subcommands.process_args(subparsers, self.process)
-        subcommands.tree_args(subparsers, self.tree)
-        subcommands.test_args(subparsers, self.test)
+        subcommands.batch(subparsers, self.batch)
+        subcommands.browse(subparsers, self.browse)
+        subcommands.config(subparsers, self.config)
+        subcommands.multiview(subparsers, self.multiview)
+        subcommands.process(subparsers, self.process)
+        subcommands.tree(subparsers, self.tree)
+        subcommands.test(subparsers, self.test)
 
         return main_parser.parse_args()
+
+    def batch(self) -> None:
+        if files := filter_files(self.args.search_filters):
+            files_exported = []
+
+            for file in files:
+                dataset = Dataset(
+                    path=file,
+                    view_only=True
+                )
+
+                files_exported.append(
+                    export_csv(
+                        dataset=dataset,
+                        data=dataset.get_chosen_traces(self.args.wavelengths),
+                        suffix='Traces'
+                    )
+                )
+
+            if files_exported:
+                print('Files exported:')
+                [print(f'\t{file}') for file in files_exported]
 
     def browse(self) -> None:
         if root_dir := self._get_root_dir():

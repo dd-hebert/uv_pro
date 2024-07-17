@@ -22,6 +22,7 @@ directory will be opened.
 @author: David
 """
 
+import os
 import glob
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
@@ -67,7 +68,7 @@ def filter_files(search_filters: list[str], mode: str = 'or') -> set[str]:
         files = set([matches for pattern in search_patterns for matches in glob.glob(pattern)])
 
     if len(files) == 0:
-        print("No files found with the specified filter.")
+        print("Error: No files found with the specified filter(s).")
         return
 
     return files
