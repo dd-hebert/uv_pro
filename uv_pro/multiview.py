@@ -22,7 +22,6 @@ directory will be opened.
 @author: David
 """
 
-import os
 import glob
 import subprocess
 from concurrent.futures import ThreadPoolExecutor

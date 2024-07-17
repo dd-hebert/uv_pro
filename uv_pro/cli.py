@@ -175,7 +175,7 @@ from uv_pro.utils.filepicker import FilePicker
 from uv_pro.utils.printing import prompt_user_choice, prompt_for_value
 
 
-# sys.tracebacklimit = 0
+sys.tracebacklimit = 0
 
 
 class CLI:
