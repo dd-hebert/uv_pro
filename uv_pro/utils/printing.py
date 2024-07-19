@@ -37,6 +37,9 @@ def print_dataset(dataset) -> None:
             if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
                 out.append(f'\033[31mUnable to fit: {", ".join(map(str, unable_to_fit))} nm.\033[0m')
 
+        if dataset.init_rate is not None:
+            out.extend(['', print_init_rate(dataset.init_rate)])
+
     return '\n'.join(out)
 
 
@@ -50,8 +53,8 @@ def print_fit(fit: dict) -> None:
     out.append('├' + '─' * table_width + '┤')
 
     for wavelength in fit['params'].columns:
-        abs_0 = '{:+.2e}'.format(fit['params'][wavelength]['abs_0'])
-        abs_f = '{:+.2e}'.format(fit['params'][wavelength]['abs_f'])
+        abs_0 = '{: .2e}'.format(fit['params'][wavelength]['abs_0'])
+        abs_f = '{: .2e}'.format(fit['params'][wavelength]['abs_f'])
         kobs = '{:.2e} ± {:.2e}'.format(fit['params'][wavelength]['kobs'], fit['params'][wavelength]['kobs err'])
         r2 = '{:.4f}'.format(fit['params'][wavelength]['r2'])
         out.append('│ {:<4}   {}   {}   {}   {} │'.format(wavelength, kobs, abs_0, abs_f, r2))
@@ -61,7 +64,28 @@ def print_fit(fit: dict) -> None:
     return '\n'.join(out)
 
 
-def prompt_user(header: str, options: list[dict]):
+def print_init_rate(init_rate: dict) -> None:
+    table_width = 61
+    table_headings = '│ \033[1m{:^4}   {:^20}   {:^8}   {:^9}   {:^6}\033[22m │'
+
+    out = []
+    out.append('┌' + '─' * table_width + '┐')
+    out.append(table_headings.format('λ', 'rate', 'Δabs', 'Δt', 'r2'))
+    out.append('├' + '─' * table_width + '┤')
+
+    for wavelength in init_rate['params'].columns:
+        rate = '{: .2e} ± {:.2e}'.format(init_rate['params'][wavelength]['slope'], init_rate['params'][wavelength]['slope err'])
+        delta_abs = '{:.2%}'.format(abs(init_rate['params'][wavelength]['delta_abs_%']))
+        delta_t = '{:.1f}'.format(init_rate['params'][wavelength]['delta_t'])
+        r2 = '{:.4f}'.format(init_rate['params'][wavelength]['r2'])
+        out.append('│ {:<4}   {}   {:>8}   {:>9}   {} │'.format(wavelength, rate, delta_abs, delta_t, r2))
+
+    out.append('└' + '─' * table_width + '┘')
+
+    return '\n'.join(out)
+
+
+def prompt_user_choice(header: str, options: list[dict]) -> list[str]:
     """
     Prompt the user for input.
 
@@ -85,16 +109,29 @@ def prompt_user(header: str, options: list[dict]):
     valid_choices = [option['key'] for option in options]
 
     try:
-        user_choices = [char for char in input(prompt).strip() if char in valid_choices]
+        user_choices = [key for key in input(prompt).strip().split() if key in valid_choices]
 
         while not user_choices:
-            print('\nInvalid selection. Enter one or more of the displayed options or ctrl-z to quit.')
-            user_choices = [char for char in input(prompt).strip() if char in valid_choices]
+            print('\nInvalid selection. Enter one or more of the displayed options or ctrl-c to quit.')
+            user_choices = [key for key in input(prompt).strip().split() if key in valid_choices]
 
         return user_choices
 
-    except EOFError:  # crtl-z
+    except (EOFError, KeyboardInterrupt):  # ctrl-c
         return []
 
-    except KeyboardInterrupt:  # ctrl-c
-        return []
+
+def prompt_for_value(title: str, prompt: str, func: callable = None):
+    """Prompt the user for some value."""
+    print(f'\n{title}')
+
+    try:
+        value = input(prompt)
+        return func(value) if func else value
+
+    except (ValueError, NameError, SyntaxError):
+        print('Invalid entry.')
+        return
+
+    except (EOFError, KeyboardInterrupt):
+        return

@@ -50,22 +50,32 @@ class FilePicker:
         file_list = [(folder, files) for folder, files in file_list if files]
 
         if file_list:
+            # print(file_list)
             return file_list
 
         print('No files found.')
         return None
 
-    def pick_file(self) -> str:
+    def pick_file(self, mode: str = 'single', min_files: int = 0, max_files: int = 100) -> list[str] | None:
         """
-        Pick a file interactively from the terminal.
+        Pick files interactively from the terminal.
+
+        Parameters
+        ----------
+        mode : str
+            Specify selection of a single or multiple files. Either \
+            'single' or 'multi'. Default is 'single'.
 
         Returns
         -------
-        file_path : str or None
-            The path of the chosen file relative to the root directory.
+        file_path : list[str] or None
+            The path of the chosen file(s) relative to the root directory.
         """
-        if self.file_list:
-            while True:
+        if not self.file_list:
+            return None
+
+        while True:
+            if len(self.file_list) > 1:
                 self._print_folders_in_root()
                 folder_choice = self._get_folder_choice()
 
@@ -73,17 +83,23 @@ class FilePicker:
                     return None
 
                 folder_index, folder_name = folder_choice
-                self._print_files_in_folder(folder_index, folder_name)
-                file_choice = self._get_file_choice(folder_index, folder_name)
 
-                if file_choice is None:
-                    return None
+            else:  # Directly print files in root
+                folder_index, folder_name = (0, self.file_list[0][0])
 
-                elif file_choice == 'back':
-                    continue
+            self._print_files_in_folder(folder_index, folder_name)
 
-                else:
-                    return self._print_selection(folder_name, file_choice)
+            file_choices = self._get_file_choice(folder_index, folder_name, mode, min_files, max_files)
+
+            if file_choices is None:
+                return None
+
+            elif file_choices == ['back']:
+                continue
+
+            else:
+                self._print_selection(file_choices)
+                return [os.path.join(folder_name, file_name) for file_name in file_choices]
 
     def _print_folders_in_root(self):
         print(f'\n{self.root}')
@@ -99,16 +115,12 @@ class FilePicker:
             selection = input('\nSelect a folder: ')
             accepted_range = range(1, len(self.file_list) + 1)
 
-        except EOFError:
-            return None
-
-        except KeyboardInterrupt:
+        except (EOFError, KeyboardInterrupt):
             return None
 
         if selection.isnumeric() is False or int(selection) not in accepted_range:
             self._print_folders_in_root()
-            print('\nInvalid selection. Input a folder number (shown in brackets)',
-                  'or q to quit.')
+            print('\nInvalid selection. Input a folder number (shown in brackets)')
             return self._get_folder_choice()
 
         else:
@@ -131,39 +143,59 @@ class FilePicker:
             else:
                 print(f'[{index + 1}]{spacing}└───{file}\t')
 
-    def _get_file_choice(self, folder_index: int, folder_name: str) -> str | None:
+    def _get_file_choice(self, folder_index: int, folder_name: str, mode: str = 'single',
+                         min_files: int = 1, max_files: int = 100) -> list[str] | None:
         try:
-            selection = input('\nSelect a file: ')
-            accepted_range = range(1, len(self.file_list[folder_index][1]) + 1)
+            if mode == 'single':
+                prompt = '\nSelect a file: '
 
-        except EOFError:
+            elif mode == 'multi':
+                prompt = f'\nSelect multiple {self.ext} files by entering the numbers in brackets separated by spaces: '
+
+            selection = [entry.lower() for entry in set(input(prompt).split())]
+
+        except (EOFError, KeyboardInterrupt):
             return None
 
-        except KeyboardInterrupt:
-            return None
+        return self._validate_file_choice(selection, folder_index, folder_name, mode, min_files, max_files)
 
-        if selection in ['b', 'B']:
-            return 'back'
+    def _validate_file_choice(self, selection: list[str], folder_index: int, folder_name: str, mode: str, min_files: int, max_files: int) -> list[str]:
+        if any((entry in ['b', 'back'] for entry in selection)):
+            return ['back']
 
-        elif selection.isnumeric() is False or int(selection) not in accepted_range:
+        accepted_range = range(1, len(self.file_list[folder_index][1]) + 1)
+
+        if any((not entry.isdigit() or int(entry) not in accepted_range for entry in selection)):
             self._print_files_in_folder(folder_index, folder_name)
-            print('\nInvalid selection. Input a file number (shown in brackets)',
-                  'or q (quit), b (back).')
-            return self._get_file_choice(folder_index, folder_name)
+            message = 'Invalid selection. Input a file number (shown in brackets) or b to go back.'
+            print(f'\n{message}')
+            return self._get_file_choice(folder_index, folder_name, mode, min_files, max_files)
 
-        else:
-            return self.file_list[folder_index][1][int(selection) - 1]
+        if len(selection) < min_files:
+            self._print_files_in_folder(folder_index, folder_name)
+            message = f'Too few files selected. Select at least {min_files} {self.ext} files.'
+            print(f'\n{message}')
+            return self._get_file_choice(folder_index, folder_name, mode, min_files, max_files)
 
-    def _print_selection(self, folder_name: str, file_name: str) -> str:
-        print('┏' + '┅' * (len(file_name) + 17) + '┓')
-        print(f'┇ File selected: {file_name} ┇')
-        print('┗' + '┅' * (len(file_name) + 17) + '┛')
+        if len(selection) > max_files:
+            self._print_files_in_folder(folder_index, folder_name)
+            message = f'Too many files selected. Select fewer than {max_files} {self.ext} files.'
+            print(f'\n{message}')
+            return self._get_file_choice(folder_index, folder_name, mode, min_files, max_files)
 
-        if folder_name == 'root':
-            return file_name
+        return [self.file_list[folder_index][1][int(entry) - 1] for entry in sorted(selection)]
 
-        else:
-            return os.path.join(folder_name, file_name)
+    def _print_selection(self, file_names: list[str]) -> str:
+        max_length = len(max(file_names, key=len)) + 2
+
+        print('┏' + '┅' * max_length + '┓')
+        print(f'┇{"File(s) selected:":^{max_length}}┇')
+
+        for file in file_names:
+            right_padding = (max_length - len(file)) - 2
+            print('┇ ' + file + ' ' * right_padding + ' ┇')
+
+        print('┗' + '┅' * max_length + '┛')
 
     def tree(self) -> None:
         """Print the root directory file tree to the console."""

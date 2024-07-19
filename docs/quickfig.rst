@@ -1,7 +1,7 @@
-uv_pro.utils.quickfig
-=====================
+uv_pro.quickfig
+===============
 
-.. automodule:: uv_pro.utils.quickfig
+.. automodule:: uv_pro.quickfig
    :members:
    :undoc-members:
    :show-inheritance:

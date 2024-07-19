@@ -6,10 +6,10 @@ Contains functions for exporting UV-vis data to .csv format.
 @author: David Hebert
 """
 import os
-from uv_pro.utils.printing import prompt_user
+from uv_pro.utils.printing import prompt_user_choice
 
 
-def export_csv(dataset, data, suffix: str = None) -> str:
+def export_csv(dataset, data, suffix: str | None = None) -> str:
     """
     Export data to .csv.
 
@@ -18,12 +18,15 @@ def export_csv(dataset, data, suffix: str = None) -> str:
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be exported.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be exported.
     data : :class:`pandas.DataFrame`
         The data to be exported. A :class:`pandas.DataFrame`
-        such as :attr:`~uv_pro.process.Dataset.raw_spectra` or
-        :attr:`~uv_pro.process.Dataset.chosen_traces`.
+        such as :attr:`~uv_pro.dataset.Dataset.raw_spectra` or
+        :attr:`~uv_pro.dataset.Dataset.chosen_traces`.
+    suffix : str or None
+        A suffix to append to the end of the file name \
+        (before the file extension).
 
     Returns
     -------
@@ -42,11 +45,9 @@ def export_csv(dataset, data, suffix: str = None) -> str:
     return filename
 
 
-def export_figure(dataset, fig) -> str:
-    """Save a figure as .png to the same directory as the parent .KD file."""
-    output_dir = os.path.dirname(dataset.path)
-    base_filename = os.path.splitext(dataset.name)[0]
-    filename = _get_unique_filename(output_dir, base_filename, 'png')
+def export_figure(fig, output_dir: str, filename: str) -> str:
+    """Save a figure with `filename` as .png to the `output_dir`."""
+    filename = _get_unique_filename(output_dir, filename, 'png')
 
     fig.savefig(
         fname=os.path.join(output_dir, filename),
@@ -74,35 +75,62 @@ def prompt_for_export(dataset) -> list[str]:
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be exported.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be exported.
 
     Returns
     -------
     files_exported : list[str]
         The names of the exported files.
     """
+    key = 1
     header = 'Export data?'
-    options = [{'key': '1', 'name': 'Processed spectra'}]
+    options = [{'key': str(key), 'name': 'Processed spectra'}]
     files_exported = []
 
     if dataset.chosen_traces is not None:
-        options.append({'key': '2', 'name': 'Time traces'})
+        key += 1
+        traces_key = key
+        options.append({'key': str(traces_key), 'name': 'Time traces'})
 
     if dataset.fit is not None:
-        options.append({'key': '3', 'name': 'Exponential fit'})
+        key += 1
+        fit_key = key
+        options.append({'key': str(fit_key), 'name': 'Exponential fit'})
 
-    if user_choices := prompt_user(header=header, options=options):
+    if dataset.init_rate is not None:
+        key += 1
+        init_rate_key = key
+        options.append({'key': str(init_rate_key), 'name': 'Initial rates'})
+
+    if user_choices := prompt_user_choice(header=header, options=options):
         if '1' in user_choices:
             files_exported.append(export_csv(dataset, dataset.processed_spectra))
-        if '2' in user_choices:
+        if str(traces_key) in user_choices:
             files_exported.append(export_csv(dataset, dataset.chosen_traces, suffix='Traces'))
-        if '3' in user_choices:
-            files_exported.extend(
-                [
-                    export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
-                    export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
-                ]
-            )
+
+        try:
+            if str(fit_key) in user_choices:
+                files_exported.extend(
+                    [
+                        export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
+                        export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
+                    ]
+                )
+
+        except UnboundLocalError:
+            pass
+
+        try:
+            if str(init_rate_key) in user_choices:
+                files_exported.extend(
+                    [
+                        export_csv(dataset, dataset.init_rate['lines'], suffix='Init rate lines'),
+                        export_csv(dataset, dataset.init_rate['params'].transpose(), suffix='Init rate params'),
+                    ]
+                )
+
+        except UnboundLocalError:
+            pass
 
     return files_exported

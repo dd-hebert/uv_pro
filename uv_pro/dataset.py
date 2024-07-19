@@ -11,7 +11,7 @@ import os
 import pandas as pd
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
-from uv_pro.fitting import fit_exponential
+from uv_pro.fitting import fit_exponential, initial_rates
 from uv_pro.slicing import slice_spectra
 from uv_pro.utils.printing import print_dataset
 
@@ -56,10 +56,10 @@ class Dataset:
     """
 
     def __init__(self, path: str, trim: list[int, int] | None = None,
-                 slicing: dict | None = None, fitting: bool = False,
-                 outlier_threshold: float = 0.1, baseline_lambda: float = 10,
-                 baseline_tolerance: float = 0.1, low_signal_window: str = 'narrow',
-                 time_trace_window: tuple[int, int] = (300, 1060),
+                 slicing: dict | None = None, fit_exp: bool = False,
+                 fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
+                 baseline_lambda: float = 10, baseline_tolerance: float = 0.1,
+                 low_signal_window: str = 'narrow', time_trace_window: tuple[int, int] = (300, 1060),
                  time_trace_interval: int = 10, wavelengths: list | None = None,
                  view_only: bool = False) -> None:
         """
@@ -80,11 +80,15 @@ class Dataset:
             Default value is None (no trimming).
         slicing : dict or None, optional
             Reduce the data down to a selection of slices. Slices can be taken in \
-            equally- or unequally-spaced (gradient) intervals.
+            equally- or unequally-spaced (gradient) intervals, or at specific times.
             For equal slicing: ``{'mode': 'equal', 'slices': int}``.
             For gradient slicing: ``{'mode': 'gradient', 'coeff': float, 'expo': float}``.
-        fitting : bool, optional
-            Perform exponential fitting on the time traces specified with ``wavelengths``
+            For specific slicing: ``{'mode': 'specific', 'times': list[float]}``.
+        fit_exp : bool, optional
+            Perform exponential fitting on the time traces specified with ``wavelengths``.
+        fit_init_rate : float or None, optional
+            Perform initial rates linear regression fitting on the time traces specified \
+            with ``wavelengths``.
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
@@ -104,17 +108,17 @@ class Dataset:
             outliers are affecting the baseline.
         time_trace_window : tuple[int, int] or None, optional
             The range (min, max) of wavelengths (in nm) to get time traces for.
-            Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
             The default is (300, 1060).
         time_trace_interval : int, optional
             The wavelength interval (in nm) between time traces. A smaller interval \
-            produces more time traces. Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            produces more time traces. Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
             An interval of 20 would generate time traces like this:
             [window min, window min + 20, window min + 40, ..., window max - 20, window max].
             The default value is 10.
         wavelengths : list[int] or None, optional
             A list of specific wavelengths to get time traces for. These time traces are \
-            independent of those created by :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            independent of those created by :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
             The default is None.
         view_only : bool, optional
             Indicate if data processing (cleaning and trimming) should be performed.
@@ -124,7 +128,8 @@ class Dataset:
         self.name = os.path.basename(self.path)
         self.trim = trim
         self.slicing = slicing
-        self.fitting = fitting
+        self.fit_exp = fit_exp
+        self.fit_init_rate = fit_init_rate
         self.time_trace_window = time_trace_window
         self.time_trace_interval = time_trace_interval
         self.wavelengths = wavelengths
@@ -132,6 +137,8 @@ class Dataset:
         self.low_signal_window = low_signal_window
         self.baseline_lambda = baseline_lambda
         self.baseline_tolerance = baseline_tolerance
+        self.fit = None
+        self.init_rate = None
         self.is_processed = False
 
         self._import_data()
@@ -154,7 +161,7 @@ class Dataset:
 
         Gets time traces, finds outliers, processes the spectra
         and traces, and performs data fitting according to the
-        attributes of the :class:`~uv_pro.process.Dataset`.
+        attributes of the :class:`~uv_pro.dataset.Dataset`.
         """
         if len(self.raw_spectra.columns) <= 2:
             pass
@@ -177,11 +184,12 @@ class Dataset:
             self.processed_spectra = self._process_spectra()
             self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
 
-            if self.fitting is True and self.processed_traces is not None:
-                self.fit = fit_exponential(self.processed_traces)
+            if self.processed_traces is not None:
+                if self.fit_exp is True:
+                    self.fit = fit_exponential(self.processed_traces)
 
-            else:
-                self.fit = None
+                if self.fit_init_rate is not None:
+                    self.init_rate = initial_rates(self.processed_traces, cutoff=self.fit_init_rate)
 
             self.is_processed = True
 

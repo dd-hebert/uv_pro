@@ -4,12 +4,12 @@ Default entry point if running the package using ``python -m uv_pro``.
 @author: David Hebert
 """
 import sys
-import uv_pro.scripts.cli
+from uv_pro.cli import CLI
 
 
 def main():
     """Run uv_pro from cli script entry point."""
-    cli = uv_pro.scripts.cli.CLI()
+    cli = CLI()
     return 0
 
 

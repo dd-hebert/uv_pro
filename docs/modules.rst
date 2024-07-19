@@ -7,10 +7,10 @@ API Reference
    fitting
    outliers
    plots
-   process
+   dataset
    slicing
+   quickfig
    export
    import_kd
    config
    filepicker
-   quickfig

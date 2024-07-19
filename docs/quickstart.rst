@@ -10,25 +10,29 @@ Process UV-Vis Data From a .KD File
 If you have a .KD file called ``mydata.KD`` located in ``C:\mystuff\UV-Vis Data\``,
 you can process this file by opening a terminal and entering the following command::
 
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD"
+    uvp process "C:\mystuff\UV-Vis Data\mydata.KD"
 
 The file will automatically be imported, processed, and plotted.
 
 Alternatively, you could open a terminal session inside ``C:\mystuff\UV-Vis Data\`` and use::
 
-    uvp -p mydata.KD
+    uvp process mydata.KD
+
+.. Note::
+    Most subcommands have shorthand alternatives, for example you can use ``p`` or ``proc`` in place
+    of ``process``.
 
 .. Note::
     When parsing a .KD file, the experiment's cycle time is automatically detected.
 
 Trim Your Data
 --------------
-You can ``trim`` your data to remove spectra outside a given time range. For example, if you collected
+You can trim your data to remove spectra outside a given time range. For example, if you collected
 spectra over 2000 seconds but only want to keep the data between 10 seconds and 100 seconds,
 you can use ``-tr 10 100`` or ``--trim 10 100``::
 
     # Trim data, keeping the spectra from 100 to 1000 seconds.
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -tr 100 1000
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" -tr 100 1000
 
 Spectra outside of the time range given with ``trim`` will be removed.
 
@@ -40,7 +44,7 @@ For example, if you collected 200 spectra but only want to plot 10, you can use 
 ``--slice_spectra 10``::
 
     # Get 10 equally-spaced slices.
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -sl 10
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" -sl 10
 
 
 Alternatively, unequally-spaced slicing (gradient slicing ``-gsl`` or ``--gradient_slice``) can be performed.
@@ -59,7 +63,7 @@ slowly in the beginning and rapidly at the end.
 Example::
 
     # Take unequally-spaced slices
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -gsl 0.5 2
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" -gsl 0.5 2
 
 
 Removing Outliers
@@ -81,8 +85,8 @@ outlier threshold [-ot]
 The :func:`outlier_threshold <uv_pro.process.Dataset.__init__>` can be set using the ``-ot`` or
 ``--outlier_threshold`` argument::
 
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -ot 0.8
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" --outlier_threshold 0.6
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" -ot 0.8
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" --outlier_threshold 0.6
 
 The default :func:`outlier_threshold <uv_pro.process.Dataset.__init__>` is 0.1.
 
@@ -107,8 +111,8 @@ The :func:`baseline_lambda <uv_pro.process.Dataset.__init__>` is the smoothness 
 argument::
 
     # Set baseline smoothness.
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -bll 0.1
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" --baseline_lambda 1000
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" -bll 0.1
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" --baseline_lambda 1000
 
 Higher ``-bll`` values give smoother baselines. Try values between 0.001 and 10000. The default is 10.
 See pybaselines.whittaker_ for more in-depth information. The image below shows how different values
@@ -129,8 +133,8 @@ The :func:`baseline_tolerance <uv_pro.process.Dataset.__init__>` specifies the e
 ``--baseline_tolerance`` argument::
 
     # Set the baseline tolerance.
-    uvp -p mydata.KD -blt 0.01
-    uvp -p mydata.KD --baseline_tolerance 10
+    uvp p mydata.KD -blt 0.01
+    uvp p mydata.KD --baseline_tolerance 10
 
 Try ``-blt`` values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker_ for
 more in-depth information.
@@ -138,17 +142,17 @@ more in-depth information.
 
 low signal window [-lsw]
 ````````````````````````
-Low signal outliers usually 
 The :func:`low_signal_window <uv_pro.process.Dataset.__init__>` sets the width of the low signal detection
 window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). Low signal outliers typically occur when the
-cuvette is removed from the instrument during data collection, resulting in an abrupt dip in the time trace.
+cuvette is removed from the instrument during data collection, resulting in an abrupt dip in the time traces.
 Removing these outliers is important because their presence can significantly impact the baseline and outlier detection.
 
 You can set the size of the window using the ``-lsw`` or ``--low_signal_window`` argument::
 
     # Set the low signal outlier window size.
-    uvp -p mydata.KD -lsw "wide"
-    uvp -p mydata.KD --low_signal_window "narrow"  # default
+    uvp p mydata.KD -lsw wide
+    uvp p mydata.KD -lsw narrow  # default
+    uvp p mydata.KD -lsw none  # skip low signal outlier detection
 
 The default size is ``"narrow"``, meaning only the spectra with low total absorbance are considered
 low signal outliers. If the size is set to ``"wide"``, the points neighboring a low signal
@@ -173,13 +177,18 @@ dips are more broad, a ``"wide"`` window may be necessary. Keep in mind that usi
 more spectra will be categorized as  :attr:`~uv_pro.process.Dataset.outliers` and removed from
 the final plot. However, this is primarily a concern when working with smaller datasets that contain fewer spectra.
 
+.. Note::
+    Low signal outlier detection can be skipped with the ``"none"`` option. This may be useful when processing spectra
+    with very low absorbance across a majority of measured wavelengths.
+
+
 Exponential Fitting
 -------------------
 You can perform exponential fitting on time traces using ``-fit`` or ``--fitting``. The wavelengths to fit must be
 given with ``-tt`` or ``--time_traces``::
 
     # Perform exponential fitting on time traces at 450 nm and 780 nm
-    uvp -p "C:\mystuff\UV-Vis Data\mydata.KD" -tt 450 780 -fit
+    uvp p "C:\mystuff\UV-Vis Data\mydata.KD" -tt 450 780 -fit
 
 Exponential fitting is performed using scipy.optimize.curve_fit_, which attempts to fit the function
 
@@ -194,14 +203,14 @@ Examples
 Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep only spectra
 from 50 seconds to 250 seconds, and show 10 slices::
 
-    uvp -p C:\Desktop\myfile.KD -tr 50 250 -ot 0.2 -sl 10
+    uvp p C:\Desktop\myfile.KD -tr 50 250 -ot 0.2 -sl 10
 
 Import the data from ``myfile.KD``, trim the data to keep only spectra from 0 seconds to 750 seconds, change baseline
 parameters, show 25 slices, and get time traces for 780 nm and 1020 nm::
 
-    uvp -p C:\Desktop\myfile.KD -tr 0 750 -bll 10 -blt 0.1 -sl 25 -tt 780 1020
+    uvp p C:\Desktop\myfile.KD -tr 0 750 -bll 10 -blt 0.1 -sl 25 -tt 780 1020
 
-The arguments are flexible and can be used in basically any order (except ``-p`` which must come first). However, each argument
+The arguments for ``process`` are flexible and can be used in basically any order (except the path which must come first). However, each argument
 should only occur once.
 
 .. _pybaselines.whittaker: https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html

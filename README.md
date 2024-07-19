@@ -14,33 +14,32 @@ Contents
 
 Installation
 ------------
-If you have git installed on your system, you can directly install ``uv_pro`` from this repo using pip:
-
-```
-pip install git+https://github.com/dd-hebert/uv_pro.git
-```
-
-Otherwise, clone this repo and use [setuptools](https://setuptools.pypa.io/en/latest/userguide/quickstart.html) to build the package (``python -m build``) then use pip to install the resulting ``.whl`` file.
+Clone this repo and use [setuptools](https://setuptools.pypa.io/en/latest/userguide/quickstart.html) and [build](https://pypi.org/project/build/) to build the package (``python -m build``) then use pip to install the resulting ``.whl`` file.
 
 Command Line Interface
 ----------------------
-With ``uv_pro`` installed, you can run the script directly from the command line using the ``uvp`` shortcut. To begin processing data, use ``-p`` and specify the path to your data:
+With ``uv_pro`` installed, you can run the script directly from the command line using the ``uvp`` shortcut. To begin processing data, use ``p`` and specify the path to your data:
+
 ```
-uvp -p path\to\your\data.KD
+uvp p path\to\your\data.KD
 ```
 
 **Tip:** You can use shorter paths by setting a **root directory** or by simply opening a terminal session inside the same folder as your data files.
 
 Command Line Arguments
 ----------------------
-- [Data Processing Args](#data-processing-args)
-- [User Config Args](#user-config-args)
+- [Data Processing Args (process, proc, p)](#data-processing-args-process-proc-p)
+- [Batch Exporting Args (batch)](#batch-exporting-args-batch)
+- [User Config Args (config, cfg)](#user-config-args-config-cfg)
 - [Other Args](#other-args)
 
-### Data Processing Args
-Args related to data processing.
+### Data Processing Args (process, proc, p)
+Process UV-vis data with the ``process`` subcommand.
 
-#### ``-p``, ``--path`` : string, required
+**Usage:**
+``uvp process <path> <options>``, ``uvp proc <path> <options>``, or ``uvp p <path> <options>``
+
+#### ``path`` : string, required
 The path to a .KD file. You have three options for specifying the path: you can use a **path relative to the current working directory**, an **absolute path**, or a **path relative to the root directory** (if one has been set).
 
 #### ``-bll``, ``-–baseline_lambda`` : float, optional
@@ -60,18 +59,27 @@ Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra th
 #### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
 Set the width of the low signal outlier detection window. Set to "wide" if low signals are interfering with the baseline.
 
+#### ``-ne``, ``--no_export`` : flag, optional
+Bypass the data export prompt at the end of the script.
+
 #### ``-ot``, ``--outlier_threshold`` : float between 0 and 1, optional
 The threshold by which spectra are considered outliers. Values closer to 0 will produce more outliers, while values closer to 1 will produce fewer outliers. A value of 1 will produce no outliers. The default value is 0.1.
 
+#### ``-qf``, ``--quick_fig`` : flag, optional
+Generate (and optionally export) a quick figure with a custom plot title and other settings.
+
 #### ``-sl``, ``--slice_spectra`` : integer, optional
 Reduce the dataset down to a number of equally-spaced "slices". Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
+
+#### ``-ssl``, ``--specific_slice`` : abritrary number of ints, optional
+Select spectra slices at specific times. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
 
 #### ``-tr``, ``--trim`` : 2 integers, optional
 Select spectra within a given time range. The first integer is the beginning of the time range and the second integer is the end. The spectra outside the given time range will be removed.
 
 ```
 # Trim from 50 seconds to 250 seconds
-uvp -p C:\\Desktop\\MyData\\myfile.KD -tr 50 250
+uvp p C:\\Desktop\\MyData\\myfile.KD -tr 50 250
 ```
 
 #### ``-tt``, ``--time_traces`` : arbitrary number of ints, optional
@@ -84,88 +92,109 @@ Set the time trace wavelength interval (in nm). An interval of 20 would create t
 Set the time trace wavelength range (min, max) (in nm). The default is (300, 1060).
 
 #### ``-v`` : flag, optional
-Enable _view-only_ mode. No data processing is performed and a plot of the data is shown.
+Enable *view-only* mode. No data processing is performed and a plot of the data is shown.
 
-### User Config Args
-Args related to user-configured settings.
+### Batch Exporting Args (batch)
+Batch export UV-vis data from .KD files in the current working directory. Currently, only batch exporting of time traces is supported.
 
-#### ``-crd``, ``-–clear_root_dir`` : flag, optional
-Reset the root directory back to the default location (in the user's home directory).
+**Usage:** ``uvp batch <wavelengths> <options>``
 
-#### ``-grd``, ``–-get_root_dir`` : flag, optional
-Print the current root directory to the console.
+#### ``wavelengths`` : arbitrary number of ints, required
+A list of time trace wavelengths (in nm) to export.
+#### ``-f``, ``--search_filters`` : arbitrary number of strings, optional
+A sequence of search filter strings. For example, passing ``-f copper A`` will select .KD files which contain 'copper' OR 'A' in their filename. Passing no filters selects all .KD files in the current working directory.
 
-#### ``-srd``, ``-–set_root_dir`` : string, optional
-Set a new root directory. Setting a root directory can simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``-p`` is assumed to be relative to the root directory.
+### User Config Args (config, cfg)
+View, edit, or reset user-configured settings with the ``config`` subcommand.
+
+**Usage:**
+``uvp config <option>`` or ``uvp cfg <option>``
+
+Current user-configurable settings: 
+    ``root_directory`` - A base directory which contains UV-vis data files. Set a root directory to enable the use of shorter, relative file paths.
+    ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``width height``
+
+#### ``-delete`` : flag, optional
+Delete the config file and directory. The config file is located in ``.config/uv_pro/`` inside the user's home directory.
+
+#### ``-edit`` : flag, optional
+Edit configuration settings. Will prompt the user for a selection of configuration settings to edit.
+
+#### ``-list`` : flag, optional
+Print the current configuration settings to the console.
+
+#### ``-reset`` : flag, optional
+Reset configuration settings back to their default value. Will prompt the user for a selection of configuration settings to reset.
+
+### Other args and subcommands
+Other miscellaneous args and subcommands.
+
+#### ``-h``, ``--help`` : flag, optional
+Use ``-h`` to get help with command line arguments.
+
+#### ``browse``, ``br`` : subcommand
+Interactively pick a .KD file from the terminal. The file is opened in _view-only_ mode. The file must be located somewhere inside the root directory. Usage: ``uvp browse``.
+
+#### ``tree`` : subcommand
+Print the root directory file tree to the console. Usage: ``uvp tree``.
+
+Examples
+--------
+Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep the spectra from 50 seconds to 250 seconds, and show 10 slices:
+```
+uvp p C:\\Desktop\\myfile.KD -tr 50 250 -ot 0.2 -sl 10
+```
+
+Root Directory
+--------------
+Setting a root directory can simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``process`` is assumed to be relative to the root directory.
 
 **Without root directory:**
 ```
 # Must type full file path
-uvp -p "C:\mydata\UV-Vis Data\mydata.KD"
+uvp p "C:\mydata\UV-Vis Data\mydata.KD"
 ```
 
 Without a root directory, you must type the full path ``"C:\mydata\UV-Vis Data\mydata.KD"`` to the data. 
 
 **With root directory:**
 ```
-# Set the root directory
-uvp -srd "C:\mydata\UV-Vis Data"
+# Set the root directory.
+uvp cfg -e
 
-# Only need short file path
-uvp -p mydata.KD
+# Select the root directory setting and enter the desired path, for example:
+"C:\mydata\UV-Vis Data"
+
+# Now, a shorter relative path can be used.
+uvp p mydata.KD
 ```
 
-By setting a root directory ``"C:\mydata\UV-Vis Data"``, you can omit that part of the path and just give a relative path ``mydata.KD``. The root directory is saved between runs in a config file.
-
-### Other args
-Other miscellaneous args.
-
-#### ``-h``, ``--help`` : flag
-Use ``-h`` to get help with command line arguments.
-
-#### ``-fp``, ``--file_picker`` : flag, optional
-Interactively pick a .KD file from the terminal. The file is opened in _view-only_ mode. The file must be located somewhere inside the root directory.
-
-#### ``-ne``, ``--no_export`` : flag, optional
-Bypass the data export prompt at the end of the script.
-
-#### ``-qf``, ``--quick_fig`` : flag, optional
-Generate (and optionally export) a quick figure with a custom plot title and other settings.
-
-#### ``--tree`` : flag, optional
-Print the root directory file tree to the console.
-
-Examples
---------
-Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep the spectra from 50 seconds to 250 seconds, and show 10 slices:
-```
-uvp -p C:\\Desktop\\myfile.KD -tr 50 250 -ot 0.2 -sl 10
-```
+By setting a root directory, for example ``"C:\mydata\UV-Vis Data"``, you can omit that part of the path and just give a relative path ``mydata.KD``. The root directory is saved between runs in a config file.
 
 Multiview Mode
 --------------
-You can open multiple .KD files (in _view-only_ mode) from the command line simultaneously with the ``Multiviewer`` script. Navigate to a directory containing .KD files and run the command:
+You can open multiple .KD files (in *view-only* mode) simultaneously with the ``multiviewer`` subcommand. Navigate to a directory containing .KD files and run the command:
 ```
-uvpmv -f some search filters
+uvp mv -f some search filters
 ```
 
-The script will open .KD files which contain any of the supplied search filters in _view-only_ mode.
+The script will open .KD files which contain any of the supplied search filters in *view-only* mode. If no filters are provided, then *all* .KD files in the current working directory will opened.
 
-The default search behavior is an *OR* search. You can use supply the ``-a`` or ``--and_filter`` argument to perform an *AND* search:
+The default search behavior is an *OR* search. You can use the ``-a`` or ``--and_filter`` argument to perform an *AND* search:
 ```
-uvpmv -f some search filters -a
+uvp mv -f some search filters -a
 ```
 
 Now only .KD files with contain *all* of the search filters in their name will be opened.
 
 **Examples:**
 ```
-uvpmv -f copper DMF
+uvp mv -f copper DMF
 ```
 OR search, open .KD files with ``copper`` *OR* ``DMF`` in their filename.
 
 ```
-uvpmv -f copper DMF TEMPOH -a
+uvp mv -f copper DMF TEMPOH -a
 ```
 AND search, open .KD files with ``copper``, ``DMF``, *AND* ``TEMPOH`` in their filename.
 
