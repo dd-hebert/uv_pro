@@ -5,7 +5,7 @@ Functions for the ``process`` command.
 """
 import os
 import argparse
-from uv_pro.process import Dataset
+from uv_pro.dataset import Dataset
 from uv_pro.quickfig import QuickFig
 from uv_pro.plots import plot_spectra, plot_2x2
 from uv_pro.io.export import prompt_for_export
@@ -15,7 +15,7 @@ def process(args: argparse.Namespace) -> None:
     """
     Process data.
 
-    Initializes a :class:`~uv_pro.process.Dataset` with the
+    Initializes a :class:`~uv_pro.dataset.Dataset` with the
     given ``args``, plots the result, and prompts the user
     for exporting.
     """
@@ -79,7 +79,7 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
 
 
 def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
-    """Plot a :class:`~uv_pro.process.Dataset` and prompt the user for export."""
+    """Plot a :class:`~uv_pro.dataset.Dataset` and prompt the user for export."""
     print('\nPlotting data...')
     if dataset.is_processed:
         files_exported = []

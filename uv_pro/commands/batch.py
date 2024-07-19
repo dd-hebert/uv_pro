@@ -5,7 +5,7 @@ Functions for the ``batch`` command.
 """
 import argparse
 from uv_pro.commands.multiview import filter_files
-from uv_pro.process import Dataset
+from uv_pro.dataset import Dataset
 from uv_pro.io.export import export_csv
 
 

@@ -1,3 +1,3 @@
 Multiviewer
 ===========
-.. automodule:: uv_pro.multiview
+.. automodule:: uv_pro.commands.multiview

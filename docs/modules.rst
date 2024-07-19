@@ -7,7 +7,7 @@ API Reference
    fitting
    outliers
    plots
-   process
+   dataset
    slicing
    quickfig
    export

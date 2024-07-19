@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from cycler import cycler
 from pandas import DataFrame
-from uv_pro.process import Dataset
+from uv_pro.dataset import Dataset
 
 
 plt.style.use('seaborn-v0_8-bright')
@@ -20,11 +20,11 @@ def plot_spectra(dataset: Dataset, spectra) -> None:
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        A :class:`~uv_pro.process.Dataset` containing the spectra to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        A :class:`~uv_pro.dataset.Dataset` containing the spectra to be plotted.
     spectra : :class:`pandas.DataFrame`
-        The spectra to be plotted, such as :attr:`~uv_pro.process.Dataset.raw_spectra`
-        or :attr:`~uv_pro.process.Dataset.processed_spectra`.
+        The spectra to be plotted, such as :attr:`~uv_pro.dataset.Dataset.raw_spectra`
+        or :attr:`~uv_pro.dataset.Dataset.processed_spectra`.
     """
     _, ax = plt.subplots()
     ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)')
@@ -37,12 +37,12 @@ def plot_spectra(dataset: Dataset, spectra) -> None:
 
 def plot_time_traces(dataset: Dataset) -> None:
     """
-    Plot the :attr:`~uv_pro.process.Dataset.time_traces` of a ``dataset``.
+    Plot the :attr:`~uv_pro.dataset.Dataset.time_traces` of a ``dataset``.
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` containing the time traces to be
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` containing the time traces to be
         plotted.
     """
     _, ax = plt.subplots()
@@ -58,13 +58,13 @@ def plot_1x2(dataset: Dataset, **fig_kw) -> None:
     """
     Show the 1-by-2 plot.
 
-    Show a 1-by-2 plot of :attr:`~uv_pro.process.Dataset.raw_spectra` and
-    :attr:`~uv_pro.process.Dataset.processed_spectra` in ``dataset``.
+    Show a 1-by-2 plot of :attr:`~uv_pro.dataset.Dataset.raw_spectra` and
+    :attr:`~uv_pro.dataset.Dataset.processed_spectra` in ``dataset``.
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be plotted.
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
@@ -81,14 +81,14 @@ def plot_1x3(dataset: Dataset, **fig_kw) -> None:
     """
     Show the 1-by-3 plot.
 
-    Show a 1-by-3 plot of :attr:`~uv_pro.process.Dataset.raw_spectra`,
-    :attr:`~uv_pro.process.Dataset.processed_spectra`, and
-    :attr:`~uv_pro.process.Dataset.time_traces` in ``dataset``.
+    Show a 1-by-3 plot of :attr:`~uv_pro.dataset.Dataset.raw_spectra`,
+    :attr:`~uv_pro.dataset.Dataset.processed_spectra`, and
+    :attr:`~uv_pro.dataset.Dataset.time_traces` in ``dataset``.
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be plotted.
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
@@ -106,21 +106,21 @@ def plot_2x2(dataset: Dataset, **fig_kw) -> None:
     """
     Show the 2-by-2 plot.
 
-    Show a 2-by-2 plot of :attr:`~uv_pro.process.Dataset.raw_spectra`,
-    :attr:`~uv_pro.process.Dataset.processed_spectra`,
-    :attr:`~uv_pro.process.Dataset.time_traces`, and
-    :attr:`~uv_pro.process.Dataset.baseline` with
-    :attr:`~uv_pro.process.Dataset.outliers` highlighted.
+    Show a 2-by-2 plot of :attr:`~uv_pro.dataset.Dataset.raw_spectra`,
+    :attr:`~uv_pro.dataset.Dataset.processed_spectra`,
+    :attr:`~uv_pro.dataset.Dataset.time_traces`, and
+    :attr:`~uv_pro.dataset.Dataset.baseline` with
+    :attr:`~uv_pro.dataset.Dataset.outliers` highlighted.
 
     Note
     ----
     If specific time traces have been chosen, then the time traces
-    plot will instead show :attr:`~uv_pro.process.Dataset.chosen_traces`.
+    plot will instead show :attr:`~uv_pro.dataset.Dataset.chosen_traces`.
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be plotted.
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
@@ -143,8 +143,8 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset) -> None:
     ----------
     ax : :class:`matplotlib.axes.Axes`
         The axes to plot on.
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be plotted.
     """
     spectra = dataset.raw_spectra
     ax.set_title('Raw Data', size=10, weight='bold', fontstyle='oblique')
@@ -165,8 +165,8 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset) -> None:
     ----------
     ax : :class:`matplotlib.axes.Axes`
         The axes to plot on.
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be plotted.
     """
     spectra = dataset.processed_spectra
     cycler = _get_linestyles(spectra)
@@ -200,8 +200,8 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset, show_slices: bool = True) -
     ----------
     ax : :class:`matplotlib.axes.Axes`
         The axes to plot on.
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be plotted.
     show_slices : bool
         Show vertical lines where slices are taken.
     """
@@ -250,8 +250,8 @@ def _outliers_subplot(ax: Axes, dataset: Dataset) -> None:
     ----------
     ax : :class:`matplotlib.axes.Axes`
         The axes to plot on.
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be plotted.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be plotted.
     """
     ax.set_title('Baseline & Outliers', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(left=0, right=dataset.spectra_times.iloc[-1])

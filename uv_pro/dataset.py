@@ -108,17 +108,17 @@ class Dataset:
             outliers are affecting the baseline.
         time_trace_window : tuple[int, int] or None, optional
             The range (min, max) of wavelengths (in nm) to get time traces for.
-            Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
             The default is (300, 1060).
         time_trace_interval : int, optional
             The wavelength interval (in nm) between time traces. A smaller interval \
-            produces more time traces. Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            produces more time traces. Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
             An interval of 20 would generate time traces like this:
             [window min, window min + 20, window min + 40, ..., window max - 20, window max].
             The default value is 10.
         wavelengths : list[int] or None, optional
             A list of specific wavelengths to get time traces for. These time traces are \
-            independent of those created by :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+            independent of those created by :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
             The default is None.
         view_only : bool, optional
             Indicate if data processing (cleaning and trimming) should be performed.
@@ -161,7 +161,7 @@ class Dataset:
 
         Gets time traces, finds outliers, processes the spectra
         and traces, and performs data fitting according to the
-        attributes of the :class:`~uv_pro.process.Dataset`.
+        attributes of the :class:`~uv_pro.dataset.Dataset`.
         """
         if len(self.raw_spectra.columns) <= 2:
             pass

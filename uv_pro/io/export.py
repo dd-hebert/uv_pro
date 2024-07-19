@@ -18,12 +18,12 @@ def export_csv(dataset, data, suffix: str | None = None) -> str:
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be exported.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be exported.
     data : :class:`pandas.DataFrame`
         The data to be exported. A :class:`pandas.DataFrame`
-        such as :attr:`~uv_pro.process.Dataset.raw_spectra` or
-        :attr:`~uv_pro.process.Dataset.chosen_traces`.
+        such as :attr:`~uv_pro.dataset.Dataset.raw_spectra` or
+        :attr:`~uv_pro.dataset.Dataset.chosen_traces`.
     suffix : str or None
         A suffix to append to the end of the file name \
         (before the file extension).
@@ -75,8 +75,8 @@ def prompt_for_export(dataset) -> list[str]:
 
     Parameters
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to be exported.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be exported.
 
     Returns
     -------

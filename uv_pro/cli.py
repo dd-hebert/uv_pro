@@ -50,7 +50,7 @@ path : str, required
     Use the quick figure generator to create and export plot figures.
 -sl, --slice : int, optional
     The number of equally-spaced slices to plot or export. Example: if
-    :attr:`~uv_pro.process.Dataset.processed_spectra` contains 100 spectra and
+    :attr:`~uv_pro.dataset.Dataset.processed_spectra` contains 100 spectra and
     ``slice`` is 10, then every tenth spectrum will be kept. The
     default is None, where all spectra are plotted or exported.
 -ssl, --specific_slice : list[int], optional
@@ -62,15 +62,15 @@ path : str, required
 -tt, --time_traces : arbitrary number of ints, optional
     A list of specific wavelengths (in nm) to create time traces for.
     These time traces are independent from the time traces created by
-    :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+    :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
 -tti, --time_trace_interval : int, optional
     Set the interval (in nm) for time traces. An interval of 10 will create
     time traces from the window min to max every 10 nm. Smaller intervals
-    may increase loading times. Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+    may increase loading times. Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
     The default is 10.
 -ttw, --time_trace_window : int int, optional
     Set the (min, max) wavelength (in nm) range to get time traces for.
-    Used in :meth:`~uv_pro.process.Dataset.get_time_traces()`.
+    Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
     The default is 300 1060.
 -v : flag, optional
     Enable view-only mode. No data processing is performed and a plot of

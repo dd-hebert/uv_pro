@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.artist import Artist
 from matplotlib.figure import Figure
-from uv_pro.process import Dataset
+from uv_pro.dataset import Dataset
 import uv_pro.plots as uvplt
 from uv_pro.utils.printing import prompt_user_choice
 from uv_pro.io.export import export_figure
@@ -26,8 +26,8 @@ class QuickFig:
 
     Attributes
     ----------
-    dataset : :class:`~uv_pro.process.Dataset`
-        The :class:`~uv_pro.process.Dataset` to create a quick figure with.
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to create a quick figure with.
     exported_figure : str
         The filename of the exported quick figure.
     """
@@ -40,10 +40,10 @@ class QuickFig:
         """
         Create a quick figure for exporting.
 
-        If the :class:`~uv_pro.process.Dataset` to be plotted has \
-        :attr:`~uv_pro.process.Dataset.chosen_traces`, these will \
+        If the :class:`~uv_pro.dataset.Dataset` to be plotted has \
+        :attr:`~uv_pro.dataset.Dataset.chosen_traces`, these will \
         be included in the figure. Otherwise, only the \
-        :attr:`~uv_pro.process.Dataset.processed_spectra` will be plotted.
+        :attr:`~uv_pro.dataset.Dataset.processed_spectra` will be plotted.
 
         Parameters
         ----------
