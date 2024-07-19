@@ -162,17 +162,8 @@ Examples
 @author: David Hebert
 """
 import sys
-import argparse
-import os
-import uv_pro._args as subcommands
-from uv_pro.multiview import multiview, filter_files
-from uv_pro.plots import plot_spectra, plot_2x2
-from uv_pro.process import Dataset
-from uv_pro.quickfig import QuickFig
-from uv_pro.io.export import prompt_for_export, export_csv
+from uv_pro.commands._parsers import get_args
 from uv_pro.utils.config import Config
-from uv_pro.utils.filepicker import FilePicker
-from uv_pro.utils.printing import prompt_user_choice, prompt_for_value
 
 
 sys.tracebacklimit = 0
@@ -192,217 +183,21 @@ class CLI:
 
     def __init__(self):
         self.cfg = Config()
-        self.args = self.get_args()
+        self.args = get_args()
+        self.get_config_values()
 
         try:
-            self.args.func()
+            self.args.func(args=self.args, config=self.cfg)
+
+        except TypeError:
+            self.args.func(args=self.args)
 
         except AttributeError:
             pass
 
-    def get_args(self) -> argparse.Namespace:
-        """Collect all command-line args."""
-        main_parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
-
-        subparsers = main_parser.add_subparsers(
-            help='Subcommands'
-        )
-
-        subcommands.batch(subparsers, self.batch)
-        subcommands.browse(subparsers, self.browse)
-        subcommands.config(subparsers, self.config)
-        subcommands.multiview(subparsers, self.multiview)
-        subcommands.process(subparsers, self.process)
-        subcommands.tree(subparsers, self.tree)
-        subcommands.test(subparsers, self.test)
-
-        return main_parser.parse_args()
-
-    def batch(self) -> None:
-        if files := filter_files(self.args.search_filters):
-            files_exported = []
-
-            for file in files:
-                dataset = Dataset(
-                    path=file,
-                    view_only=True
-                )
-
-                files_exported.append(
-                    export_csv(
-                        dataset=dataset,
-                        data=dataset.get_chosen_traces(self.args.wavelengths),
-                        suffix='Traces'
-                    )
-                )
-
-            if files_exported:
-                print('Files exported:')
-                [print(f'\t{file}') for file in files_exported]
-
-    def browse(self) -> None:
-        if root_dir := self._get_root_dir():
-            if file := FilePicker(root_dir, '.KD').pick_file():
-                self.args.path = file[0]
-                self.args.view = True
-                self.process()
-
-    def config(self) -> None:
-        if self.args.edit or self.args.reset:
-            if self.args.edit:
-                header = 'Edit config settings'
-                func = self._edit_config
-            if self.args.reset:
-                header = 'Reset config settings'
-                func = self._reset_config
-
-            self._config_prompt(header, func)
-
-        elif self.args.list:
-            self._print_config()
-
-        elif self.args.delete:
-            self._delete_config()
-
-    def _config_prompt(self, header: str, func: callable) -> None:
-        options = []
-        settings_keys = {}
-        for key, (setting, value) in enumerate(self.cfg.items('Settings'), start=1):
-            options.append({'key': str(key), 'name': f'{setting}: {value}'})
-            settings_keys[str(key)] = setting
-
-        if user_choices := prompt_user_choice(header=header, options=options):
-            for choice in user_choices:
-                func(settings_keys[choice])
-
-    def _delete_config(self) -> None:
-        if input('Delete config file? (Y/N): ').lower() == 'y':
-            delete = self.cfg.delete()
-            if isinstance(delete, BaseException):
-                print('Error deleting config.')
-                print(delete)
-
-            else:
-                print('Config deleted.')
-
-    def _edit_config(self, setting: str) -> None:
-        if value := prompt_for_value(title=setting, prompt='Enter a new value: '):
-            if self.cfg.modify(section='Settings', key=setting, value=value):
-                return
-
-            else:
-                self._edit_config(setting)
-
-    def _reset_config(self, setting: str) -> None:
-        self.cfg.modify(
-            'Settings',
-            setting,
-            self.cfg.defaults['Settings'][setting]
-        )
-
-    def _print_config(self) -> None:
-        print('\nConfig settings')
-        print('===============')
-        for setting, value in self.cfg.items('Settings'):
-            print(f'{setting}: {value}')
-        print('')
-
-    def multiview(self) -> None:
-        multiview(
-            search_filters=self.args.search_filters,
-            filter_mode=self.args.filter_mode
-        )
-
-    def process(self) -> None:
-        """
-        Process data.
-
-        Initializes a :class:`~uv_pro.process.Dataset` with the
-        given ``args``, plots the result, and prompts the user
-        for exporting.
-        """
-        self._handle_path(self._get_root_dir())
-
-        if self.args.view is True:
-            dataset = Dataset(self.args.path, view_only=True)
-
-        else:
-            dataset = Dataset(
-                self.args.path,
-                trim=self.args.trim,
-                slicing=self._handle_slicing(),
-                fit_exp=self.args.fit_exp,
-                fit_init_rate=self.args.init_rate,
-                outlier_threshold=self.args.outlier_threshold,
-                baseline_lambda=self.args.baseline_lambda,
-                baseline_tolerance=self.args.baseline_tolerance,
-                low_signal_window=self.args.low_signal_window,
-                time_trace_window=self.args.time_trace_window,
-                time_trace_interval=self.args.time_trace_interval,
-                wavelengths=self.args.time_traces
-            )
-
-        print(dataset)
-        self._plot_and_export(dataset)
-
-    def _handle_path(self, root_dir: str | None) -> None:
-        current_dir = os.getcwd()
-        path_exists = os.path.exists(os.path.join(current_dir, self.args.path))
-
-        if path_exists:
-            self.args.path = os.path.join(current_dir, self.args.path)
-
-        elif root_dir is not None and os.path.exists(os.path.join(root_dir, self.args.path)):
-            self.args.path = os.path.join(root_dir, self.args.path)
-
-        else:
-            raise FileNotFoundError(f'No such file or directory could be found: "{self.args.path}"')
-
-    def _handle_slicing(self) -> dict | None:
-        if self.args.slice:
-            return {'mode': 'equal', 'slices': self.args.slice}
-
-        elif self.args.gradient_slice:
-            return {
-                'mode': 'gradient',
-                'coeff': self.args.gradient_slice[0],
-                'expo': self.args.gradient_slice[1]
-            }
-
-        elif self.args.specific_slice:
-            return {
-                'mode': 'specific',
-                'times': self.args.specific_slice
-            }
-
-        return None
-
-    def _plot_and_export(self, dataset: Dataset) -> None:
-        """Plot a :class:`~uv_pro.process.Dataset` and prompt the user for export."""
-        print('\nPlotting data...')
-        if dataset.is_processed:
-            files_exported = []
-
-            if self.args.quick_fig is True:
-                try:
-                    files_exported.append(getattr(QuickFig(dataset), 'exported_figure'))
-
-                except AttributeError:
-                    pass
-
-            else:
-                plot_2x2(dataset, figsize=self._get_plot_size())
-
-            if self.args.no_export is False:
-                files_exported.extend(prompt_for_export(dataset))
-
-            if files_exported:
-                print(f'\nExport location: {os.path.dirname(self.args.path)}')
-                print('Files exported:')
-                [print(f'\t{file}') for file in files_exported]
-
-        else:
-            plot_spectra(dataset, dataset.raw_spectra)
+    def get_config_values(self) -> None:
+        self.args.root_dir = self._get_root_dir()
+        self.args.plot_size = self._get_plot_size()
 
     def _get_plot_size(self) -> tuple[int, int]:
         return tuple(map(int, self.cfg.get('Settings', 'plot_size').split()))
@@ -410,18 +205,6 @@ class CLI:
     def _get_root_dir(self) -> str:
         root_dir = self.cfg.get('Settings', 'root_directory')
         return root_dir if root_dir else None
-
-    def tree(self) -> None:
-        if root_dir := self._get_root_dir():
-            FilePicker(root_dir, '.KD').tree()
-
-    def test(self) -> None:
-        r"""Test mode `-qq` only works from inside the repo \...\uv_pro\uv_pro."""
-        test_data = os.path.normpath(
-            os.path.join(os.path.abspath(os.pardir), 'test data\\test_data1.KD')
-        )
-        self.args.path = test_data
-        self.process()
 
 
 def main() -> None:

@@ -22,14 +22,15 @@ directory will be opened.
 @author: David
 """
 
+import argparse
 import glob
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
 
-def multiview(search_filters: list[str], filter_mode: str = 'or') -> None:
+def multiview(args: argparse.Namespace) -> None:
     """
-    Get command line args and run :func:`~uv_pro.scripts.multiview.multiview()`.
+    Open multilple .KD files in parallel (view-only mode).
 
     Parameters
     ----------
@@ -38,7 +39,7 @@ def multiview(search_filters: list[str], filter_mode: str = 'or') -> None:
     mode : str, optional
         The filter mode, can be 'and' or 'or'. The default is 'or'.
     """
-    _run_uvp_parallel(filter_files(search_filters, mode=filter_mode))
+    _run_uvp_parallel(filter_files(args.search_filters, mode=args.filter_mode))
 
 
 def filter_files(search_filters: list[str], mode: str = 'or') -> set[str]:

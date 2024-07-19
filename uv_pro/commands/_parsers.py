@@ -1,13 +1,40 @@
 """
 Helper functions for argparse boilerplate.
+Gets subparsers for CLI commands and parses command line args.
 
 @author: David Hebert
 """
 
 import argparse
+from uv_pro.commands.process import process
+from uv_pro.commands.multiview import multiview
+from uv_pro.commands.config import config
+from uv_pro.commands.browse import browse
+from uv_pro.commands.batch import batch
+from uv_pro.commands.tree import tree
+from uv_pro.commands.test import test
 
 
-def batch(subparser: argparse._SubParsersAction, func: callable) -> None:
+def get_args() -> argparse.Namespace:
+    """Collect all command-line args."""
+    main_parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
+
+    subparsers = main_parser.add_subparsers(
+        help='Subcommands'
+    )
+
+    _batch(subparsers)
+    _browse(subparsers)
+    _config(subparsers)
+    _multiview(subparsers)
+    _process(subparsers)
+    _tree(subparsers)
+    _test(subparsers)
+
+    return main_parser.parse_args()
+
+
+def _batch(subparser: argparse._SubParsersAction) -> None:
     """Get args for ``batch`` subcommand."""
     help_msg = {
         'search_filters': '''An arbitrary number of search filters''',
@@ -38,22 +65,22 @@ def batch(subparser: argparse._SubParsersAction, func: callable) -> None:
         help=help_msg['search_filters']
     )
 
-    batch_subparser.set_defaults(func=func)
+    batch_subparser.set_defaults(func=batch)
 
 
-def browse(subparser: argparse._SubParsersAction, func: callable) -> None:
+def _browse(subparser: argparse._SubParsersAction) -> None:
     """Get args for ``browse`` subcommand."""
-    filepicker_subparser: argparse.ArgumentParser = subparser.add_parser(
+    browse_subparser: argparse.ArgumentParser = subparser.add_parser(
         'browse',
         description='Browse for a .KD file in the root directory and open it in view-only mode.',
         aliases=['br'],
         help='Browse for a .KD file in the root directory and open it in view-only mode.'
     )
 
-    filepicker_subparser.set_defaults(func=func)
+    browse_subparser.set_defaults(func=browse)
 
 
-def config(subparser: argparse._SubParsersAction, func: callable) -> None:
+def _config(subparser: argparse._SubParsersAction) -> None:
     """Get args for ``config`` subcommand."""
     help_msg = {
         'delete': '''Delete the config file.''',
@@ -69,7 +96,7 @@ def config(subparser: argparse._SubParsersAction, func: callable) -> None:
         help='View and modify config settings.'
     )
 
-    config_subparser.set_defaults(func=func)
+    config_subparser.set_defaults(func=config)
 
     mutually_exclusive = config_subparser.add_mutually_exclusive_group()
     mutually_exclusive.add_argument(
@@ -98,7 +125,7 @@ def config(subparser: argparse._SubParsersAction, func: callable) -> None:
     )
 
 
-def multiview(subparser: argparse._SubParsersAction, func: callable) -> None:
+def _multiview(subparser: argparse._SubParsersAction) -> None:
     """Get args for ``multiview`` subcommand."""
     help_msg = {
         'search_filters': '''An arbitrary number of search filters''',
@@ -115,7 +142,7 @@ def multiview(subparser: argparse._SubParsersAction, func: callable) -> None:
 
     multiview_subparser.set_defaults(
         filter_mode='or',
-        func=func
+        func=multiview
     )
 
     multiview_subparser.add_argument(
@@ -146,7 +173,7 @@ def multiview(subparser: argparse._SubParsersAction, func: callable) -> None:
     )
 
 
-def process(subparser: argparse._SubParsersAction, func: callable) -> None:
+def _process(subparser: argparse._SubParsersAction) -> None:
     """Get args for ``process`` subcommand."""
     help_msg = {
         'path': '''A path to a UV-vis Data File (.KD format).''',
@@ -185,7 +212,7 @@ def process(subparser: argparse._SubParsersAction, func: callable) -> None:
         help='Process .KD UV-vis data files.'
     )
 
-    process_subparser.set_defaults(func=func)
+    process_subparser.set_defaults(func=process)
 
     process_subparser.add_argument(
         'path',
@@ -339,7 +366,7 @@ def process(subparser: argparse._SubParsersAction, func: callable) -> None:
     )
 
 
-def tree(subparser: argparse._SubParsersAction, func: callable) -> None:
+def _tree(subparser: argparse._SubParsersAction) -> None:
     """Get args for ``tree`` subcommand."""
     tree_subparser: argparse.ArgumentParser = subparser.add_parser(
         'tree',
@@ -347,10 +374,10 @@ def tree(subparser: argparse._SubParsersAction, func: callable) -> None:
         help='Show the root directory file tree.'
     )
 
-    tree_subparser.set_defaults(func=func)
+    tree_subparser.set_defaults(func=tree)
 
 
-def test(subparser: argparse._SubParsersAction, func: callable) -> None:
+def _test(subparser: argparse._SubParsersAction) -> None:
     """Get args for ``test`` subcommand."""
     test_subparser: argparse.ArgumentParser = subparser.add_parser(
         'test',
@@ -359,6 +386,6 @@ def test(subparser: argparse._SubParsersAction, func: callable) -> None:
     )
 
     test_subparser.set_defaults(
-        func=func,
+        func=test,
         test=True
     )
