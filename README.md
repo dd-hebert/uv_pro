@@ -9,6 +9,7 @@ Contents
 - [Command Line Interface](#command-line-interface)
 - [Command Line Arguments](#command-line-arguments)
 - [Examples](#examples)
+- [File Paths & Root Directory](#file-paths--root-directory)
 - [Multiview Mode](#multiview-mode)
 - [Uninstall](#uninstall)
 
@@ -24,14 +25,14 @@ With ``uv_pro`` installed, you can run the script directly from the command line
 uvp p path\to\your\data.KD
 ```
 
-**Tip:** You can use shorter paths by setting a **root directory** or by simply opening a terminal session inside the same folder as your data files.
+**Tip:** You can use shorter paths by setting a [**root directory**](#file-paths--root-directory) or by simply opening a terminal session inside the same folder as your data files.
 
 Command Line Arguments
 ----------------------
 - [Data Processing Args (process, proc, p)](#data-processing-args-process-proc-p)
 - [Batch Exporting Args (batch)](#batch-exporting-args-batch)
 - [User Config Args (config, cfg)](#user-config-args-config-cfg)
-- [Other Args](#other-args)
+- [Other Args](#other-args-and-subcommands)
 
 ### Data Processing Args (process, proc, p)
 Process UV-vis data with the ``process`` subcommand.
@@ -56,8 +57,8 @@ Reduce the dataset down to a number of unequally-spaced "slices". This slicing m
 
 Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
 
-#### ``-lsw``, ``-–low_signal_window`` : "narrow" or "wide", optional
-Set the width of the low signal outlier detection window. Set to "wide" if low signals are interfering with the baseline.
+#### ``-lsw``, ``-–low_signal_window`` : narrow, wide, or none, optional
+Set the width of the low signal outlier detection window. Set to ``wide`` if low signals are interfering with the baseline. The default is ``narrow``. If set to ``none``, low signal outlier detection is skipped. This is useful when processing spectra with very low absorbance across a majority of measured wavelengths.
 
 #### ``-ne``, ``--no_export`` : flag, optional
 Bypass the data export prompt at the end of the script.
@@ -71,29 +72,29 @@ Generate (and optionally export) a quick figure with a custom plot title and oth
 #### ``-sl``, ``--slice_spectra`` : integer, optional
 Reduce the dataset down to a number of equally-spaced "slices". Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
 
-#### ``-ssl``, ``--specific_slice`` : abritrary number of ints, optional
+#### ``-ssl``, ``--specific_slice`` : abritrary number of floats, optional
 Select spectra slices at specific times. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
 
 #### ``-tr``, ``--trim`` : 2 integers, optional
-Select spectra within a given time range. The first integer is the beginning of the time range and the second integer is the end. The spectra outside the given time range will be removed.
+Remove spectra outside a given time range. The first integer is the beginning of the time range and the second integer is the end.
 
 ```
-# Trim from 50 seconds to 250 seconds
+# Trim before 50 seconds and after 250 seconds
 uvp p C:\\Desktop\\MyData\\myfile.KD -tr 50 250
 ```
 
 #### ``-tt``, ``--time_traces`` : arbitrary number of ints, optional
-Get time traces for the specified wavelengths.
+Get time traces for the specified wavelengths. These time traces are independent from the time traces used for outlier detection.
 
 #### ``-tti``, ``--time_trace_interval`` : int, optional
-Set the time trace wavelength interval (in nm). An interval of 20 would create time traces like: (window min, window min + 20, ... , window max - 20, window max). Smaller intervals may result in increased loading times. Default is 10.
+Set the time trace wavelength interval (in nm). An interval of 20 would create time traces like: (window min, window min + 20, ... , window max - 20, window max). Smaller intervals may result in increased loading times. Default is 10. These time traces are used for outlier detection.
 
 #### ``-ttw``, ``--time_trace_window`` : int int, optional
-Set the time trace wavelength range (min, max) (in nm). The default is (300, 1060).
+Set the time trace wavelength range (min, max) (in nm). The default is (300, 1060). These time traces are used for outlier detection.
 
 #### ``-v`` : flag, optional
 Enable *view-only* mode. No data processing is performed and a plot of the data is shown.
-
+___
 ### Batch Exporting Args (batch)
 Batch export UV-vis data from .KD files in the current working directory. Currently, only batch exporting of time traces is supported.
 
@@ -101,9 +102,10 @@ Batch export UV-vis data from .KD files in the current working directory. Curren
 
 #### ``wavelengths`` : arbitrary number of ints, required
 A list of time trace wavelengths (in nm) to export.
+
 #### ``-f``, ``--search_filters`` : arbitrary number of strings, optional
 A sequence of search filter strings. For example, passing ``-f copper A`` will select .KD files which contain 'copper' OR 'A' in their filename. Passing no filters selects all .KD files in the current working directory.
-
+___
 ### User Config Args (config, cfg)
 View, edit, or reset user-configured settings with the ``config`` subcommand.
 
@@ -128,28 +130,42 @@ Reset configuration settings back to their default value. Will prompt the user f
 
 ### Other args and subcommands
 Other miscellaneous args and subcommands.
-
+___
 #### ``-h``, ``--help`` : flag, optional
-Use ``-h`` to get help with command line arguments.
+Use ``-h`` to get help with command line arguments. Get help for specific commands with ``uvp <command> -h``.
 
 #### ``browse``, ``br`` : subcommand
-Interactively pick a .KD file from the terminal. The file is opened in _view-only_ mode. The file must be located somewhere inside the root directory. Usage: ``uvp browse``.
+Interactively pick a .KD file from the terminal. The file is opened in *view-only* mode. The file must be located somewhere inside the root directory. Usage: ``uvp browse`` or ``uvp br``.
 
 #### ``tree`` : subcommand
 Print the root directory file tree to the console. Usage: ``uvp tree``.
 
 Examples
 --------
-Import the data from ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep the spectra from 50 seconds to 250 seconds, and show 10 slices:
+Process the data in ``myfile.KD``, set the outlier detection to 0.2, trim the data to keep the spectra from 50 seconds to 250 seconds, and show 10 slices:
 ```
 uvp p C:\\Desktop\\myfile.KD -tr 50 250 -ot 0.2 -sl 10
 ```
+Process the data in ``somefile.KD``, trim the data to keep the spectra from 20 seconds to 120 seconds, show 15 slices, get time traces for 390, 450, 670 nm, and fit an exponential function to the specified time traces:
+```
+uvp p C:\\Desktop\\data\\somefile.KD -tr 20 120 -sl 15 -tt 390 450 670 -fit
+```
 
-Root Directory
---------------
-Setting a root directory can simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``process`` is assumed to be relative to the root directory.
+File Paths & Root Directory
+---------------------------
+``uv_pro`` is flexible in handling file paths. When you give a path at the terminal, you can provide a full absolute path:
+```
+uvp p C:\full\path\to\your\data\file.KD
+```
+Alternatively, you can open a terminal session inside a directory containing a data file and use a relative path:
+```
+# Current working directory = C:\full\path\to\your\data
+uvp p file.KD
+```
 
-**Without root directory:**
+Setting a root directory can simplify file path entry. For instance, if you store all your UV-Vis data files in a common folder, you can designate it as the root directory. Subsequently, any path provided with ``process`` can be given relative to the root directory.
+
+***Without* root directory:**
 ```
 # Must type full file path
 uvp p "C:\mydata\UV-Vis Data\mydata.KD"
@@ -157,10 +173,10 @@ uvp p "C:\mydata\UV-Vis Data\mydata.KD"
 
 Without a root directory, you must type the full path ``"C:\mydata\UV-Vis Data\mydata.KD"`` to the data. 
 
-**With root directory:**
+***With* root directory:**
 ```
 # Set the root directory.
-uvp cfg -e
+uvp config -edit
 
 # Select the root directory setting and enter the desired path, for example:
 "C:\mydata\UV-Vis Data"
@@ -169,7 +185,7 @@ uvp cfg -e
 uvp p mydata.KD
 ```
 
-By setting a root directory, for example ``"C:\mydata\UV-Vis Data"``, you can omit that part of the path and just give a relative path ``mydata.KD``. The root directory is saved between runs in a config file.
+With a root directory set, for example ``"C:\mydata\UV-Vis Data"``, you can omit that part of the path and just give a relative path ``mydata.KD``. The root directory is saved between runs in a config file.
 
 Multiview Mode
 --------------
@@ -204,3 +220,8 @@ To uninstall ``uv_pro``, run the following command:
 ```
 pip uninstall uv_pro
 ```
+Uninstalling ``uv_pro`` does not delete its config file. To delete the config file, first run:
+```
+uvp config -delete
+```
+Before uninstalling the package with pip.
