@@ -6,7 +6,7 @@ Contains functions for exporting UV-vis data to .csv format.
 @author: David Hebert
 """
 import os
-from uv_pro.utils.printing import prompt_user_choice
+from uv_pro.utils.prompts import user_choice
 
 
 def export_csv(dataset, data, suffix: str | None = None) -> str:
@@ -103,7 +103,7 @@ def prompt_for_export(dataset) -> list[str]:
         init_rate_key = key
         options.append({'key': str(init_rate_key), 'name': 'Initial rates'})
 
-    if user_choices := prompt_user_choice(header=header, options=options):
+    if user_choices := user_choice(header=header, options=options):
         if '1' in user_choices:
             files_exported.append(export_csv(dataset, dataset.processed_spectra))
         if str(traces_key) in user_choices:

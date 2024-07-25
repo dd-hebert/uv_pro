@@ -162,6 +162,8 @@ Examples
 @author: David Hebert
 """
 import sys
+from random import choice
+from uv_pro import __version__, __author__
 from uv_pro.commands._parsers import get_args
 from uv_pro.utils.config import Config
 
@@ -193,7 +195,10 @@ class CLI:
             self.args.func(args=self.args)
 
         except AttributeError:
-            pass
+            print(self)
+
+    def __str__(self) -> str:
+        return self._splash()
 
     def get_config_values(self) -> None:
         self.args.root_dir = self._get_root_dir()
@@ -205,6 +210,49 @@ class CLI:
     def _get_root_dir(self) -> str:
         root_dir = self.cfg.get('Settings', 'root_directory')
         return root_dir if root_dir else None
+
+    def _splash(self) -> str:
+        COLORS = {
+            'text': {
+                'red': '\033[31m',
+                'blue': '\033[34m',
+                'green': '\033[32m',
+                'yellow': '\033[33m',
+                'cyan': '\033[36m',
+                'purple': '\033[35m',
+                'reset': '\033[0m'
+            },
+            'background': {
+                'red': '\033[41m',
+                'blue': '\033[44m',
+                'green': '\033[42m',
+                'yellow': '\033[43m',
+                'cyan': '\033[46m',
+                'purple': '\033[45m',
+                'reset': '\033[47m'
+            }
+        }
+
+        random_color = choice(list(COLORS['text'].keys()))
+        text_color = COLORS['text'][random_color] + COLORS['background'][random_color]
+        reset = COLORS['text']['reset']
+
+        splash = [
+            '                                                      ',
+            ' ███  ███ ███   ███         ███████   ██████  ██████  ',
+            ' ███  ███ ███   ███         ███  ███ ███     ███  ███ ',
+            ' ███  ███  ███ ███          ███  ███ ███     ███  ███ ',
+            '  ███████   █████   ███████ ███████  ███      ██████  ',
+            '                            ███                       ',
+            '                            ███                       ',
+        ]
+
+        splash = [line.translate(line.maketrans({'█': f'{text_color}█{reset}'})) for line in splash]
+        splash.append(COLORS['text']['reset'])
+        splash.append(f'Version: {__version__}\nAuthor: {__author__}')
+        splash.append('\nFor help with commands, type: uvp -h')
+
+        return '\n'.join(splash)
 
 
 def main() -> None:

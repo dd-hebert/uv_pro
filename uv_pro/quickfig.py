@@ -16,7 +16,7 @@ from matplotlib.artist import Artist
 from matplotlib.figure import Figure
 from uv_pro.dataset import Dataset
 import uv_pro.plots as uvplt
-from uv_pro.utils.printing import prompt_user_choice
+from uv_pro.utils.prompts import user_choice
 from uv_pro.io.export import export_figure
 
 
@@ -31,12 +31,21 @@ class QuickFig:
     exported_figure : str
         The filename of the exported quick figure.
     """
+    logo = '\n'.join(
+        [
+            '\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓',
+            '┇ uv_pro Quick Figure ┇',
+            '┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛',
+            'Enter ctrl-c to quit.\n'
+        ]
+    )
+
     def __init__(self, dataset: Dataset) -> None:
-        self._print_logo()
+        print(QuickFig.logo)
         self.dataset = dataset
         self.quick_figure()
 
-    def quick_figure(self, title: str = None, x_bounds: list[int] = None) -> None:
+    def quick_figure(self, title: str | None = None, x_bounds: tuple[int] | None = None) -> None:
         """
         Create a quick figure for exporting.
 
@@ -47,9 +56,9 @@ class QuickFig:
 
         Parameters
         ----------
-        title : str, optional
+        title : str or None, optional
             The figure title. Default is None.
-        x_bounds : list[int, int], optional
+        x_bounds : tuple[int, int] or None, optional
             The processed data plot x-axis bounds. Default is None \
             (bounds determined automatically).
         """
@@ -85,7 +94,7 @@ class QuickFig:
         title = input('Enter a plot title: ')
         return title
 
-    def _get_plot_xbounds(self) -> list[int, int]:
+    def _get_plot_xbounds(self) -> tuple[int, int]:
         pattern = re.compile('([0-9]+)[ ]+([0-9]+)')
         x_bounds = input('Enter x-axis bounds [min max]: ').strip()
         match = re.search(pattern, x_bounds)
@@ -95,7 +104,8 @@ class QuickFig:
             match = re.search(pattern, x_bounds)
 
         x_bounds = [bound for bound in map(int, match.groups())]
-        return x_bounds
+
+        return tuple(x_bounds)
 
     def _processed_data_plot(self) -> tuple[Figure, Axes]:
         """Create processed data plot."""
@@ -121,7 +131,7 @@ class QuickFig:
 
         return fig, (ax_processed_data, ax_traces)
 
-    def _touchup_processed_data_plot(self, ax: Axes, x_bounds: list[int, int]) -> None:
+    def _touchup_processed_data_plot(self, ax: Axes, x_bounds: tuple[int, int]) -> None:
         """Modify x-axis bounds and plot text."""
         ax.set_title('UV-vis Spectra', fontstyle='normal')
         ax.set_xbound(*x_bounds)
@@ -147,7 +157,7 @@ class QuickFig:
             int(self.dataset.processed_spectra.columns[-1])
         )
 
-    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: list[int]) -> None:
+    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple[int]) -> None:
         """
         Prompt the user for plot changes or export.
 
@@ -157,7 +167,7 @@ class QuickFig:
             The current quick figure.
         title : str
             The quick figure plot title.
-        x_bounds : list[int]
+        x_bounds : tuple[int]
             The x-axis bounds for the processed data plot.
         """
         header = 'Make changes?'
@@ -167,16 +177,10 @@ class QuickFig:
             {'key': '3', 'name': 'Change x-axis bounds'}
         ]
 
-        if user_choices := prompt_user_choice(header=header, options=options):
+        if user_choices := user_choice(header=header, options=options):
             if '1' in user_choices:
                 self.exported_figure = self.export(fig)
             if '2' in user_choices:
                 self.quick_figure(x_bounds=x_bounds)
             if '3' in user_choices:
                 self.quick_figure(title=title)
-
-    def _print_logo(self) -> None:
-        print('\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓')
-        print('┇ uv_pro Quick Figure ┇')
-        print('┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛')
-        print('Enter ctrl-c to quit.\n')

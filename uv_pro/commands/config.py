@@ -5,7 +5,7 @@ Functions for the ``config`` command.
 """
 import argparse
 from uv_pro.utils.config import Config
-from uv_pro.utils.printing import prompt_user_choice, prompt_for_value
+from uv_pro.utils.prompts import user_choice, get_value
 
 
 def config(args: argparse.Namespace, config: Config) -> None:
@@ -33,7 +33,7 @@ def _config_prompt(config: Config, header: str, func: callable) -> None:
         options.append({'key': str(key), 'name': f'{setting}: {value}'})
         settings_keys[str(key)] = setting
 
-    if user_choices := prompt_user_choice(header=header, options=options):
+    if user_choices := user_choice(header=header, options=options):
         for choice in user_choices:
             func(config, settings_keys[choice])
 
@@ -50,7 +50,7 @@ def _delete_config(config: Config) -> None:
 
 
 def _edit_config(config: Config, setting: str) -> None:
-    if value := prompt_for_value(title=setting, prompt='Enter a new value: '):
+    if value := get_value(title=setting, prompt='Enter a new value: '):
         if config.modify(section='Settings', key=setting, value=value):
             return
 

@@ -12,16 +12,12 @@ from uv_pro.commands.config import config
 from uv_pro.commands.browse import browse
 from uv_pro.commands.batch import batch
 from uv_pro.commands.tree import tree
-from uv_pro.commands.test import test
 
 
 def get_args() -> argparse.Namespace:
     """Collect all command-line args."""
     main_parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
-
-    subparsers = main_parser.add_subparsers(
-        help='Subcommands'
-    )
+    subparsers = main_parser.add_subparsers(help='Subcommands')
 
     _batch(subparsers)
     _browse(subparsers)
@@ -29,7 +25,6 @@ def get_args() -> argparse.Namespace:
     _multiview(subparsers)
     _process(subparsers)
     _tree(subparsers)
-    _test(subparsers)
 
     return main_parser.parse_args()
 
@@ -375,17 +370,3 @@ def _tree(subparser: argparse._SubParsersAction) -> None:
     )
 
     tree_subparser.set_defaults(func=tree)
-
-
-def _test(subparser: argparse._SubParsersAction) -> None:
-    """Get args for ``test`` subcommand."""
-    test_subparser: argparse.ArgumentParser = subparser.add_parser(
-        'test',
-        description='For testing purposes.',
-        help='For testing purposes.'
-    )
-
-    test_subparser.set_defaults(
-        func=test,
-        test=True
-    )

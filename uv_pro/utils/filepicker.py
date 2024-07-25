@@ -50,7 +50,6 @@ class FilePicker:
         file_list = [(folder, files) for folder, files in file_list if files]
 
         if file_list:
-            # print(file_list)
             return file_list
 
         print('No files found.')
@@ -148,6 +147,7 @@ class FilePicker:
         try:
             if mode == 'single':
                 prompt = '\nSelect a file: '
+                max_files = 1
 
             elif mode == 'multi':
                 prompt = f'\nSelect multiple {self.ext} files by entering the numbers in brackets separated by spaces: '
@@ -173,13 +173,13 @@ class FilePicker:
 
         if len(selection) < min_files:
             self._print_files_in_folder(folder_index, folder_name)
-            message = f'Too few files selected. Select at least {min_files} {self.ext} files.'
+            message = f'Too few files selected. Select at least {min_files} {self.ext} file(s).'
             print(f'\n{message}')
             return self._get_file_choice(folder_index, folder_name, mode, min_files, max_files)
 
         if len(selection) > max_files:
             self._print_files_in_folder(folder_index, folder_name)
-            message = f'Too many files selected. Select fewer than {max_files} {self.ext} files.'
+            message = f'Too many files selected. Select up to {max_files} {self.ext} file(s).'
             print(f'\n{message}')
             return self._get_file_choice(folder_index, folder_name, mode, min_files, max_files)
 
