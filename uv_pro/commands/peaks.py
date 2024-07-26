@@ -26,6 +26,8 @@ class PeakFinder:
         The peak info is a :class:`pandas.DataFrame` with the peak wavelengths \
         (index) and their respective absorbance values ``'abs'`` and epsilon values \
         ``'epsilon'`` (if a molar concentration was provided).
+    peak_labels : list[:class:`pandas.text.Annotation`]
+        The labels for peaks in the plot.
     peak_scatter : :class:`matplotlib.lines.Line2D`
         A scatter plot of the detected peaks in the current spectrum.
     smooth_spectrum : :class:`matplotlib.lines.Line2D`
@@ -123,7 +125,7 @@ class PeakFinder:
 
     def plot_peaks(self) -> None:
         """Generate an interactive peak detection plot with time slider."""
-        subplot: tuple[Figure, Axes] = plt.subplots()
+        subplot: tuple[Figure, Axes] = plt.subplots(figsize=self.args.plot_size)
         self.fig, self.ax = subplot
         self.fig.suptitle('Peak Finder', fontweight='bold')
         self.fig.subplots_adjust(bottom=0.2)
@@ -137,23 +139,26 @@ class PeakFinder:
         self.spectrum_scatter, = self.ax.plot(
             self.spectrum.index,
             self.spectrum,
-            'k.',
+            color='0.6',
+            marker='o',
+            linestyle='',
             zorder=0
         )
         self.smooth_spectrum, = self.ax.plot(
             self.spectrum.index,
             smooth_spectrum(self.spectrum),
-            'c',
+            color='k',
             zorder=1
         )
         self.peak_scatter, = self.ax.plot(
             self.peaks['info']['abs'].index,
             self.peaks['info']['abs'],
-            'r+',
+            color='#0400FF',
+            marker='|',
+            markersize=15,
+            linestyle='',
             zorder=2
         )
-
-        print(type(self.spectrum_scatter))
 
         self._label_peaks()
 
@@ -164,7 +169,9 @@ class PeakFinder:
             valmin=min(self.dataset.raw_spectra.columns),
             valmax=max(self.dataset.raw_spectra.columns),
             valinit=self.args.time,
-            valstep=self.dataset.spectra_times
+            valstep=self.dataset.spectra_times,
+            color='#0400FF',
+            initcolor='none'
         )
 
         time_slider.on_changed(self._update_plot)
@@ -181,8 +188,10 @@ class PeakFinder:
                 self.ax.annotate(
                     text=str(peak),
                     xy=(peak, self.peaks['info']['abs'].loc[peak] + 0.01),
-                    color='r',
-                    fontweight='bold'
+                    color='#0400FF',
+                    fontweight='bold',
+                    fontsize='large',
+                    zorder=3
                 )
             )
 
