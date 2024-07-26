@@ -9,7 +9,7 @@ can be found in the user's home directory.
 
 import os
 from configparser import ConfigParser
-from uv_pro.utils._config_validator import validate_root_dir, validate_plot_size
+from uv_pro.utils._validate import validate_root_dir, validate_plot_size
 
 
 class Config:
@@ -29,7 +29,6 @@ class Config:
     name : str
         The name of the configuration file.
     """
-
     name = 'uv_pro'
     directory = os.path.join(os.path.expanduser("~"), ".config", f"{name}")
     filename = "settings.ini"

@@ -4,10 +4,11 @@ API Reference
 .. toctree::
    :maxdepth: 4
 
+   dataset
    fitting
    outliers
+   peaks
    plots
-   dataset
    slicing
    quickfig
    export

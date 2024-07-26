@@ -6,11 +6,12 @@ Gets subparsers for CLI commands and parses command line args.
 """
 
 import argparse
-from uv_pro.commands.process import process
-from uv_pro.commands.multiview import multiview
-from uv_pro.commands.config import config
-from uv_pro.commands.browse import browse
 from uv_pro.commands.batch import batch
+from uv_pro.commands.browse import browse
+from uv_pro.commands.config import config
+from uv_pro.commands.multiview import multiview
+from uv_pro.commands.peaks import PeakFinder
+from uv_pro.commands.process import process
 from uv_pro.commands.tree import tree
 
 
@@ -23,6 +24,7 @@ def get_args() -> argparse.Namespace:
     _browse(subparsers)
     _config(subparsers)
     _multiview(subparsers)
+    _peaks(subparsers)
     _process(subparsers)
     _tree(subparsers)
 
@@ -166,6 +168,110 @@ def _multiview(subparser: argparse._SubParsersAction) -> None:
         const='or',
         help=help_msg['or_filter']
     )
+
+
+def _peaks(subparser: argparse._SubParsersAction) -> None:
+    """Get args for ``peaks`` subcommand."""
+    help_msg = {
+        'path': '''A path to a UV-vis Data File (.KD format).''',
+        'conc': '''The molar concentration of the species in the spectrum. Used for calculating
+                   molar absorptivity (ε). Default is None.''',
+        'dist': '''Set the minimum distance between peaks (in nm). Default is 10.''',
+        'max_iter': '''The max number of peak finding iterations. The default is 1000.''',
+        'method': '''The peak detection method: either localmax or deriv. Default is localmax.''',
+        'num_peaks': '''The number of peaks that should be found. Default is 0 (find all peaks).''',
+        'prom': '''Set the minimum peak prominance. Default is 0.''',
+        'p_win': '''Set the peak detection window (in nm). Search for peaks within the given
+                    wavelength range. Default is None (search whole spectrum).''',
+        's_win': '''Set the Savitzky-Golay smoothing window. Default is 15.
+                    See :func:`scipy.signal.savgol_filter`.'''
+    }
+
+    peaks_subparser: argparse.ArgumentParser = subparser.add_parser(
+        'peaks',
+        description='UV-vis spectrum peak detection.',
+        help='Find peaks in UV-vis spectra.'
+    )
+
+    peaks_subparser.add_argument(
+        'path',
+        action='store',
+        default=None,
+        help=help_msg['path']
+    )
+    peaks_subparser.add_argument(
+        '-conc',
+        '--concentration',
+        action='store',
+        type=float,
+        default=None,
+        metavar='',
+        help=help_msg['conc']
+    )
+    peaks_subparser.add_argument(
+        '-dist',
+        '--distance',
+        action='store',
+        type=int,
+        default=10,
+        metavar='',
+        help=help_msg['dist']
+    )
+    peaks_subparser.add_argument(
+        '--max_iter',
+        action='store',
+        type=int,
+        default=1000,
+        metavar='',
+        help=help_msg['max_iter']
+    )
+    peaks_subparser.add_argument(
+        '--method',
+        action='store',
+        type=str,
+        default='localmax',
+        metavar='',
+        help=help_msg['method']
+    )
+    peaks_subparser.add_argument(
+        '-num',
+        '--num_peaks',
+        action='store',
+        type=int,
+        default=0,
+        metavar='',
+        help=help_msg['num_peaks']
+    )
+    peaks_subparser.add_argument(
+        '-prom',
+        '--prominance',
+        action='store',
+        type=float,
+        default=0.0,
+        metavar='',
+        help=help_msg['prom']
+    )
+    peaks_subparser.add_argument(
+        '-pwin',
+        '--peak_window',
+        action='store',
+        type=int,
+        nargs=2,
+        default=[300, 1100],
+        metavar='',
+        help=help_msg['p_win']
+    )
+    peaks_subparser.add_argument(
+        '-swin',
+        '--smooth_window',
+        action='store',
+        type=int,
+        default=15,
+        metavar='',
+        help=help_msg['s_win']
+    )
+
+    peaks_subparser.set_defaults(func=PeakFinder, time=0)
 
 
 def _process(subparser: argparse._SubParsersAction) -> None:

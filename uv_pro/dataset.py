@@ -57,7 +57,7 @@ class Dataset:
     def __init__(self, path: str, trim: list[int, int] | None = None,
                  slicing: dict | None = None, fit_exp: bool = False,
                  fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
-                 baseline_lambda: float = 10, baseline_tolerance: float = 0.1,
+                 baseline_lambda: float = 10.0, baseline_tolerance: float = 0.1,
                  low_signal_window: str = 'narrow', time_trace_window: tuple[int, int] = (300, 1060),
                  time_trace_interval: int = 10, wavelengths: list | None = None,
                  view_only: bool = False) -> None:

@@ -36,9 +36,9 @@ path : str, required
     and an exponent. The data slicing will be determined by the equation
     y = coefficient*x^exponent + 1, where y is the step size between slices.
     The default is None, where all spectra are plotted or exported.
--lsw, --low_signal_window : ``"narrow"`` or ``"wide"``, optional
+-lsw, --low_signal_window : ``narrow`` or ``wide``, optional
     Set the width of the low signal outlier detection window (see
-    :func:`~uv_pro.outliers.find_outliers()`). Set to ``"wide"`` if low
+    :func:`~uv_pro.outliers.find_outliers()`). Set to ``wide`` if low
     signals are interfering with the baseline.
 -ne, --no_export : flag, optional
     Use this argument to bypass the export data prompt at the end of the script.
@@ -75,6 +75,37 @@ path : str, required
 -v : flag, optional
     Enable view-only mode. No data processing is performed and a plot of
     the data set is shown. Default is False.
+
+peaks
+-----
+Usage: ``uvp peaks <path> <options>``
+
+Find peaks in UV-vis spectra.
+
+path : str, required
+    A path to a UV-vis Data File (.KD format).
+-conc, --concentration : float, optional
+    The molar concentration of the species in the spectrum. Used for calculating
+    molar absorptivity (ε). Default is None.
+-dist, --distance : int, optional
+    Set the minimum distance between peaks (in nm). Default is 10. Only used with
+    ``localmax`` method.
+--max_iter : int, optional
+    The max number of peak finding iterations. The default is 1000. Only used with
+    ``localmax`` method.
+--method : str, optional
+    The peak detection method: either ``localmax`` or deriv. Default is ``localmax``.
+-num, --num_peaks : int, optional
+    The number of peaks that should be found. Default is 0 (find all peaks).
+    Only used with ``localmax`` method.
+-prom, --prominance : float, optional
+    Set the minimum peak prominance. Default is 0. Only used with ``localmax`` method.
+-pwin, --peak_window : int int, optional
+    Set the (min, max) peak detection window (in nm). Search for peaks within
+    the given wavelength range. Default is None (search whole spectrum).
+-swin, --smooth_window : int, optional
+    Set the Savitzky-Golay smoothing window. Default is 15.
+    See :func:`scipy.signal.savgol_filter`.
 
 browse (br)
 -----------

@@ -13,9 +13,9 @@ from sphinx.ext.autodoc import cut_lines
 sys.path.insert(0, os.path.abspath(".."))
 
 project = 'uv_pro'
-copyright = '2023, David Hebert'
+copyright = '2023-2024, David Hebert'
 author = 'David Hebert'
-release = '0.5.2'
+release = '0.5.3'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -58,7 +58,8 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pandas': ('https://pandas.pydata.org/docs/', None),
-    'pybaselines': ('https://pybaselines.readthedocs.io/en/latest/', None)
+    'pybaselines': ('https://pybaselines.readthedocs.io/en/latest/', None),
+    'scipy':  ('https://docs.scipy.org/doc/scipy/', None)
 }
 
 # Cache remote doc inventories for 14 days.
