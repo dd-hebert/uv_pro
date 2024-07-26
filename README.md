@@ -31,6 +31,7 @@ Command Line Arguments
 ----------------------
 - [Data Processing Args (process, proc, p)](#data-processing-args-process-proc-p)
 - [Batch Exporting Args (batch)](#batch-exporting-args-batch)
+- [Peak Detection Args (peaks)](#peak-detection-args-peaks)
 - [User Config Args (config, cfg)](#user-config-args-config-cfg)
 - [Other Args](#other-args-and-subcommands)
 
@@ -113,24 +114,32 @@ Find peaks in UV-vis spectra with the ``peaks`` subcommand.
 **Usage:**
 ``uvp peaks <path> <options>``
 
-#### ``path``: str, required
-    A path to a UV-vis Data File (.KD format).
+#### ``path`` : str, required
+A path to a UV-vis Data File (.KD format).
+
 #### ``-conc``, ``--concentration`` : float, optional
-    The molar concentration of the species in the spectrum. Used for calculating molar absorptivity (ε). Default is None.
+The molar concentration of the species in the spectrum. Used for calculating molar absorptivity (ε). Default is None.
+
 #### ``-dist``, ``--distance`` : int, optional
-    Set the minimum distance between peaks (in nm). Default is 10. Only used with ``localmax`` method.
+Set the minimum distance between peaks (in nm). Default is 10. Only used with ``localmax`` method.
+
 #### ``--max_iter`` : int, optional
-    The max number of peak finding iterations. The default is 1000. Only used with ``localmax`` method.
+The max number of peak finding iterations. The default is 1000. Only used with ``localmax`` method.
+
 #### ``--method`` : str, optional
-    The peak detection method: either ``localmax`` or deriv. Default is ``localmax``.
+The peak detection method: either ``localmax`` or deriv. Default is ``localmax``.
+
 #### ``-num``, ``--num_peaks`` : int, optional
-    The number of peaks that should be found. Default is 0 (find all peaks). Only used with ``localmax`` method.
+The number of peaks that should be found. Default is 0 (find all peaks). Only used with ``localmax`` method.
+
 #### ``-prom``, ``--prominance`` : float, optional
-    Set the minimum peak prominance. Default is 0. Only used with ``localmax`` method.
+Set the minimum peak prominance. Default is 0. Only used with ``localmax`` method.
+
 #### ``-pwin``, ``--peak_window`` : 2 integers, optional
-    Set the (min, max) peak detection window (in nm). Search for peaks within the given wavelength range. Default is None (search whole spectrum).
+Set the (min, max) peak detection window (in nm). Search for peaks within the given wavelength range. Default is None (search whole spectrum).
+
 #### ``-swin``, ``--smooth_window`` : int, optional
-    Set the Savitzky-Golay smoothing window. Default is 15. See [scipy.signal.savgol_filter()](https://docs.scipy.org/doc/scipy/reference/generated scipy.signal.savgol_filter.html) for more information.
+Set the Savitzky-Golay smoothing window. Default is 15. See [scipy.signal.savgol_filter()](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_filter.html#savgol-filter) for more information.
 
 ___
 ### User Config Args (config, cfg)
