@@ -105,6 +105,33 @@ A list of time trace wavelengths (in nm) to export.
 
 #### ``-f``, ``--search_filters`` : arbitrary number of strings, optional
 A sequence of search filter strings. For example, passing ``-f copper A`` will select .KD files which contain 'copper' OR 'A' in their filename. Passing no filters selects all .KD files in the current working directory.
+
+---
+### Peak Detection Args (peaks)
+Find peaks in UV-vis spectra with the ``peaks`` subcommand.
+
+**Usage:**
+``uvp peaks <path> <options>``
+
+#### ``path``: str, required
+    A path to a UV-vis Data File (.KD format).
+#### ``-conc``, ``--concentration`` : float, optional
+    The molar concentration of the species in the spectrum. Used for calculating molar absorptivity (ε). Default is None.
+#### ``-dist``, ``--distance`` : int, optional
+    Set the minimum distance between peaks (in nm). Default is 10. Only used with ``localmax`` method.
+#### ``--max_iter`` : int, optional
+    The max number of peak finding iterations. The default is 1000. Only used with ``localmax`` method.
+#### ``--method`` : str, optional
+    The peak detection method: either ``localmax`` or deriv. Default is ``localmax``.
+#### ``-num``, ``--num_peaks`` : int, optional
+    The number of peaks that should be found. Default is 0 (find all peaks). Only used with ``localmax`` method.
+#### ``-prom``, ``--prominance`` : float, optional
+    Set the minimum peak prominance. Default is 0. Only used with ``localmax`` method.
+#### ``-pwin``, ``--peak_window`` : 2 integers, optional
+    Set the (min, max) peak detection window (in nm). Search for peaks within the given wavelength range. Default is None (search whole spectrum).
+#### ``-swin``, ``--smooth_window`` : int, optional
+    Set the Savitzky-Golay smoothing window. Default is 15. See [scipy.signal.savgol_filter()](https://docs.scipy.org/doc/scipy/reference/generated scipy.signal.savgol_filter.html) for more information.
+
 ___
 ### User Config Args (config, cfg)
 View, edit, or reset user-configured settings with the ``config`` subcommand.
