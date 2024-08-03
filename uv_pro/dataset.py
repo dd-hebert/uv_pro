@@ -54,7 +54,7 @@ class Dataset:
         and it contains more than 2 spectra.
     """
 
-    def __init__(self, path: str, trim: list[int, int] | None = None,
+    def __init__(self, path: str, *, trim: list[int, int] | None = None,
                  slicing: dict | None = None, fit_exp: bool = False,
                  fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
                  baseline_lambda: float = 10.0, baseline_tolerance: float = 0.1,

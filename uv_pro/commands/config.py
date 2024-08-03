@@ -4,11 +4,59 @@ Functions for the ``config`` command.
 @author: David Hebert
 """
 import argparse
+from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.utils.config import Config
 from uv_pro.utils.prompts import user_choice, get_value
 
 
-def config(args: argparse.Namespace, config: Config) -> None:
+HELP = {
+    'delete': '''Delete the config file.''',
+    'edit': '''Edit config settings.''',
+    'list': '''Print the current config settings to the console.''',
+    'reset': '''Reset config settings back to their default value.''',
+}
+MUTUALLY_EXCLUSIVE_ARGS = [
+    mutually_exclusive_group(
+        argument(
+            '-delete',
+            action='store_true',
+            default=False,
+            help=HELP['delete']
+        ),
+        argument(
+            '-edit',
+            action='store_true',
+            default=False,
+            help=HELP['edit']
+        ),
+        argument(
+            '-list',
+            action='store_true',
+            default=False,
+            help=HELP['list']
+        ),
+        argument(
+            '-reset',
+            action='store_true',
+            default=False,
+            help=HELP['reset']
+        )
+    )
+]
+
+
+@command(mutually_exclusive_args=MUTUALLY_EXCLUSIVE_ARGS, aliases=['cfg'])
+def config(args: argparse.Namespace) -> None:
+    """
+    View and modify config settings.
+
+    Parser Info
+    -----------
+    *aliases : cfg
+    *desc : View and modify the config settings. Available config settings: \
+        root_directory, plot_size.
+    *help : View and modify the config settings.
+    """
     if args.edit or args.reset:
         if args.edit:
             header = 'Edit config settings'
@@ -17,13 +65,13 @@ def config(args: argparse.Namespace, config: Config) -> None:
             header = 'Reset config settings'
             func = _reset_config
 
-        _config_prompt(config, header, func)
+        _config_prompt(args.config, header, func)
 
     elif args.list:
-        _print_config(config)
+        _print_config(args.config)
 
     elif args.delete:
-        _delete_config(config)
+        _delete_config(args.config)
 
 
 def _config_prompt(config: Config, header: str, func: callable) -> None:
@@ -59,11 +107,7 @@ def _edit_config(config: Config, setting: str) -> None:
 
 
 def _reset_config(config: Config, setting: str) -> None:
-    config.modify(
-        'Settings',
-        setting,
-        config.defaults['Settings'][setting]
-    )
+    config.modify('Settings', setting, config.defaults['Settings'][setting])
 
 
 def _print_config(config: Config) -> None:

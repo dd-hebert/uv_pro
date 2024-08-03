@@ -195,7 +195,7 @@ Examples
 import sys
 from random import choice
 from uv_pro import __version__, __author__
-from uv_pro.commands._parsers import get_args
+from uv_pro.commands import get_args
 from uv_pro.utils.config import Config
 
 
@@ -215,14 +215,11 @@ class CLI:
     """
 
     def __init__(self):
-        self.cfg = Config()
         self.args = get_args()
+        self.args.config = Config()
         self.get_config_values()
 
         try:
-            self.args.func(args=self.args, config=self.cfg)
-
-        except TypeError:
             self.args.func(args=self.args)
 
         except AttributeError:
@@ -236,10 +233,10 @@ class CLI:
         self.args.plot_size = self._get_plot_size()
 
     def _get_plot_size(self) -> tuple[int, int]:
-        return tuple(map(int, self.cfg.get('Settings', 'plot_size').split()))
+        return tuple(map(int, self.args.config.get('Settings', 'plot_size').split()))
 
     def _get_root_dir(self) -> str:
-        root_dir = self.cfg.get('Settings', 'root_directory')
+        root_dir = self.args.config.get('Settings', 'root_directory')
         return root_dir if root_dir else None
 
     def _splash(self) -> str:

@@ -26,8 +26,37 @@ import argparse
 import glob
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
+from uv_pro.commands import command, argument
 
 
+HELP = {
+    'search_filters': '''An arbitrary number of search filters''',
+    'and_filter': '``and`` filter mode.',
+    'or_filter': '``or`` filter mode.'
+}
+ARGS = [
+    argument(
+        '-f',
+        '--search_filters',
+        action='store',
+        nargs='*',
+        default='*',
+        metavar='',
+        help=HELP['search_filters'],
+    ),
+    argument(
+        '-and',
+        '--and_filter',
+        dest='filter_mode',
+        action='store_const',
+        default='or',
+        const='and',
+        help=HELP['and_filter']
+    )
+]
+
+
+@command(args=ARGS, aliases=['mv'])
 def multiview(args: argparse.Namespace) -> None:
     """
     Open multilple .KD files in parallel (view-only mode).
@@ -38,6 +67,13 @@ def multiview(args: argparse.Namespace) -> None:
         A list of search filter strings.
     mode : str, optional
         The filter mode, can be 'and' or 'or'. The default is 'or'.
+
+    Parser Info
+    -----------
+    *aliases : mv
+    *desc : Search for multiple UV-vis data files in the current working directory \
+        and open them view-only mode.
+    *help : Open multiple UV-vis data files in view-only mode.
     """
     _run_uvp_parallel(filter_files(args.search_filters, mode=args.filter_mode))
 
@@ -49,7 +85,7 @@ def filter_files(search_filters: list[str], mode: str = 'or') -> set[str]:
     Parameters
     ----------
     search_filters : list[str]
-        A list of search filter strings.
+        A list of search filter strings. Default is '*'.
     mode : str, optional
         The filter mode, can be 'and' or 'or'. The default is 'or'.
 
@@ -68,7 +104,7 @@ def filter_files(search_filters: list[str], mode: str = 'or') -> set[str]:
         files = set([matches for pattern in search_patterns for matches in glob.glob(pattern)])
 
     if len(files) == 0:
-        print("Error: No files found with the specified filter(s).")
+        print("Error: No .KD files found with the specified filter(s).")
         return
 
     return files
