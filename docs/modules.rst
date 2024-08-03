@@ -8,6 +8,7 @@ API Reference
    fitting
    outliers
    peaks
+   peakfinder
    plots
    slicing
    quickfig

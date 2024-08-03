@@ -71,7 +71,8 @@ class PeakFinder:
         Find peaks in UV-vis spectra.
 
         Peak detection can be performed using local maxima or \
-        first derivative methods.
+        first derivative methods. See :func:`~uv_pro.peaks.find_peaks` and \
+        :func:`~uv_pro.peaks.find_peaks_dxdy`.
 
         Returns
         -------
