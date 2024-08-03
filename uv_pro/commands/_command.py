@@ -13,12 +13,31 @@ subparsers = main_parser.add_subparsers(help='Commands')
 
 
 def get_args() -> argparse.Namespace:
-    """Collect all command-line args."""
+    """Collect and parse all command-line args."""
     return main_parser.parse_args()
 
 
 def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
-            parent=subparsers, aliases: list[str] = []):
+            parent: argparse._SubParsersAction = subparsers, aliases: list[str] = []):
+    """
+    Add commands and args to the CLI via a decorator.
+
+    Parameters
+    ----------
+    args : list[dict], optional
+        The formatted arguments for the command, by default [].
+    mutually_exclusive_args : list[dict], optional
+        Groups of mutually exclusive arguments for the command, by default [].
+    parent : argparse._SubParsersAction, optional
+        The parent parser to add commands to, by default subparsers.
+    aliases : list[str], optional
+        Aliases for the command, by default [].
+
+    Returns
+    -------
+    function
+        The function to add as a command.
+    """
     def _decorator(func):
         subparser: argparse.ArgumentParser = parent.add_parser(
             name=func.__name__,
@@ -38,10 +57,34 @@ def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
 
 
 def argument(*name_or_flags: str, **kwargs) -> dict:
+    """
+    Helper function to format CLI arguments to pass to command decorator.
+
+    Returns
+    -------
+    dict
+        Keys: 'name_or_flags': The argument name and flags, a list[str]. \
+        'kwargs': The kwargs to pass to the argparse `add_argument()` function.
+    """
     return {'name_or_flags': [*name_or_flags], 'kwargs': kwargs}
 
 
 def mutually_exclusive_group(*args, required=False) -> dict:
+    """
+    Helper function for adding mutually exclusive arguments to the command decorator.
+
+    Parameters
+    ----------
+    required : bool, optional
+        Indicates that one of the args in the group must be given. \
+        By default False.
+
+    Returns
+    -------
+    dict
+        Keys: 'args': The formatted arguments in the group, a list[dict]. \
+        'required': bool.
+    """
     return {'args': [*args], 'required': required}
 
 
