@@ -26,7 +26,7 @@ class PeakFinder:
         The peak info is a :class:`pandas.DataFrame` with the peak wavelengths \
         (index) and their respective absorbance values ``'abs'`` and epsilon values \
         ``'epsilon'`` (if a molar concentration was provided).
-    peak_labels : list[:class:`pandas.text.Annotation`]
+    peak_labels : list[:class:`matplotlib.text.Annotation`]
         The labels for peaks in the plot.
     peak_scatter : :class:`matplotlib.lines.Line2D`
         A scatter plot of the detected peaks in the current spectrum.
@@ -45,6 +45,7 @@ class PeakFinder:
             'Close plot window to continue.\n'
         ]
     )
+
     def __init__(self, path: str, *, method: str = 'localmax', num_peaks: int = 0,
                  conc: float | None = None, p_win: tuple[int, int] | None = None,
                  s_win: int = 15, dist: int = 10, prom: float = 0.0,
@@ -139,7 +140,12 @@ class PeakFinder:
         self.peaks = self.find_peaks()
 
         self.spectrum_scatter.set_ydata(self.spectrum)
-        self.smooth_spectrum.set_ydata(smooth_spectrum(self.spectrum))
+        self.smooth_spectrum.set_ydata(
+            smooth_spectrum(
+                self.spectrum,
+                s_win=self.s_win
+            )
+        )
         self.peak_scatter.set_data(
             self.peaks['info']['abs'].index,
             self.peaks['info']['abs']
@@ -176,7 +182,7 @@ class PeakFinder:
         )
         self.smooth_spectrum, = self.ax.plot(
             self.spectrum.index,
-            smooth_spectrum(self.spectrum),
+            smooth_spectrum(self.spectrum, s_win=self.s_win),
             color='k',
             zorder=1
         )
@@ -207,7 +213,9 @@ class PeakFinder:
         time_slider.on_changed(self._update_plot)
 
         plt.show()
-        self._print_peaks()
+
+        if self.peaks['peaks']:
+            self._print_peaks()
 
     def _label_peaks(self) -> None:
         self._clear_peak_labels()

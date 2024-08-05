@@ -82,7 +82,7 @@ def find_peaks(spectrum: pd.DataFrame, num_peaks: int = 0, conc: float | None = 
         else:
             print(f'Max iterations ({max_iter}) reached!')
 
-    return _process_peaks(spectrum, peaks, conc) if peaks.size > 0 else None
+    return _process_peaks(spectrum, peaks, conc)
 
 
 def find_peaks_dxdy(spectrum: pd.DataFrame, conc: float | None = None,
@@ -119,7 +119,7 @@ def find_peaks_dxdy(spectrum: pd.DataFrame, conc: float | None = None,
     spectrum_deriv = np.gradient(smoothed_spectrum)
     peaks = _get_zero_crossings(spectrum_deriv) + 1
 
-    return _process_peaks(spectrum, peaks, conc) if peaks.size > 0 else None
+    return _process_peaks(spectrum, peaks, conc)
 
 
 def find_peaks_hidden(spectrum: pd.DataFrame, conc: float | None = None,
@@ -164,7 +164,7 @@ def find_peaks_hidden(spectrum: pd.DataFrame, conc: float | None = None,
         distance=10
     )
 
-    return _process_peaks(spectrum, peaks, conc) if peaks.size > 0 else None
+    return _process_peaks(spectrum, peaks, conc)
 
 
 def smooth_spectrum(spectrum: pd.DataFrame, s_win: int = 15) -> np.ndarray:
