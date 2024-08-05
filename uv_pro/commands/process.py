@@ -162,7 +162,7 @@ ARGS = [
         help=HELP['quick_fig']
     )
 ]
-MUTUALLY_EXCLUSIVE_ARGS = [
+MUTEX_ARGS = [
     mutually_exclusive_group(
         argument(
             '-sl',
@@ -197,7 +197,7 @@ MUTUALLY_EXCLUSIVE_ARGS = [
 ]
 
 
-@command(args=ARGS, mutually_exclusive_args=MUTUALLY_EXCLUSIVE_ARGS, aliases=['p', 'proc'])
+@command(args=ARGS, mutually_exclusive_args=MUTEX_ARGS, aliases=['p', 'proc'])
 def process(args: argparse.Namespace) -> None:
     """
     Process data.

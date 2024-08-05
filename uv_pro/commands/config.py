@@ -15,7 +15,7 @@ HELP = {
     'list': '''Print the current config settings to the console.''',
     'reset': '''Reset config settings back to their default value.''',
 }
-MUTUALLY_EXCLUSIVE_ARGS = [
+MUTEX_ARGS = [
     mutually_exclusive_group(
         argument(
             '-delete',
@@ -45,7 +45,7 @@ MUTUALLY_EXCLUSIVE_ARGS = [
 ]
 
 
-@command(mutually_exclusive_args=MUTUALLY_EXCLUSIVE_ARGS, aliases=['cfg'])
+@command(mutually_exclusive_args=MUTEX_ARGS, aliases=['cfg'])
 def config(args: argparse.Namespace) -> None:
     """
     View and modify config settings.

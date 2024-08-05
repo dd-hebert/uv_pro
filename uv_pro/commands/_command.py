@@ -18,9 +18,13 @@ def get_args() -> argparse.Namespace:
 
 
 def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
-            parent: argparse._SubParsersAction = subparsers, aliases: list[str] = []):
+            aliases: list[str] = [], parent: argparse._SubParsersAction = subparsers):
     """
-    Add commands and args to the CLI via a decorator.
+    Add a command and args to the CLI via a decorator.
+
+    The command's description and help messages are extracted from the function's docstring.
+    These messages are identified by the `*desc :` and `*help :` tags within the docstring.
+    See the usage example below.
 
     Parameters
     ----------
@@ -28,10 +32,23 @@ def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
         The formatted arguments for the command, by default [].
     mutually_exclusive_args : list[dict], optional
         Groups of mutually exclusive arguments for the command, by default [].
-    parent : argparse._SubParsersAction, optional
-        The parent parser to add commands to, by default subparsers.
     aliases : list[str], optional
         Aliases for the command, by default [].
+    parent : argparse._SubParsersAction, optional
+        The parent parser to add commands to, by default subparsers.
+
+    Usage Example
+    -------------
+    ```
+    @command(args=[argument('-a', action='store_true')])
+    def some_func(args):
+    '''
+    docstring for some_func()
+    *desc : some_func command description
+    *help : some_func command help
+    '''
+        print(args)
+    ```
 
     Returns
     -------
@@ -58,23 +75,29 @@ def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
 
 def argument(*name_or_flags: str, **kwargs) -> dict:
     """
-    Helper function to format CLI arguments to pass to command decorator.
+    Helper function to format CLI arguments to pass to the @command decorator.
+
+    Refer to :meth:`argparse.ArgumentParser.add_argument` for help with parameters \
+    and accepted keyword arguments.
 
     Returns
     -------
     dict
         Keys: 'name_or_flags': The argument name and flags, a list[str]. \
-        'kwargs': The kwargs to pass to the argparse `add_argument()` function.
+        'kwargs': The keyword arguments to pass to the argparse `add_argument()` method.
     """
     return {'name_or_flags': [*name_or_flags], 'kwargs': kwargs}
 
 
 def mutually_exclusive_group(*args, required=False) -> dict:
     """
-    Helper function for adding mutually exclusive arguments to the command decorator.
+    Helper function for adding mutually exclusive arguments to the @command decorator.
 
     Parameters
     ----------
+    args : list[dict], required
+        A list of formatted arguments to add to the group. To properly \
+        format the arguments, use :func:`~uv_pro.commands._command.argument`.
     required : bool, optional
         Indicates that one of the args in the group must be given. \
         By default False.
@@ -88,9 +111,9 @@ def mutually_exclusive_group(*args, required=False) -> dict:
     return {'args': [*args], 'required': required}
 
 
-def _add_args(args: list[dict], destination: argparse.ArgumentParser | argparse._MutuallyExclusiveGroup) -> None:
+def _add_args(args: list[dict], parser_or_group: argparse.ArgumentParser | argparse._MutuallyExclusiveGroup) -> None:
     for arg in args:
-        destination.add_argument(*arg['name_or_flags'], **arg['kwargs'])
+        parser_or_group.add_argument(*arg['name_or_flags'], **arg['kwargs'])
 
 
 def _add_mutually_exclusive_args(arg_groups: list[dict], parser: argparse.ArgumentParser) -> None:

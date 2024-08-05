@@ -139,11 +139,7 @@ View multiple .KD files from the command line.
     Passing no filters opens all .KD files in the current working directory.
 -a, --and_filter: flag, optional
     Enable AND filter mode. For example, passing ``-f copper A -a`` will open
-    .KD files which contain both 'copper' AND 'A' in their filename. Default False.
--o, --or_filter: flag, optional
-    Enable OR filter mode (the default filter mode). For example, passing
-    ``-f copper A -a`` will open .KD files which contain both 'copper' OR 'A'
-    in their filename. Default True.
+    .KD files which contain both 'copper' AND 'A' in their filename. Default is OR filter mode.
 
 config (cfg)
 ------------
