@@ -5,6 +5,7 @@ Functions for the ``peaks`` command.
 """
 import argparse
 from uv_pro.commands import command, argument
+from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
 
 
@@ -111,4 +112,17 @@ def peaks(args: argparse.Namespace) -> None:
     *desc : UV-vis spectrum peak detection.
     *help : Find peaks in UV-vis spectra.
     """
-    PeakFinder(args)
+    _handle_path(args)
+
+    PeakFinder(
+        path=args.path,
+        method=args.method,
+        num_peaks=args.num_peaks,
+        conc=args.concentration,
+        p_win=args.peak_window,
+        s_win=args.smooth_window,
+        dist=args.distance,
+        prom=args.prominance,
+        max_iter=args.max_iter,
+        plot_size=args.plot_size
+    )

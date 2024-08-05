@@ -11,7 +11,6 @@ from matplotlib.axes import Axes
 from matplotlib.widgets import Slider
 from uv_pro.dataset import Dataset
 from uv_pro.peaks import find_peaks, find_peaks_dxdy, smooth_spectrum
-from uv_pro.commands.process import _handle_path
 
 
 class PeakFinder:
@@ -46,25 +45,54 @@ class PeakFinder:
             'Close plot window to continue.\n'
         ]
     )
-
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, path: str, *, method: str = 'localmax', num_peaks: int = 0,
+                 conc: float | None = None, p_win: tuple[int, int] | None = None,
+                 s_win: int = 15, dist: int = 10, prom: float = 0.0,
+                 max_iter: int = 1000, plot_size: tuple[int, int] = (12, 6)) -> None:
         """
         Initialize a :class:`~uv_pro.commands.peaks.PeakFinder` and find peaks in UV-vis spectra.
 
         Parameters
         ----------
-        args : argparse.Namespace
-            The command line args for peak detection.
+        path : str
+            The path to a .KD file.
+        method : str, optional
+            The peak detection method. Either 'localmax' or 'deriv'. Default is 'localmax'.
+        num_peaks : int, optional
+            The number of peaks that should be found. Default is 0 (find all peaks).
+        conc : float or None, optional
+            The molar concentration of the species in the spectrum. Used for calculating \
+            molar absorptivity (ε). Default is None.
+        p_win : tuple[int, int] or None, optional
+            Set the peak detection window (in nm). Search for peaks within the given \
+            wavelength range. Default is None (search whole spectrum).
+        s_win : int, optional
+            Set the Savitzky-Golay smoothing window. Default is 15. \
+            See :func:`scipy.signal.savgol_filter`.
+        dist : int, optional
+            Set the minimum distance between peaks (in nm). Default is 10.
+        prom : float, optional
+            Set the minimum peak prominance. Default is 0.
+        max_iter : int, optional
+            The max number of peak finding iterations. The default is 1000.
+        plot_size : tuple[int, int], optionals
+            The size of the peak finder plot window in inches.
         """
         print(PeakFinder.logo)
-        _handle_path(args)
-        self.args = args
+        self.method = method
+        self.num_peaks = num_peaks
+        self.conc = conc
+        self.p_win = p_win
+        self.s_win = s_win
+        self.dist = dist
+        self.prom = prom
+        self.max_iter = max_iter
         self.peak_labels = []
-        self.dataset = Dataset(path=self.args.path, view_only=False)
-        self.args.time = self.dataset.spectra_times[0]
+        self.dataset = Dataset(path=path, view_only=False)
+        self.time = self.dataset.spectra_times[0]
         self.spectrum = self._get_spectrum()
         self.peaks = self.find_peaks()
-        self.plot_peaks()
+        self.plot_peaks(plot_size=plot_size)
 
     def find_peaks(self) -> dict:
         """
@@ -82,31 +110,31 @@ class PeakFinder:
             (index) and their respective absorbance values ``'abs'`` and epsilon values \
             ``'epsilon'`` (if a molar concentration was provided).
         """
-        if self.args.method == 'localmax':
+        if self.method == 'localmax':
             peaks = find_peaks(
                 spectrum=self.spectrum,
-                num_peaks=self.args.num_peaks,
-                conc=self.args.concentration,
-                p_win=self.args.peak_window,
-                s_win=self.args.smooth_window,
-                dist=self.args.distance,
-                prom=self.args.prominance,
-                max_iter=self.args.max_iter
+                num_peaks=self.num_peaks,
+                conc=self.conc,
+                p_win=self.p_win,
+                s_win=self.s_win,
+                dist=self.dist,
+                prom=self.prom,
+                max_iter=self.max_iter
             )
 
-        if self.args.method == 'deriv':
+        if self.method == 'deriv':
             peaks = find_peaks_dxdy(
                 spectrum=self.spectrum,
-                conc=self.args.concentration,
-                p_win=self.args.peak_window,
-                s_win=self.args.smooth_window
+                conc=self.conc,
+                p_win=self.p_win,
+                s_win=self.s_win
             )
 
         return peaks
 
     def _update_plot(self, val) -> None:
         """Update the plot when the time slider is changed."""
-        self.args.time = val
+        self.time = val
         self.spectrum = self._get_spectrum()
         self.peaks = self.find_peaks()
 
@@ -123,11 +151,11 @@ class PeakFinder:
         self.fig.canvas.draw_idle()
 
     def _get_spectrum(self) -> pd.DataFrame:
-        return self.dataset.raw_spectra.loc[:, [self.args.time]]
+        return self.dataset.raw_spectra.loc[:, [self.time]]
 
-    def plot_peaks(self) -> None:
+    def plot_peaks(self, plot_size: tuple[int, int] = (12, 6)) -> None:
         """Generate an interactive peak detection plot with time slider."""
-        subplot: tuple[Figure, Axes] = plt.subplots(figsize=self.args.plot_size)
+        subplot: tuple[Figure, Axes] = plt.subplots(figsize=plot_size)
         self.fig, self.ax = subplot
         self.fig.suptitle('Peak Finder', fontweight='bold')
         self.fig.subplots_adjust(bottom=0.2)
@@ -170,7 +198,7 @@ class PeakFinder:
             label='Time (s)',
             valmin=min(self.dataset.raw_spectra.columns),
             valmax=max(self.dataset.raw_spectra.columns),
-            valinit=self.args.time,
+            valinit=self.time,
             valstep=self.dataset.spectra_times,
             color='#0400FF',
             initcolor='none'
