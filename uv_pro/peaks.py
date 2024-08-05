@@ -12,7 +12,7 @@ from scipy.signal import find_peaks as scipy_find_peaks
 
 def find_peaks(spectrum: pd.DataFrame, num_peaks: int = 0, conc: float | None = None,
                p_win: tuple[int, int] | None = None, s_win: int = 15,
-               dist: int = 10, prom: float = 0.0, max_iter: int = 1000) -> dict | None:
+               dist: int = 10, prom: float = 0.0, max_iter: int = 1000) -> dict:
     """
     Find UV-vis peaks using local maxima.
 
@@ -47,7 +47,7 @@ def find_peaks(spectrum: pd.DataFrame, num_peaks: int = 0, conc: float | None = 
 
     Returns
     -------
-    dict or None
+    dict
         The found peaks ``{'peaks': list[int], 'info': pd.DataFrame}``. \
         The peak info is a :class:`pandas.DataFrame` with the peak wavelengths \
         (index) and their respective absorbance values ``'abs'`` and epsilon values \
@@ -86,7 +86,7 @@ def find_peaks(spectrum: pd.DataFrame, num_peaks: int = 0, conc: float | None = 
 
 
 def find_peaks_dxdy(spectrum: pd.DataFrame, conc: float | None = None,
-                    p_win: tuple[int, int] | None = None, s_win: int = 15) -> dict | None:
+                    p_win: tuple[int, int] | None = None, s_win: int = 15) -> dict:
     """
     Find peaks from zero-crossings in the derivative of the smoothed UV-vis spectrum.
 
@@ -109,7 +109,7 @@ def find_peaks_dxdy(spectrum: pd.DataFrame, conc: float | None = None,
 
     Returns
     -------
-    dict or None
+    dict
         The found peaks ``{'peaks': list[int], 'info': pd.DataFrame}``. \
         The peak info is a :class:`pandas.DataFrame` with the peak wavelengths \
         (index) and their respective absorbance values ``'abs'`` and epsilon values \
@@ -123,7 +123,7 @@ def find_peaks_dxdy(spectrum: pd.DataFrame, conc: float | None = None,
 
 
 def find_peaks_hidden(spectrum: pd.DataFrame, conc: float | None = None,
-                      p_win: tuple[int, int] | None = None, s_win: int = 15) -> dict | None:
+                      p_win: tuple[int, int] | None = None, s_win: int = 15) -> dict:
     """
     Find hidden peaks from the second-derivative of the smoothed UV-vis spectrum.
 
@@ -148,7 +148,7 @@ def find_peaks_hidden(spectrum: pd.DataFrame, conc: float | None = None,
 
     Returns
     -------
-    dict or None
+    dict
         The found peaks ``{'peaks': list[int], 'info': pd.DataFrame}``. \
         The peak info is a :class:`pandas.DataFrame` with the peak wavelengths \
         (index) and their respective absorbance values ``'abs'`` and epsilon values \
