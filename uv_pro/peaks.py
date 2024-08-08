@@ -178,7 +178,7 @@ def smooth_spectrum(spectrum: pd.DataFrame, s_win: int = 15) -> np.ndarray:
     spectrum : :class:`pandas.DataFrame`
         The spectrum to apply smoothing to.
     s_win : int, optional
-        The smoothing window. The default 15.
+        The smoothing window. The default is 15.
 
     Returns
     -------

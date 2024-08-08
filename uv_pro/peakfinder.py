@@ -51,7 +51,7 @@ class PeakFinder:
                  s_win: int = 15, dist: int = 10, prom: float = 0.0,
                  max_iter: int = 1000, plot_size: tuple[int, int] = (12, 6)) -> None:
         """
-        Initialize a :class:`~uv_pro.commands.peaks.PeakFinder` and find peaks in UV-vis spectra.
+        Initialize a :class:`~uv_pro.peakfinder.PeakFinder` and find peaks in UV-vis spectra.
 
         Parameters
         ----------
