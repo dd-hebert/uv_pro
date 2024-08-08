@@ -25,8 +25,8 @@ class KDFile:
     cycle_time_header : dict
         The hex string header and spacing that precedes the cycle time in
         the .KD file.
-    absorbance_table_length : int
-        The length (in bytes) of the absorbance data table based on the range
+    spectrum_bytes_length : int
+        The length (in bytes) of each spectrum based on the range
         of wavelengths captured by the detector.
     file_bytes : bytes
         The bytes read from the .KD file.
@@ -34,7 +34,7 @@ class KDFile:
         All of the raw spectra found in the .KD file.
     spectra_times : :class:`pandas.Series`
         The time values that each spectrum was captured.
-    cycle_time : int
+    cycle_time : int or None
         The cycle time value (in seconds) for the experiment.
     """
 
@@ -74,14 +74,14 @@ class KDFile:
         """
         self.path = path
         self.wavelength_range = list(range(spectrometer_range[0], spectrometer_range[1]))
-        self.absorbance_table_length = self._get_absorbance_table_length()
+        self.spectrum_bytes_length = self._get_spectrum_bytes_length()
         self.file_bytes = self._read_binary()
         self.spectra, self.spectra_times, self.cycle_time = self.parse_kd()
 
-    def _get_absorbance_table_length(self) -> int:
+    def _get_spectrum_bytes_length(self) -> int:
         """8 hex chars per wavelength."""
-        absorbance_table_length = (self.wavelength_range[-1] - self.wavelength_range[0]) * 8 + 8
-        return absorbance_table_length
+        spectrum_bytes_length = (self.wavelength_range[-1] - self.wavelength_range[0]) * 8 + 8
+        return spectrum_bytes_length
 
     def _read_binary(self) -> bytes:
         with open(self.path, 'rb') as kd_file:
@@ -112,18 +112,22 @@ class KDFile:
         return spectra, spectra_times, cycle_time
 
     def _handle_spectra(self, spectra_times: pd.Series) -> pd.DataFrame:
-        list_of_spectra = self._extract_data(KDFile.absorbance_data_header, self._parse_spectra)
-        if list_of_spectra is None:
-            raise Exception('Error parsing file. No spectra found.')
-        return self._spectra_dataframe(list_of_spectra, spectra_times)
+        def _spectra_dataframe(spectra: list, spectra_times: pd.Series) -> pd.DataFrame:
+            df = pd.concat(spectra, axis=1)
+            df.index = pd.Index(self.wavelength_range, name='Wavelength (nm)')
+            df.columns = spectra_times
+            return df
+
+        if list_of_spectra := self._extract_data(KDFile.absorbance_data_header, self._parse_spectra):
+            return _spectra_dataframe(list_of_spectra, spectra_times)
+        raise Exception('Error parsing file. No spectra found.')
 
     def _handle_spectratimes(self) -> pd.Series:
-        spectra_times = self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes)
-        if spectra_times is None:
-            raise Exception('Error parsing file. No spectra times found.')
-        return pd.Series(spectra_times, name='Time (s)')
+        if spectra_times := self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes):
+            return pd.Series(spectra_times, name='Time (s)')
+        raise Exception('Error parsing file. No spectra times found.')
 
-    def _handle_cycletime(self) -> int:
+    def _handle_cycletime(self) -> int | None:
         try:
             return int(self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0])
         except TypeError:
@@ -134,21 +138,21 @@ class KDFile:
         position = 0
         data_header = header['header']
         spacing = header['spacing']
+        chunk = self.spectrum_bytes_length
 
         while True:
-            header_location = self.file_bytes.find(data_header, position)
-            if header_location == -1:
+            header_idx = self.file_bytes.find(data_header, position)
+            if header_idx == -1:
                 break
 
-            data_start = header_location + spacing
-            data = parse_func(data_start)
-            data_list.append(data)
-            position = data_start + self.absorbance_table_length
+            data_idx = header_idx + spacing
+            data_list.append(parse_func(data_idx))
+            position = data_idx + chunk
 
         return data_list if data_list else None
 
     def _parse_spectra(self, data_start: int) -> pd.Series:
-        data_end = data_start + self.absorbance_table_length
+        data_end = data_start + self.spectrum_bytes_length
         absorbance_data = self.file_bytes[data_start:data_end]
         absorbance_values = [value for value, in struct.iter_unpack('<d', absorbance_data)]
         return pd.Series(absorbance_values, index=self.wavelength_range)
@@ -158,9 +162,3 @@ class KDFile:
 
     def _parse_cycletime(self, data_start: int) -> int:
         return int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
-
-    def _spectra_dataframe(self, spectra: list, spectra_times: pd.Series) -> pd.DataFrame:
-        df = pd.concat(spectra, axis=1)
-        df.index = pd.Index(self.wavelength_range, name='Wavelength (nm)')
-        df.columns = spectra_times
-        return df
