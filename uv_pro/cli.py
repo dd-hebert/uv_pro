@@ -36,10 +36,10 @@ path : str, required
     and an exponent. The data slicing will be determined by the equation
     y = coefficient*x^exponent + 1, where y is the step size between slices.
     The default is None, where all spectra are plotted or exported.
--lsw, --low_signal_window : ``narrow`` or ``wide``, optional
+-lsw, --low_signal_window : ``narrow``, ``wide``, or ``none`` optional
     Set the width of the low signal outlier detection window (see
     :func:`~uv_pro.outliers.find_outliers()`). Set to ``wide`` if low
-    signals are interfering with the baseline.
+    signals are interfering with the baseline. Default is ``none``.
 -ne, --no_export : flag, optional
     Use this argument to bypass the export data prompt at the end of the script.
 -ot, --outlier_threshold : float, optional

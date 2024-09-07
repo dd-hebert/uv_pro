@@ -78,6 +78,6 @@ def equal_slicing(spectra: DataFrame, num_slices: int) -> DataFrame:
 
 def specific_slicing(spectra: DataFrame, times: list[int]) -> DataFrame:
     """Get the slices closest to the given ``times`` from ``spectra``."""
-    closest_times = [min(spectra.columns, key=lambda t: abs(t - time)) for time in times]
-    slices = [spectra[closest_time] for closest_time in set(closest_times)]
+    closest_times = sorted(set([min(spectra.columns, key=lambda t: abs(t - time)) for time in times]))
+    slices = [spectra[closest_time] for closest_time in closest_times]
     return DataFrame(slices).transpose()

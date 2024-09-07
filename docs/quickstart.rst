@@ -143,21 +143,21 @@ more in-depth information.
 low signal window [-lsw]
 ````````````````````````
 The :func:`low_signal_window <uv_pro.process.Dataset.__init__>` sets the width of the low signal detection
-window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). Low signal outliers typically occur when the
-cuvette is removed from the instrument during data collection, resulting in an abrupt dip in the time traces.
-Removing these outliers is important because their presence can significantly impact the baseline and outlier detection.
+window (see: :meth:`~uv_pro.process.Dataset.find_outliers()`). Low signal outliers are spectra with have close to zero
+absorbance across all wavelengths. These typically occur if the cuvette is removed from the instrument during data
+collection, resulting in an abrupt dip in all time traces. Removing these outliers is important because their presence
+can significantly impact the baseline fitting and outlier detection. Low signal outlier detection is not performed by default.
 
 You can set the size of the window using the ``-lsw`` or ``--low_signal_window`` argument::
 
     # Set the low signal outlier window size.
     uvp p mydata.KD -lsw wide
-    uvp p mydata.KD -lsw narrow  # default
-    uvp p mydata.KD -lsw none  # skip low signal outlier detection
+    uvp p mydata.KD -lsw narrow
+    uvp p mydata.KD -lsw none  # skip low signal outlier detection (default)
 
-The default size is ``"narrow"``, meaning only the spectra with low total absorbance are considered
-low signal outliers. If the size is set to ``"wide"``, the points neighboring a low signal
-outlier are also removed :attr:`~uv_pro.process.Dataset.outliers`. The image below illustrates
-the effect of changing the size of the low signal outlier window:
+A ``"narrow"`` window size flags the spectra with low absorbance across all wavelengths as low signal outliers
+to be removed during data processing. With the ``"wide"`` window size, one spectrum before and after a detected low signal
+outlier are also removed. The image below illustrates the effect of changing the size of the low signal outlier window:
 
 .. image:: C2_lsw_comparison.png
 
@@ -172,15 +172,13 @@ the data more closely. However, it's worth noting that several valid data points
 the situation, further adjustments to other :attr:`~uv_pro.process.Dataset.baseline` parameters are needed to
 achieve a better fit.
 
-In general, the default ``"narrow"`` window size works well when the dips in the absorbance are sharp. If the
+In general, a ``"narrow"`` window size works well when the dips in the absorbance are sharp. If the
 dips are more broad, a ``"wide"`` window may be necessary. Keep in mind that using a wider window has a side effect:
 more spectra will be categorized as  :attr:`~uv_pro.process.Dataset.outliers` and removed from
-the final plot. However, this is primarily a concern when working with smaller datasets that contain fewer spectra.
+the final plot. However, this is usually only a concern when working with smaller datasets with few spectra.
 
 .. Note::
-    Low signal outlier detection can be skipped with the ``"none"`` option. This may be useful when processing spectra
-    with very low absorbance across a majority of measured wavelengths.
-
+    By default, low signal outlier detection is not performed.
 
 Exponential Fitting
 -------------------

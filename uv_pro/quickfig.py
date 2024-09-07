@@ -77,7 +77,7 @@ class QuickFig:
         else:
             fig, (ax_processed_data, ax_traces) = self._1x2_plot()
 
-        fig.suptitle(title, fontweight='bold')
+        fig.suptitle(title, fontweight='bold', wrap=True)
         self._touchup_processed_data_plot(ax_processed_data, x_bounds)
 
         print('Close plot window to continue...', end='\n')

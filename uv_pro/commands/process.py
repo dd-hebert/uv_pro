@@ -27,7 +27,7 @@ HELP = {
     'baseline_lambda': 'Set the smoothness of the baseline. Default: 10.',
     'baseline_tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
     'low_signal_window': '''"narrow", "wide", or "none". Set the width of the low signal outlier detection window.
-                             Default: "narrow". If "none", low signal outlier detection is skipped.''',
+                             Default: "none". If "none", low signal outlier detection is skipped.''',
     'fit_exp': 'Perform exponential fitting of specified time traces. Default: False.',
     'init_rate': '''Perform linear regression of specified time traces for initial rates. Default False.
                     If performing initial rates fitting, you can supply an optional float value for
@@ -96,7 +96,7 @@ ARGS = [
         '-lsw',
         '--low_signal_window',
         action='store',
-        default='narrow',
+        default='none',
         choices=['narrow', 'wide', 'none'],
         help=HELP['low_signal_window']
     ),

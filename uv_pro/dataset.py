@@ -58,7 +58,7 @@ class Dataset:
                  slicing: dict | None = None, fit_exp: bool = False,
                  fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
                  baseline_lambda: float = 10.0, baseline_tolerance: float = 0.1,
-                 low_signal_window: str = 'narrow', time_trace_window: tuple[int, int] = (300, 1060),
+                 low_signal_window: str = 'none', time_trace_window: tuple[int, int] = (300, 1060),
                  time_trace_interval: int = 10, wavelengths: list | None = None,
                  view_only: bool = False) -> None:
         """
@@ -101,10 +101,10 @@ class Dataset:
             Set the exit criteria for the baseline algorithm. Try values between \
             0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
             for more information.
-        low_signal_window : str, "narrow" or "wide", optional
+        low_signal_window : str, "narrow", "wide", or "none", optional
             Set the width of the low signal detection window (see \
             :func:`~uv_pro.outliers.find_outliers()`). Set to wide if low signal
-            outliers are affecting the baseline.
+            outliers are affecting the baseline. The default is "none".
         time_trace_window : tuple[int, int] or None, optional
             The range (min, max) of wavelengths (in nm) to get time traces for.
             Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.

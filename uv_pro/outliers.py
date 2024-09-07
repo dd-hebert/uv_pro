@@ -9,7 +9,8 @@ import pandas as pd
 from pybaselines.whittaker import asls
 
 
-def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: float, tol: float) -> list:
+def find_outliers(time_traces: pd.DataFrame, *, threshold: float = 0.1,
+                  lsw: str = 'none', lam: float = 10.0, tol: float = 0.1) -> list:
     """
     Find outlier spectra.
 
@@ -24,17 +25,17 @@ def find_outliers(time_traces: pd.DataFrame, threshold: float, lsw: str, lam: fl
     threshold : float
         The outlier threshold, values closer to 0 produce more outliers
         while values closer to 1 produce fewer outliers. A value >>1 will
-        produce no outliers.
+        produce no outliers. The default is 0.1.
     lsw : str
         The width of the low signal outlier window. Either 'wide', 'narrow', or 'none'.
-        If 'none', low signal outlier detection will be skipped.
+        If 'none' (default), low signal outlier detection will be skipped.
     lam : float
         The smoothness of the baseline. Larger numbers result in a smoother
-        baseline. Try values between 0.001 and 10000.
+        baseline. Try values between 0.001 and 10000. The default is 10.0.
     tol : float
         Set the exit criteria for the baseline algorithm. Try values between
         0.001 and 10000. See :func:`pybaselines.whittaker.asls()` for more
-        information.
+        information. The default is 0.1.
 
     Returns
     -------
@@ -76,7 +77,7 @@ def _find_low_signal_outliers(data: pd.DataFrame, window: str) -> set[float]:
 
     Returns
     -------
-    outliers : set[float, ...]
+    outliers : set[float]
         A set of outlier x-axis values.
     """
     outlier_cutoff = len(data.columns) * 0.1
