@@ -4,6 +4,7 @@ Contains functions for slicing UV-vis spectra.
 @author: David Hebert
 """
 from pandas import DataFrame
+import numpy as np
 
 
 def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
@@ -54,7 +55,7 @@ def gradient_slicing(spectra: DataFrame, coeff: float, expo: float) -> DataFrame
     """Get unequally-spaced slices from ``spectra``."""
     _check_gradient_slice_coeff(coeff)
     slices = [0]
-    for i in range(1, len(spectra.columns) + 1):
+    for i in range(1, len(spectra.columns)):
         next_slice = slices[-1] + round(coeff * i**expo + 1)
 
         if next_slice >= len(spectra.columns):
@@ -72,12 +73,10 @@ def _check_gradient_slice_coeff(coeff) -> None:
 
 def equal_slicing(spectra: DataFrame, num_slices: int) -> DataFrame:
     """Get equally-spaced slices from ``spectra``."""
-    step = max(1, round(len(spectra.columns) / num_slices))
-    return spectra.iloc[:, list(range(0, len(spectra.columns), step))]
+    return spectra.iloc[:, np.linspace(0, len(spectra.columns) - 1, num_slices).astype(int)]
 
 
 def specific_slicing(spectra: DataFrame, times: list[int]) -> DataFrame:
     """Get the slices closest to the given ``times`` from ``spectra``."""
     closest_times = sorted(set([min(spectra.columns, key=lambda t: abs(t - time)) for time in times]))
-    slices = [spectra[closest_time] for closest_time in closest_times]
-    return DataFrame(slices).transpose()
+    return spectra[closest_times]
