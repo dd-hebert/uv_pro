@@ -239,6 +239,11 @@ def process(args: argparse.Namespace) -> None:
 
 
 def _handle_path(args: argparse.Namespace) -> None:
+    ext = os.path.splitext(args.path)[1]
+
+    if not ext:
+        args.path = args.path + '.KD'
+
     current_dir = os.getcwd()
     path_exists = os.path.exists(os.path.join(current_dir, args.path))
 
