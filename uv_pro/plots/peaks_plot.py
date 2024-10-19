@@ -9,7 +9,17 @@ from uv_pro.peaks import smooth_spectrum
 
 
 class PeaksPlot:
+    logo = '\n'.join(
+        [
+            '\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓',
+            '┇ uv_pro Peak Finder ┇',
+            '┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛',
+            'Close plot window to continue.\n'
+        ]
+    )
+
     def __init__(self, pf: PeakFinder, **fig_kw) -> None:
+        print(PeaksPlot.logo)
         self.pf = pf
         self.fig, self.ax = self._create_fig(**fig_kw)
         self.plot_peaks()
