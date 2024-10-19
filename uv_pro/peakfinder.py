@@ -4,12 +4,8 @@ An interactive UV-vis peak finder based on Matplotlib.
 @author: David Hebert
 """
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.axes import Axes
-from matplotlib.widgets import Slider
 from uv_pro.dataset import Dataset
-from uv_pro.peaks import find_peaks, find_peaks_dxdy, smooth_spectrum
+from uv_pro.peaks import find_peaks, find_peaks_dxdy
 
 
 class PeakFinder:
@@ -36,14 +32,6 @@ class PeakFinder:
     spectrum_scatter : :class:`matplotlib.lines.Line2D`
         A scatter plot of the current spectrum.
     """
-    logo = '\n'.join(
-        [
-            '\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓',
-            '┇ uv_pro Peak Finder ┇',
-            '┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛',
-            'Close plot window to continue.\n'
-        ]
-    )
 
     def __init__(self, path: str, *, method: str = 'localmax', num_peaks: int = 0,
                  conc: float | None = None, p_win: tuple[int, int] | None = None,
@@ -76,7 +64,6 @@ class PeakFinder:
         max_iter : int, optional
             The max number of peak finding iterations. The default is 1000.
         """
-        print(PeakFinder.logo)
         self.method = method
         self.num_peaks = num_peaks
         self.conc = conc
