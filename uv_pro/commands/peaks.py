@@ -7,6 +7,7 @@ import argparse
 from uv_pro.commands import command, argument
 from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
+from uv_pro.plots import PeaksPlot
 
 
 HELP = {
@@ -114,7 +115,7 @@ def peaks(args: argparse.Namespace) -> None:
     """
     _handle_path(args)
 
-    PeakFinder(
+    pf = PeakFinder(
         path=args.path,
         method=args.method,
         num_peaks=args.num_peaks,
@@ -123,6 +124,35 @@ def peaks(args: argparse.Namespace) -> None:
         s_win=args.smooth_window,
         dist=args.distance,
         prom=args.prominance,
-        max_iter=args.max_iter,
-        plot_size=args.plot_size
+        max_iter=args.max_iter
     )
+
+    PeaksPlot(pf, figsize=args.plot_size)
+
+    if pf.peaks['peaks']:
+        _print_peaks(pf.peaks)
+
+
+def _print_peaks(peaks: dict) -> str:
+    out = []
+
+    has_epsilon = 'epsilon' in peaks['info'].columns
+    table_width = 34 if has_epsilon else 20
+    headings = ['λ', 'abs'] + (['epsilon'] if has_epsilon else [])
+
+    table_headings = f'│ \033[1m{headings[0]:^4}   '
+    table_headings += ('   '.join([f'{heading:^11}' for heading in headings[1:]]))
+    table_headings += ('\033[22m │')
+
+    out.append('┌' + '─' * table_width + '┐')
+    out.append(table_headings)
+    out.append('├' + '─' * table_width + '┤')
+
+    for wavelength in peaks['info'].index:
+        row = f'│ {wavelength:^4}   {peaks['info']['abs'].loc[wavelength]:^11.3e}'
+        row += f'   {peaks['info']['epsilon'].loc[wavelength]:^11.3e} │' if has_epsilon else ' │'
+        out.append(row)
+
+    out.append('└' + '─' * table_width + '┘')
+
+    print('\n'.join(out))

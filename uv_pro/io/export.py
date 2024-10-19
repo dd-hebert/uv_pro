@@ -88,6 +88,10 @@ def prompt_for_export(dataset) -> list[str]:
     options = [{'key': str(key), 'name': 'Processed spectra'}]
     files_exported = []
 
+    traces_key = None
+    fit_key = None
+    init_rate_key = None
+
     if dataset.chosen_traces is not None:
         key += 1
         traces_key = key
@@ -106,31 +110,24 @@ def prompt_for_export(dataset) -> list[str]:
     if user_choices := user_choice(header=header, options=options):
         if '1' in user_choices:
             files_exported.append(export_csv(dataset, dataset.processed_spectra))
+
         if str(traces_key) in user_choices:
             files_exported.append(export_csv(dataset, dataset.chosen_traces, suffix='Traces'))
 
-        try:
-            if str(fit_key) in user_choices:
-                files_exported.extend(
-                    [
-                        export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
-                        export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
-                    ]
-                )
+        if str(fit_key) in user_choices:
+            files_exported.extend(
+                [
+                    export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
+                    export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
+                ]
+            )
 
-        except UnboundLocalError:
-            pass
-
-        try:
-            if str(init_rate_key) in user_choices:
-                files_exported.extend(
-                    [
-                        export_csv(dataset, dataset.init_rate['lines'], suffix='Init rate lines'),
-                        export_csv(dataset, dataset.init_rate['params'].transpose(), suffix='Init rate params'),
-                    ]
-                )
-
-        except UnboundLocalError:
-            pass
+        if str(init_rate_key) in user_choices:
+            files_exported.extend(
+                [
+                    export_csv(dataset, dataset.init_rate['lines'], suffix='Init rate lines'),
+                    export_csv(dataset, dataset.init_rate['params'].transpose(), suffix='Init rate params'),
+                ]
+            )
 
     return files_exported

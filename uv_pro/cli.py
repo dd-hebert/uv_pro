@@ -225,15 +225,33 @@ class CLI:
         return self._splash()
 
     def get_config_values(self) -> None:
-        self.args.root_dir = self._get_root_dir()
-        self.args.plot_size = self._get_plot_size()
+        config_map = {
+            "root_dir": {
+                "section": "Settings",
+                "key": "root_directory",
+                "type": str,
+                "default": None
+            },
+            "plot_size": {
+                "section": "Settings",
+                "key": "plot_size",
+                "type": lambda x: tuple(map(int, x.split())),
+                "default": (12, 6)
+            },
+        }
 
-    def _get_plot_size(self) -> tuple[int, int]:
-        return tuple(map(int, self.args.config.get('Settings', 'plot_size').split()))
+        for arg_name, config_details in config_map.items():
+            setattr(self.args, arg_name, self._get_config_value(**config_details))
 
-    def _get_root_dir(self) -> str:
-        root_dir = self.args.config.get('Settings', 'root_directory')
-        return root_dir if root_dir else None
+    def _get_config_value(self, section: str, key: str, type: callable, default=None):
+        try:
+            if value := self.args.config.get(section, key):
+                return type(value)
+
+        except Exception as e:
+            print(f"Warning: Could not retrieve config value for [{section}] {key}: {e}")
+
+        return default
 
     def _splash(self) -> str:
         COLORS = {
