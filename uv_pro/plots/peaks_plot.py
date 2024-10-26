@@ -66,30 +66,30 @@ def _create_fig(pf: PeakFinder, **fig_kw):
 def _update_plot(pf: PeakFinder, fig: Figure, ax: Axes, spectrum_scatter: Line2D,
                  smoothed_plot: Line2D, peak_scatter: Line2D, val: float) -> None:
     """Update the plot when the time slider is changed."""
-    def _update_peakfinder():
+    def update_peakfinder():
         setattr(pf, 'time', val)
         setattr(pf, 'spectrum', pf._get_spectrum())
         setattr(pf, 'peaks', pf.find_peaks())
 
-    def _update_spectrum_scatter():
+    def update_spectrum_scatter():
         spectrum_scatter.set_ydata(pf.spectrum)
 
-    def _update_smoothed_plot():
+    def update_smoothed_plot():
         smoothed_plot.set_ydata(smooth_spectrum(pf.spectrum, s_win=pf.s_win))
 
-    def _update_peak_scatter(peaks: pd.DataFrame):
+    def update_peak_scatter(peaks: pd.DataFrame):
         peak_scatter.set_data(peaks.index, peaks)
 
-    def _adjust_ybounds(peaks: pd.DataFrame) -> None:
+    def adjust_ybounds(peaks: pd.DataFrame) -> None:
         ymax = peaks.max() * 1.1
         if ymax > ax.get_ylim()[1]:
             ax.set_ylim(top=ymax)
 
-    _update_peakfinder()
-    _update_spectrum_scatter()
-    _update_smoothed_plot()
-    _update_peak_scatter(pf.peaks['info']['abs'])
-    _adjust_ybounds(pf.peaks['info']['abs'])
+    update_peakfinder()
+    update_spectrum_scatter()
+    update_smoothed_plot()
+    update_peak_scatter(pf.peaks['info']['abs'])
+    adjust_ybounds(pf.peaks['info']['abs'])
     _label_peaks(ax, pf)
 
     fig.canvas.draw_idle()
