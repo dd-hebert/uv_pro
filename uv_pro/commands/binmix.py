@@ -12,15 +12,15 @@ from uv_pro.plots import plot_binarymixture
 
 
 HELP = {
-    'path': '''A path to a UV-vis data file (.csv format).''',
-    'component_a': '''A path to a UV-vis spectra (.csv format) of pure component "A".''',
-    'component_b': '''A path to a UV-vis spectra (.csv format) of pure component "B".''',
+    'path': '''Path to a UV-vis data file (.csv format) of binary mixture spectra.''',
+    'component_a': '''Path to a UV-vis spectrum (.csv format) of pure component "A".''',
+    'component_b': '''Path to a UV-vis spectrum (.csv format) of pure component "B".''',
     'columns': '''The columns of the binary mixture .csv file to perform fitting on.
                   Default is None (fit all columns).''',
-    'window': '''Set the range of wavelengths (in nm) of the given spectra to use
+    'window': '''Set the range of wavelengths (in nm) to use from the given spectra
                  for fitting. Default is (300, 1100).''',
     'interactive': '''Enable interactive mode. Show an interactive matplotlib figure
-                    of the binary mixture fitting.'''
+                      of the binary mixture fitting.'''
 }
 ARGS = [
     argument(
