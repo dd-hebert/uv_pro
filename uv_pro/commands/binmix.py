@@ -8,7 +8,7 @@ import argparse
 import pandas as pd
 from uv_pro.commands import command, argument
 from uv_pro.binarymix import BinaryMixture
-from uv_pro.plots import BinMixPlot
+from uv_pro.plots import plot_binarymixture
 
 
 HELP = {
@@ -96,7 +96,7 @@ def binmix(args: argparse.Namespace) -> None:
             )
 
             if args.interactive:
-                BinMixPlot(bm, figsize=args.plot_size)
+                plot_binarymixture(bm, figsize=args.plot_size)
 
             out.append(
                 {

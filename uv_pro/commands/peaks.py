@@ -7,7 +7,7 @@ import argparse
 from uv_pro.commands import command, argument
 from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
-from uv_pro.plots import PeaksPlot
+from uv_pro.plots import plot_peakfinder
 
 
 HELP = {
@@ -127,7 +127,7 @@ def peaks(args: argparse.Namespace) -> None:
         max_iter=args.max_iter
     )
 
-    PeaksPlot(pf, figsize=args.plot_size)
+    plot_peakfinder(pf, figsize=args.plot_size)
 
     if pf.peaks['peaks']:
         _print_peaks(pf.peaks)
