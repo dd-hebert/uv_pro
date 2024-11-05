@@ -11,7 +11,7 @@ from uv_pro.plots import plot_peakfinder
 
 
 HELP = {
-    'path': '''A path to a UV-vis Data File (.KD format).''',
+    'path': '''A path to a UV-vis data file (.KD format).''',
     'conc': '''The molar concentration of the species in the spectrum. Used for calculating
                 molar absorptivity (ε). Default is None.''',
     'dist': '''Set the minimum distance between peaks (in nm). Default is 10.''',

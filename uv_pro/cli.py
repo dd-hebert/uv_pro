@@ -83,7 +83,7 @@ Usage: ``uvp peaks <path> <options>``
 Find peaks in UV-vis spectra.
 
 path : str, required
-    A path to a UV-vis Data File (.KD format).
+    A path to a UV-vis data file (.KD format).
 -conc, --concentration : float, optional
     The molar concentration of the species in the spectrum. Used for calculating
     molar absorptivity (ε). Default is None.
@@ -106,6 +106,28 @@ path : str, required
 -swin, --smooth_window : int, optional
     Set the Savitzky-Golay smoothing window. Default is 15.
     See :func:`scipy.signal.savgol_filter`.
+
+binmix
+------
+Usage: ``uvp binmix <path> <component_a> <component_b> <options>``
+
+Estimate the relative concentrations of two species in a binary mixture.
+
+path : str, required
+    Path to a UV-vis data file (.csv format) of one or more binary mixture spectra.
+component_a : str, required
+    Path to a UV-vis spectrum (.csv format) of pure component "A".
+component_b : str, required
+    Path to a UV-vis spectrum (.csv format) of pure component "B".
+-cols, --columns : arbitrary number of ints, optional
+    The columns of the binary mixture .csv file to perform fitting on.
+    Default is None (fit all columns).
+-win, --window : int int, optional
+    Set the range of wavelengths (in nm) to use from the given spectra
+    for fitting. Default is (300, 1100).
+-i, --interactive : flag, optional
+    Enable interactive mode. Show an interactive matplotlib figure
+    of the binary mixture fitting.
 
 browse (br)
 -----------
