@@ -119,7 +119,6 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
 
     def fit_params_handler(trace: pd.Series) -> dict:
         """Prepare parameters for the fitting function."""
-        trace = cutoff_handler(trace)
         return {'x': trace.index, 'y': trace.values}
 
     def post_fit_handler(trace, *fit_params) -> tuple[dict, pd.Series]:
