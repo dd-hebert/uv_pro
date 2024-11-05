@@ -7,7 +7,7 @@ Functions for the ``binmix`` command.
 import argparse
 import pandas as pd
 from uv_pro.commands import command, argument
-from uv_pro.binarymix import BinaryMixture
+from uv_pro.binarymixture import BinaryMixture
 from uv_pro.plots import plot_binarymixture
 
 

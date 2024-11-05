@@ -13,7 +13,7 @@ from matplotlib.collections import QuadMesh
 import matplotlib.colors as colors
 from matplotlib.widgets import Slider
 from matplotlib.text import Annotation
-from uv_pro.binarymix import BinaryMixture
+from uv_pro.binarymixture import BinaryMixture
 
 
 SPLASH = '\n'.join(

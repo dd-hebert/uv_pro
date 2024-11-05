@@ -12,6 +12,19 @@ class BinaryMixture:
     """
     UV-vis binary mixture solver.
 
+    Attributes
+    ----------
+    coeff_a_max : float
+        The maximum possible coefficient for component A.
+    coeff_b_max : float
+        The maximum possible coefficient for component B.
+    coeff_a : float, optional
+        The best-fit scalar coefficient of component A.
+    coeff_b : float, optional
+        The best-fit scalar coefficient of component A.
+    fit : pandas.Series
+        The best-fit spectrum from a linear combination of \
+        component A and component B.
     """
 
     def __init__(self, mixture: pd.Series, component_a: pd.Series, component_b: pd.Series,
@@ -27,12 +40,12 @@ class BinaryMixture:
 
         Parameters
         ----------
-        mixture : pd.Series
+        mixture : pandas.Series
             The UV-vis spectrum of a binary mixture to fit.
-        component_a : pd.Series
-            The UV-vis spectrum of pure species A
-        component_b : pd.Series
-            The UV-vis spectrum of pure species B
+        component_a : pandas.Series
+            The UV-vis spectrum of pure species A.
+        component_b : pandas.Series
+            The UV-vis spectrum of pure species B.
         coeff_a : float, optional
             An initial guess for the scalar coefficient to \
             apply to the spectrum of species A. The defeault is 0.5.
@@ -63,6 +76,19 @@ class BinaryMixture:
         return round(squared_diffs.sum() / len(squared_diffs.index), 5)
 
     def minimize(self, fit_vars: tuple[float, float]):
+        """
+        Fit a binary mixture.
+
+        Determine the best fit of a binary mixture by minimizing the \
+        mean squared error (MSE) of some linear combination of component A \
+        and component B. See :func:`scipy.optimize.minimize`.
+
+        Parameters
+        ----------
+        fit_vars : tuple[float, float]
+            A tuple with initial guesses for the scalar coefficients of \
+            component A and component B.
+        """
         def fit_mean_squared_error(fit_vars: tuple[float, float]):
             self.fit = self.linear_combination(*fit_vars)
             squared_diffs = self.difference_spectrum() ** 2
