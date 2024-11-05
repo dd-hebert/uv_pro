@@ -9,6 +9,7 @@ API Reference
    outliers
    peaks
    peakfinder
+   binarymixture
    plots
    slicing
    quickfig
