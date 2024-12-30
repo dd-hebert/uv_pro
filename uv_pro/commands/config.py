@@ -107,7 +107,7 @@ def _edit_config(config: Config, setting: str) -> None:
 
 
 def _reset_config(config: Config, setting: str) -> None:
-    config.modify('Settings', setting, config.defaults['Settings'][setting])
+    config.modify('Settings', setting, config.defaults[setting])
 
 
 def _print_config(config: Config) -> None:
