@@ -132,3 +132,8 @@ def _to_string(results: list[dict]) -> str:
     out.append('└' + '─' * table_width + '┘')
 
     return '\n'.join(out)
+
+
+# TODO
+# Add exporting of fitted spectra
+# Add options for concentrations/equivalents
