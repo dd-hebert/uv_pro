@@ -16,8 +16,9 @@ from uv_pro.io.export import prompt_for_export
 HELP = {
     'path': '''A path to a UV-vis data file (.KD format).''',
     'view': '''Enable view-only mode (no data processing).''',
-    'trim': '''2 args: trim data from __ to __.
-               Trim the data to remove spectra outside the given time range.''',
+    'trim': '''2 args: trim data from START to END.
+               Trim the data to remove spectra outside the given time range.
+               Use -1 for END to indicate the end of the data.''',
     'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
                             Values closer to 0 result in higher sensitivity (more outliers).
                             Values closer to 1 result in lower sensitivity (fewer outliers).''',
@@ -63,7 +64,7 @@ ARGS = [
         type=int,
         nargs=2,
         default=None,
-        metavar='',
+        metavar=('START', 'END'),
         help=HELP['trim']
     ),
     argument(
@@ -126,7 +127,7 @@ ARGS = [
         type=int,
         nargs=2,
         default=[300, 1060],
-        metavar='',
+        metavar=('MIN', 'MAX'),
         help=HELP['time_trace_window']
     ),
     argument(

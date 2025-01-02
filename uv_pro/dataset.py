@@ -67,7 +67,7 @@ class Dataset:
         Parses a .KD file at ``path`` and processes the found spectra. Processing \
         includes removing "bad" spectra (e.g. stray light or spectra collected \
         during mixing), trimming (see :meth:`trim_data`), slicing \
-        (see :func:`~uv_pro.slicing.slice_spectra`), and exponential fitting of \
+        (see :func:`~uv_pro.slicing.slice_spectra`), and kinetics analysis of \
         time traces.
 
         Parameters
@@ -307,13 +307,12 @@ class Dataset:
         return data.truncate(before=self.trim[0], after=self.trim[1], axis=axis)
 
     def _check_trim_values(self) -> None:
-        try:
-            start = min(self.trim)
-            end = max(self.trim)
-            self.trim = (start, end)
+        start, end = self.trim
 
-        except TypeError:
-            pass
+        if end >= self.spectra_times.iloc[-1] or end == -1:
+            end = self.spectra_times.iloc[-1]
+
+        self.trim = (start, end)
 
     def _to_string(self) -> str:
         def dataset(dataset: Dataset) -> str:
@@ -328,7 +327,11 @@ class Dataset:
                 out.append(f'Outliers found: {len(dataset.outliers)}')
 
                 if dataset.trim:
-                    out.append(f'Removed data before {dataset.trim[0]} and after {dataset.trim[1]} seconds.')
+                    start, end = dataset.trim
+                    start = 'start' if start == 0 else f'{start} seconds'
+                    end = 'end' if end >= dataset.spectra_times.iloc[-1] else f'{end} seconds'
+
+                    out.append(f'Keeping data from {start} to {end}.')
 
                 if dataset.slicing is None:
                     out.append(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
