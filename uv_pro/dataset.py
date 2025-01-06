@@ -54,7 +54,7 @@ class Dataset:
         and it contains more than 2 spectra.
     """
 
-    def __init__(self, path: str, *, trim: list[int, int] | None = None,
+    def __init__(self, path: str, *, trim: tuple[int, int] | None = None,
                  slicing: dict | None = None, fit_exp: bool = False,
                  fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
                  baseline_lambda: float = 10.0, baseline_tolerance: float = 0.1,
@@ -74,8 +74,8 @@ class Dataset:
         ----------
         path : str
             A file path to a .KD file.
-        trim : list[int, int] or None, optional
-            Trim data outside a given time range: ``[trim_before, trim_after]``.
+        trim : tuple[int, int] or None, optional
+            Trim data outside a given time range: ``(trim_before, trim_after)``.
             Default value is None (no trimming).
         slicing : dict or None, optional
             Reduce the data down to a selection of slices. Slices can be taken in \
@@ -176,7 +176,6 @@ class Dataset:
                 tol=self.baseline_tolerance
             )
 
-            self._check_trim_values()
             self.processed_spectra = self._process_spectra()
             self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
 
@@ -212,6 +211,7 @@ class Dataset:
         processed_traces = self.clean_data(chosen_traces, axis='index')
 
         if self.trim:
+            self._check_trim_values()
             processed_traces = self.trim_data(processed_traces, axis='index')
 
         return chosen_traces, processed_traces
