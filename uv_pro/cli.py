@@ -217,6 +217,7 @@ Examples
 
 @author: David Hebert
 """
+
 import sys
 from random import choice
 from rich import print

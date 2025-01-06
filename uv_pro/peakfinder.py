@@ -3,6 +3,7 @@ An interactive UV-vis peak finder based on Matplotlib.
 
 @author: David Hebert
 """
+
 import pandas as pd
 from uv_pro.dataset import Dataset
 from uv_pro.peaks import find_peaks, find_peaks_dxdy
