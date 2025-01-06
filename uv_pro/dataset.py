@@ -9,8 +9,6 @@ UV-vis Chemstation software.
 
 import os
 import pandas as pd
-from rich import print
-from rich.table import Table, Column
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
 from uv_pro.fitting import fit_exponential, initial_rates
@@ -146,10 +144,6 @@ class Dataset:
 
         if not view_only:
             self.process_data()
-
-    def __str__(self) -> str:
-        print(*self._to_string(), sep='\n')
-        return ''
 
     def _import_data(self) -> None:
         kd_file = KDFile(self.path)
@@ -316,93 +310,3 @@ class Dataset:
             end = self.spectra_times.iloc[-1]
 
         self.trim = (start, end)
-
-    def _to_string(self) -> str:
-        def rich_text(dataset: Dataset) -> list:
-            out = []
-            out.append(f'Filename: {dataset.name}')
-            out.append(f'Spectra found: {len(dataset.raw_spectra.columns)}')
-
-            if dataset.cycle_time:
-                out.append(f'Cycle time (s): {dataset.cycle_time}')
-
-            if dataset.is_processed is True:
-                out.append(f'Outliers found: {len(dataset.outliers)}')
-
-                if dataset.trim:
-                    start, end = dataset.trim
-                    start = 'start' if start == 0 else f'{start} seconds'
-                    end = 'end' if end >= dataset.spectra_times.iloc[-1] else f'{end} seconds'
-
-                    out.append(f'Keeping data from {start} to {end}.')
-
-                if dataset.slicing is None:
-                    out.append(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
-
-                else:
-                    out.append(f'Slicing mode: {dataset.slicing["mode"]}')
-                    if dataset.slicing['mode'] == 'gradient':
-                        out.append(f'Coefficient: {dataset.slicing["coeff"]}')
-                        out.append(f'Exponent: {dataset.slicing["expo"]}')
-
-                    out.append(f'Slices: {len(dataset.processed_spectra.columns)}')
-
-                if dataset.fit is not None:
-                    out.extend(['', fit(dataset.fit)])
-                    if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
-                        out.append(f'\033[31mUnable to fit: {", ".join(map(str, unable_to_fit))} nm.\033[0m')
-
-                if dataset.init_rate is not None:
-                    out.extend(['', init_rate(dataset.init_rate)])
-
-            return out
-
-        def fit(fit: dict) -> str:
-            equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
-            table = Table(
-                Column('λ', justify='center'),
-                Column('kobs', justify='center'),
-                Column('abs_0', justify='center'),
-                Column('abs_f', justify='center'),
-                Column('r2', justify='center'),
-                title='Exponential Fit Results',
-                caption=f'Fit function: {equation}',
-                width=65
-            )
-
-            for wavelength in fit['params'].columns:
-                params = fit['params'][wavelength]
-                table.add_row(
-                    str(wavelength),
-                    '{:.2e} ± {:.2e}'.format(params['kobs'], params['kobs err']),
-                    '{: .2e}'.format(params['abs_0']),
-                    '{: .2e}'.format(params['abs_f']),
-                    '{:.4f}'.format(params['r2'])
-                )
-
-            return table
-
-        def init_rate(init_rate: dict) -> str:
-            table = Table(
-                Column('λ', justify='center'),
-                Column('rate', justify='center'),
-                Column('Δabs', justify='center'),
-                Column('Δt', justify='center'),
-                Column('r2', justify='center'),
-                title='Initial Rates Results',
-                width=65
-            )
-
-            for wavelength in init_rate['params'].columns:
-                params = init_rate['params'][wavelength]
-                table.add_row(
-                    str(wavelength),
-                    '{: .2e} ± {:.2e}'.format(params['slope'], params['slope err']),
-                    '{:.2%}'.format(abs(params['delta_abs_%'])),
-                    '{:.1f}'.format(params['delta_t']),
-                    '{:.4f}'.format(params['r2'])
-                )
-
-            return table
-
-        return rich_text(self)

@@ -6,7 +6,6 @@ Contains functions for exporting UV-vis data to .csv format.
 @author: David Hebert
 """
 import os
-from uv_pro.utils.prompts import user_choice
 
 
 def export_csv(dataset, data, suffix: str | None = None) -> str:
@@ -67,67 +66,3 @@ def _get_unique_filename(output_dir: str, base_filename: str, ext: str) -> str:
         n += 1
 
     return unique_filename
-
-
-def prompt_for_export(dataset) -> list[str]:
-    """
-    Prompt the user for data export.
-
-    Parameters
-    ----------
-    dataset : :class:`~uv_pro.dataset.Dataset`
-        The :class:`~uv_pro.dataset.Dataset` to be exported.
-
-    Returns
-    -------
-    files_exported : list[str]
-        The names of the exported files.
-    """
-    key = 1
-    header = 'Export data?'
-    options = [{'key': str(key), 'name': 'Processed spectra'}]
-    files_exported = []
-
-    traces_key = None
-    fit_key = None
-    init_rate_key = None
-
-    if dataset.chosen_traces is not None:
-        key += 1
-        traces_key = key
-        options.append({'key': str(traces_key), 'name': 'Time traces'})
-
-    if dataset.fit is not None:
-        key += 1
-        fit_key = key
-        options.append({'key': str(fit_key), 'name': 'Exponential fit'})
-
-    if dataset.init_rate is not None:
-        key += 1
-        init_rate_key = key
-        options.append({'key': str(init_rate_key), 'name': 'Initial rates'})
-
-    if user_choices := user_choice(header=header, options=options):
-        if '1' in user_choices:
-            files_exported.append(export_csv(dataset, dataset.processed_spectra))
-
-        if str(traces_key) in user_choices:
-            files_exported.append(export_csv(dataset, dataset.chosen_traces, suffix='Traces'))
-
-        if str(fit_key) in user_choices:
-            files_exported.extend(
-                [
-                    export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
-                    export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
-                ]
-            )
-
-        if str(init_rate_key) in user_choices:
-            files_exported.extend(
-                [
-                    export_csv(dataset, dataset.init_rate['lines'], suffix='Init rate lines'),
-                    export_csv(dataset, dataset.init_rate['params'].transpose(), suffix='Init rate params'),
-                ]
-            )
-
-    return files_exported

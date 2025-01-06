@@ -6,11 +6,15 @@ Functions for the ``process`` command.
 
 import os
 import argparse
+from rich import print
+from rich.console import RenderableType
+from rich.table import Table, Column
 from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.dataset import Dataset
 from uv_pro.quickfig import QuickFig
 from uv_pro.plots import plot_spectra, plot_2x2
-from uv_pro.io.export import prompt_for_export
+from uv_pro.io.export import export_csv
+from uv_pro.utils.prompts import user_choice
 
 
 HELP = {
@@ -236,7 +240,7 @@ def process(args: argparse.Namespace) -> None:
             wavelengths=args.time_traces
         )
 
-    print(dataset)
+    print(*_rich_text(dataset), sep='\n')
     _plot_and_export(args, dataset)
 
 
@@ -279,9 +283,161 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
     return None
 
 
+def _rich_text(dataset: Dataset) -> list[RenderableType]:
+    def fit_table(fit: dict) -> Table:
+        equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
+        table = Table(
+            Column('λ', justify='center'),
+            Column('kobs', justify='center'),
+            Column('abs_0', justify='center'),
+            Column('abs_f', justify='center'),
+            Column('r²', justify='center'),
+            title='Exponential Fit Results',
+            caption=f'Fit function: {equation}',
+            width=65
+        )
+
+        for wavelength in fit['params'].columns:
+            params = fit['params'][wavelength]
+            table.add_row(
+                str(wavelength),
+                '{:.2e} ± {:.2e}'.format(params['kobs'], params['kobs err']),
+                '{: .2e}'.format(params['abs_0']),
+                '{: .2e}'.format(params['abs_f']),
+                '{:.4f}'.format(params['r2'])
+            )
+
+        return table
+
+    def init_rate_table(init_rate: dict) -> Table:
+        table = Table(
+            Column('λ', justify='center'),
+            Column('rate', justify='center'),
+            Column('Δabs', justify='center'),
+            Column('Δt', justify='center'),
+            Column('r²', justify='center'),
+            title='Initial Rates Results',
+            width=65
+        )
+
+        for wavelength in init_rate['params'].columns:
+            params = init_rate['params'][wavelength]
+            table.add_row(
+                str(wavelength),
+                '{: .2e} ± {:.2e}'.format(params['slope'], params['slope err']),
+                '{:.2%}'.format(abs(params['delta_abs_%'])),
+                '{:.1f}'.format(params['delta_t']),
+                '{:.4f}'.format(params['r2'])
+            )
+
+        return table
+
+    out = []
+    out.append(f'Filename: {dataset.name}')
+    out.append(f'Spectra found: {len(dataset.raw_spectra.columns)}')
+
+    if dataset.cycle_time:
+        out.append(f'Cycle time (s): {dataset.cycle_time}')
+
+    if dataset.is_processed is True:
+        out.append(f'Outliers found: {len(dataset.outliers)}')
+
+        if dataset.trim:
+            start, end = dataset.trim
+            start = 'start' if start == 0 else f'{start} seconds'
+            end = 'end' if end >= dataset.spectra_times.iloc[-1] else f'{end} seconds'
+
+            out.append(f'Keeping data from {start} to {end}.')
+
+        if dataset.slicing is None:
+            out.append(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
+
+        else:
+            out.append(f'Slicing mode: {dataset.slicing["mode"]}')
+            if dataset.slicing['mode'] == 'gradient':
+                out.append(f'Coefficient: {dataset.slicing["coeff"]}')
+                out.append(f'Exponent: {dataset.slicing["expo"]}')
+
+            out.append(f'Slices: {len(dataset.processed_spectra.columns)}')
+
+        if dataset.fit is not None:
+            out.extend(['', fit_table(dataset.fit)])
+            if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
+                out.append(f'\033[31mUnable to fit: {", ".join(map(str, unable_to_fit))} nm.\033[0m')
+
+        if dataset.init_rate is not None:
+            out.extend(['', init_rate_table(dataset.init_rate)])
+
+    return out
+
+
+def prompt_for_export(dataset) -> list[str]:
+    """
+    Prompt the user for data export.
+
+    Parameters
+    ----------
+    dataset : :class:`~uv_pro.dataset.Dataset`
+        The :class:`~uv_pro.dataset.Dataset` to be exported.
+
+    Returns
+    -------
+    files_exported : list[str]
+        The names of the exported files.
+    """
+    key = 1
+    header = 'Export data?'
+    options = [{'key': str(key), 'name': 'Processed spectra'}]
+    files_exported = []
+
+    traces_key = None
+    fit_key = None
+    init_rate_key = None
+
+    if dataset.chosen_traces is not None:
+        key += 1
+        traces_key = key
+        options.append({'key': str(traces_key), 'name': 'Time traces'})
+
+    if dataset.fit is not None:
+        key += 1
+        fit_key = key
+        options.append({'key': str(fit_key), 'name': 'Exponential fit'})
+
+    if dataset.init_rate is not None:
+        key += 1
+        init_rate_key = key
+        options.append({'key': str(init_rate_key), 'name': 'Initial rates'})
+
+    if user_choices := user_choice(header=header, options=options):
+        if '1' in user_choices:
+            files_exported.append(export_csv(dataset, dataset.processed_spectra))
+
+        if str(traces_key) in user_choices:
+            files_exported.append(export_csv(dataset, dataset.chosen_traces, suffix='Traces'))
+
+        if str(fit_key) in user_choices:
+            files_exported.extend(
+                [
+                    export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
+                    export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
+                ]
+            )
+
+        if str(init_rate_key) in user_choices:
+            files_exported.extend(
+                [
+                    export_csv(dataset, dataset.init_rate['lines'], suffix='Init rate lines'),
+                    export_csv(dataset, dataset.init_rate['params'].transpose(), suffix='Init rate params'),
+                ]
+            )
+
+    return files_exported
+
+
 def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
     """Plot a :class:`~uv_pro.dataset.Dataset` and prompt the user for export."""
-    print('Plotting data...')
+    print('\nPlotting data...')
     if dataset.is_processed:
         files_exported = []
 

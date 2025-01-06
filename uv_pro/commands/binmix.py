@@ -9,6 +9,7 @@ import os
 from collections import namedtuple
 import pandas as pd
 from rich import print
+from rich.console import RenderableType
 from rich.table import Table
 from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.binarymixture import BinaryMixture
@@ -170,13 +171,14 @@ def binmix(args: argparse.Namespace) -> None:
             continue
 
     if fit_results:
-        print(*results_table(args, fit_results), sep='\n')
+        print(*_rich_text(args, fit_results), sep='\n')
 
         if args.no_export is False:
             prompt_for_export(args, fit_results, fit_specta)
 
 
-def results_table(args, results):
+def _rich_text(args, results) -> list[RenderableType]:
+    """Pretty print fitting results with ``rich``."""
     out = [
         f'Binary Mixture: {args.path}',
         f'Component A: {args.component_a}',
@@ -184,7 +186,6 @@ def results_table(args, results):
     ]
 
     table = Table(title='Binary Mixture Fitting Results')
-
     table.add_column('Label', justify='center', max_width=20, overflow='fold')
     table.add_column('Coeff. A', justify='center')
 
