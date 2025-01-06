@@ -13,7 +13,7 @@ from rich.table import Table
 from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.binarymixture import BinaryMixture
 from uv_pro.plots import plot_binarymixture
-from uv_pro.io.export import prompt_for_export, export_csv
+from uv_pro.io.export import export_csv
 from uv_pro.utils.prompts import user_choice
 
 
@@ -138,9 +138,6 @@ def binmix(args: argparse.Namespace) -> None:
 
     elif args.index_columns:
         mixture = mixture.iloc[:, args.index_columns]
-
-    else:
-        columns = mixture.columns
 
     fit_results = []
     fit_specta = []

@@ -370,7 +370,6 @@ class Dataset:
                 width=65
             )
 
-
             for wavelength in fit['params'].columns:
                 params = fit['params'][wavelength]
                 table.add_row(

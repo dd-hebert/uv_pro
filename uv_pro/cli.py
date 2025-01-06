@@ -225,7 +225,7 @@ from uv_pro.commands import get_args
 from uv_pro.utils.config import Config
 
 
-# sys.tracebacklimit = 0
+sys.tracebacklimit = 0
 
 
 class CLI:
