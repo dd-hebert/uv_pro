@@ -281,7 +281,7 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
 
 def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
     """Plot a :class:`~uv_pro.dataset.Dataset` and prompt the user for export."""
-    print('\nPlotting data...')
+    print('Plotting data...')
     if dataset.is_processed:
         files_exported = []
 
