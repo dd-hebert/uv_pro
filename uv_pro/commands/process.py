@@ -20,8 +20,8 @@ from uv_pro.utils.prompts import user_choice
 HELP = {
     'path': '''A path to a UV-vis data file (.KD format).''',
     'view': '''Enable view-only mode (no data processing).''',
-    'trim': '''2 args: trim data from START to END.
-               Trim the data to remove spectra outside the given time range.
+    'trim': '''Remove spectra outside the given time range.
+               Data before time = T1 and after time = T2 will be removed.
                Use -1 for END to indicate the end of the data.''',
     'outlier_threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
                             Values closer to 0 result in higher sensitivity (more outliers).
@@ -68,7 +68,7 @@ ARGS = [
         type=int,
         nargs=2,
         default=None,
-        metavar=('START', 'END'),
+        metavar=('T1', 'T2'),
         help=HELP['trim']
     ),
     argument(
