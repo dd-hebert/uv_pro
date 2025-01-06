@@ -176,6 +176,7 @@ class Dataset:
                 tol=self.baseline_tolerance
             )
 
+            self._check_trim_values()
             self.processed_spectra = self._process_spectra()
             self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
 
@@ -211,7 +212,6 @@ class Dataset:
         processed_traces = self.clean_data(chosen_traces, axis='index')
 
         if self.trim:
-            self._check_trim_values()
             processed_traces = self.trim_data(processed_traces, axis='index')
 
         return chosen_traces, processed_traces
@@ -304,9 +304,14 @@ class Dataset:
         return data.truncate(before=self.trim[0], after=self.trim[1], axis=axis)
 
     def _check_trim_values(self) -> None:
-        start, end = self.trim
+        try:
+            start, end = self.trim
+            start = max(start, self.spectra_times.iloc[0])
 
-        if end >= self.spectra_times.iloc[-1] or end == -1:
-            end = self.spectra_times.iloc[-1]
+            if end >= self.spectra_times.iloc[-1] or end == -1:
+                end = self.spectra_times.iloc[-1]
 
-        self.trim = (start, end)
+            self.trim = (start, end)
+
+        except TypeError:
+            pass

@@ -183,9 +183,9 @@ def binmix(args: argparse.Namespace) -> None:
 def _rich_text(args, results) -> list[RenderableType]:
     """Pretty print fitting results with ``rich``."""
     out = [
-        f'Binary Mixture: {args.path}',
-        f'Component A: {args.component_a}',
-        f'Component B: {args.component_b}'
+        f'Binary Mixture: [bold cyan]{args.path}[/bold cyan]',
+        f'Component A: [bold cyan]{args.component_a}[/bold cyan]',
+        f'Component B: [bold cyan]{args.component_b}[/bold cyan]'
     ]
 
     table = Table(title='Binary Mixture Fitting Results')

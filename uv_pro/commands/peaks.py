@@ -4,6 +4,8 @@ Functions for the ``peaks`` command.
 @author: David Hebert
 """
 import argparse
+from rich import print
+from rich.table import Table, Column
 from uv_pro.commands import command, argument
 from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
@@ -130,29 +132,28 @@ def peaks(args: argparse.Namespace) -> None:
     plot_peakfinder(pf, figsize=args.plot_size)
 
     if pf.peaks['peaks']:
-        _print_peaks(pf.peaks)
+        print(_rich_text(pf.peaks))
 
 
-def _print_peaks(peaks: dict) -> str:
-    out = []
-
+def _rich_text(peaks: dict) -> Table:
     has_epsilon = 'epsilon' in peaks['info'].columns
-    table_width = 34 if has_epsilon else 20
-    headings = ['λ', 'abs'] + (['epsilon'] if has_epsilon else [])
+    table = Table(
+        Column('λ', justify='center'),
+        Column('abs', justify='center'),
+        title='Peak Finder Results',
+        width=30
+    )
 
-    table_headings = f'│ \033[1m{headings[0]:^4}   '
-    table_headings += ('   '.join([f'{heading:^11}' for heading in headings[1:]]))
-    table_headings += ('\033[22m │')
-
-    out.append('┌' + '─' * table_width + '┐')
-    out.append(table_headings)
-    out.append('├' + '─' * table_width + '┤')
+    if has_epsilon:
+        table.add_column('ε', justify='center')
 
     for wavelength in peaks['info'].index:
-        row = f'│ {wavelength:^4}   {peaks['info']['abs'].loc[wavelength]:^11.3e}'
-        row += f'   {peaks['info']['epsilon'].loc[wavelength]:^11.3e} │' if has_epsilon else ' │'
-        out.append(row)
+        absorbance = '{:^.3f}'.format(peaks['info']['abs'].loc[wavelength])
+        row = [str(wavelength), absorbance]
 
-    out.append('└' + '─' * table_width + '┘')
+        if has_epsilon:
+            row.append('{:^.3e}'.format(peaks['info']['epsilon'].loc[wavelength]))
 
-    print('\n'.join(out))
+        table.add_row(*row)
+
+    return table

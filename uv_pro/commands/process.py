@@ -9,6 +9,8 @@ import argparse
 from rich import print
 from rich.console import RenderableType
 from rich.table import Table, Column
+from rich.panel import Panel
+from rich.text import Text
 from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.dataset import Dataset
 from uv_pro.quickfig import QuickFig
@@ -333,7 +335,7 @@ def _rich_text(dataset: Dataset) -> list[RenderableType]:
         return table
 
     out = []
-    out.append(f'Filename: {dataset.name}')
+    out.append(f'Filename: [bold cyan]{dataset.name}[/bold cyan]')
     out.append(f'Spectra found: {len(dataset.raw_spectra.columns)}')
 
     if dataset.cycle_time:
@@ -344,8 +346,8 @@ def _rich_text(dataset: Dataset) -> list[RenderableType]:
 
         if dataset.trim:
             start, end = dataset.trim
-            start = 'start' if start == 0 else f'{start} seconds'
-            end = 'end' if end >= dataset.spectra_times.iloc[-1] else f'{end} seconds'
+            start = '[bold cyan]start[/bold cyan]' if start <= dataset.spectra_times.iloc[0] else f'{start} seconds'
+            end = '[bold cyan]end[/bold cyan]' if end >= dataset.spectra_times.iloc[-1] else f'{end} seconds'
 
             out.append(f'Keeping data from {start} to {end}.')
 
@@ -353,7 +355,7 @@ def _rich_text(dataset: Dataset) -> list[RenderableType]:
             out.append(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
 
         else:
-            out.append(f'Slicing mode: {dataset.slicing["mode"]}')
+            out.append(f'Slicing mode: [bold cyan]{dataset.slicing["mode"]}[/bold cyan]')
             if dataset.slicing['mode'] == 'gradient':
                 out.append(f'Coefficient: {dataset.slicing["coeff"]}')
                 out.append(f'Exponent: {dataset.slicing["expo"]}')
@@ -363,7 +365,7 @@ def _rich_text(dataset: Dataset) -> list[RenderableType]:
         if dataset.fit is not None:
             out.extend(['', fit_table(dataset.fit)])
             if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
-                out.append(f'\033[31mUnable to fit: {", ".join(map(str, unable_to_fit))} nm.\033[0m')
+                out.append(f'[underline red]Unable to fit: {", ".join(map(str, unable_to_fit))} nm.[/underline red]')
 
         if dataset.init_rate is not None:
             out.extend(['', init_rate_table(dataset.init_rate)])
