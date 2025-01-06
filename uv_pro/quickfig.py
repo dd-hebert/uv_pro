@@ -15,7 +15,7 @@ from matplotlib.axes import Axes
 from matplotlib.artist import Artist
 from matplotlib.figure import Figure
 from uv_pro.dataset import Dataset
-import uv_pro.plots as uvplt
+from uv_pro.plots.dataset_plots import _processed_data_subplot, _time_traces_subplot
 from uv_pro.utils.prompts import user_choice
 from uv_pro.io.export import export_figure
 
@@ -110,7 +110,7 @@ class QuickFig:
     def _processed_data_plot(self) -> tuple[Figure, Axes]:
         """Create processed data plot."""
         fig, ax_processed_data = plt.subplots()
-        uvplt._processed_data_subplot(ax_processed_data, self.dataset)
+        _processed_data_subplot(ax_processed_data, self.dataset)
         ax_processed_data.set(title=None)
 
         return fig, ax_processed_data
@@ -125,8 +125,8 @@ class QuickFig:
             sharey=True
         )
 
-        uvplt._processed_data_subplot(ax_processed_data, self.dataset)
-        uvplt._time_traces_subplot(ax_traces, self.dataset, show_slices=False)
+        _processed_data_subplot(ax_processed_data, self.dataset)
+        _time_traces_subplot(ax_traces, self.dataset, show_slices=False)
         self._touchup_time_traces_plot(ax_traces)
 
         return fig, (ax_processed_data, ax_traces)

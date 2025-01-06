@@ -54,7 +54,7 @@ class Dataset:
         and it contains more than 2 spectra.
     """
 
-    def __init__(self, path: str, *, trim: list[int, int] | None = None,
+    def __init__(self, path: str, *, trim: tuple[int, int] | None = None,
                  slicing: dict | None = None, fit_exp: bool = False,
                  fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
                  baseline_lambda: float = 10.0, baseline_tolerance: float = 0.1,
@@ -67,15 +67,15 @@ class Dataset:
         Parses a .KD file at ``path`` and processes the found spectra. Processing \
         includes removing "bad" spectra (e.g. stray light or spectra collected \
         during mixing), trimming (see :meth:`trim_data`), slicing \
-        (see :func:`~uv_pro.slicing.slice_spectra`), and exponential fitting of \
+        (see :func:`~uv_pro.slicing.slice_spectra`), and kinetics analysis of \
         time traces.
 
         Parameters
         ----------
         path : str
             A file path to a .KD file.
-        trim : list[int, int] or None, optional
-            Trim data outside a given time range: ``[trim_before, trim_after]``.
+        trim : tuple[int, int] or None, optional
+            Trim data outside a given time range: ``(trim_before, trim_after)``.
             Default value is None (no trimming).
         slicing : dict or None, optional
             Reduce the data down to a selection of slices. Slices can be taken in \
@@ -144,9 +144,6 @@ class Dataset:
 
         if not view_only:
             self.process_data()
-
-    def __str__(self) -> str:
-        return self._to_string()
 
     def _import_data(self) -> None:
         kd_file = KDFile(self.path)
@@ -308,91 +305,13 @@ class Dataset:
 
     def _check_trim_values(self) -> None:
         try:
-            start = min(self.trim)
-            end = max(self.trim)
+            start, end = self.trim
+            start = max(start, self.spectra_times.iloc[0])
+
+            if end >= self.spectra_times.iloc[-1] or end == -1:
+                end = self.spectra_times.iloc[-1]
+
             self.trim = (start, end)
 
         except TypeError:
             pass
-
-    def _to_string(self) -> str:
-        def dataset(dataset: Dataset) -> str:
-            out = []
-            out.append(f'Filename: {dataset.name}')
-            out.append(f'Spectra found: {len(dataset.raw_spectra.columns)}')
-
-            if dataset.cycle_time:
-                out.append(f'Cycle time (s): {dataset.cycle_time}')
-
-            if dataset.is_processed is True:
-                out.append(f'Outliers found: {len(dataset.outliers)}')
-
-                if dataset.trim:
-                    out.append(f'Removed data before {dataset.trim[0]} and after {dataset.trim[1]} seconds.')
-
-                if dataset.slicing is None:
-                    out.append(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
-
-                else:
-                    out.append(f'Slicing mode: {dataset.slicing["mode"]}')
-                    if dataset.slicing['mode'] == 'gradient':
-                        out.append(f'Coefficient: {dataset.slicing["coeff"]}')
-                        out.append(f'Exponent: {dataset.slicing["expo"]}')
-
-                    out.append(f'Slices: {len(dataset.processed_spectra.columns)}')
-
-                if dataset.fit is not None:
-                    equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
-                    out.append(f'Fit function: {equation}')
-                    out.extend(['', fit(dataset.fit)])
-                    if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
-                        out.append(f'\033[31mUnable to fit: {", ".join(map(str, unable_to_fit))} nm.\033[0m')
-
-                if dataset.init_rate is not None:
-                    out.extend(['', init_rate(dataset.init_rate)])
-
-            return '\n'.join(out)
-
-        def fit(fit: dict) -> str:
-            table_width = 61
-            table_headings = '│ \033[1m{:^4}   {:^19}   {:^9}   {:^9}   {:^6}\033[22m │'
-
-            out = []
-            out.append('┌' + '─' * table_width + '┐')
-            out.append(table_headings.format('λ', 'kobs', 'abs_0', 'abs_f', 'r2'))
-            out.append('├' + '─' * table_width + '┤')
-
-            for wavelength in fit['params'].columns:
-                fit_data = fit['params'][wavelength]
-                abs_0 = '{: .2e}'.format(fit_data['abs_0'])
-                abs_f = '{: .2e}'.format(fit_data['abs_f'])
-                kobs = '{:.2e} ± {:.2e}'.format(fit_data['kobs'], fit_data['kobs err'])
-                r2 = '{:.4f}'.format(fit_data['r2'])
-                out.append('│ {:<4}   {}   {}   {}   {} │'.format(wavelength, kobs, abs_0, abs_f, r2))
-
-            out.append('└' + '─' * table_width + '┘')
-
-            return '\n'.join(out)
-
-        def init_rate(init_rate: dict) -> str:
-            table_width = 61
-            table_headings = '│ \033[1m{:^4}   {:^20}   {:^8}   {:^9}   {:^6}\033[22m │'
-
-            out = []
-            out.append('┌' + '─' * table_width + '┐')
-            out.append(table_headings.format('λ', 'rate', 'Δabs', 'Δt', 'r2'))
-            out.append('├' + '─' * table_width + '┤')
-
-            for wavelength in init_rate['params'].columns:
-                init_rate_data = init_rate['params'][wavelength]
-                rate = '{: .2e} ± {:.2e}'.format(init_rate_data['slope'], init_rate_data['slope err'])
-                delta_abs = '{:.2%}'.format(abs(init_rate_data['delta_abs_%']))
-                delta_t = '{:.1f}'.format(init_rate_data['delta_t'])
-                r2 = '{:.4f}'.format(init_rate_data['r2'])
-                out.append('│ {:<4}   {}   {:>8}   {:>9}   {} │'.format(wavelength, rate, delta_abs, delta_t, r2))
-
-            out.append('└' + '─' * table_width + '┘')
-
-            return '\n'.join(out)
-
-        return dataset(self)

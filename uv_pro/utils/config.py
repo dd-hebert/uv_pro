@@ -10,6 +10,7 @@ can be found in the user's home directory.
 import os
 from configparser import ConfigParser
 from uv_pro.utils._validate import validate_root_dir, validate_plot_size
+from uv_pro.utils._defaults import CONFIG_MAP
 
 
 class Config:
@@ -30,12 +31,9 @@ class Config:
         The name of the configuration file.
     """
     name = 'uv_pro'
-    directory = os.path.join(os.path.expanduser("~"), ".config", f"{name}")
-    filename = "settings.ini"
-    defaults = {
-        "root_directory": "",
-        "plot_size": "10 5"
-    }
+    directory = os.path.join(os.path.expanduser('~'), '.config', f'{name}')
+    filename = 'settings.ini'
+    defaults = {cfg['key']: cfg['default_str'] for (_, cfg) in CONFIG_MAP.items()}
 
     def __init__(self) -> None:
         if not self.exists():
@@ -113,3 +111,26 @@ class Config:
 
         except (OSError, FileNotFoundError) as e:
             return e
+
+    def broadcast(self) -> list[tuple]:
+        """
+        Broadcast formatted config values.
+
+        Useful when config parameters are to be used programmatically.
+
+        Returns
+        -------
+        list[tuple[str, Any]]
+            A list of tuples with config parameter names (str) and formatted values (any).
+        """
+        def get_val(section: str, key: str, type: callable, default_val=None, **kwargs):
+            try:
+                if value := self.config.get(section, key):
+                    return type(value)
+
+            except Exception as e:
+                print(f"Warning: Could not retrieve config value for [{section}] {key}: {e}")
+
+            return default_val
+
+        return [(arg_name, get_val(**config_details)) for arg_name, config_details in CONFIG_MAP.items()]

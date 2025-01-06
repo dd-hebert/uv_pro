@@ -83,7 +83,7 @@ Usage: ``uvp peaks <path> <options>``
 Find peaks in UV-vis spectra.
 
 path : str, required
-    A path to a UV-vis Data File (.KD format).
+    A path to a UV-vis data file (.KD format).
 -conc, --concentration : float, optional
     The molar concentration of the species in the spectrum. Used for calculating
     molar absorptivity (ε). Default is None.
@@ -106,6 +106,35 @@ path : str, required
 -swin, --smooth_window : int, optional
     Set the Savitzky-Golay smoothing window. Default is 15.
     See :func:`scipy.signal.savgol_filter`.
+
+binmix
+------
+Usage: ``uvp binmix <path> <component_a> <component_b> <options>``
+
+Estimate the relative concentrations of two species in a binary mixture.
+
+path : str, required
+    Path to a UV-vis data file (.csv format) of one or more binary mixture spectra.
+component_a : str, required
+    Path to a UV-vis spectrum (.csv format) of pure component "A".
+component_b : str, required
+    Path to a UV-vis spectrum (.csv format) of pure component "B".
+-a, --molarity_a : float, optional
+    Specify the concentration (in M) of pure component "A".
+-b, --molarity_b : float, optional
+    Specify the concentration (in M) of pure component "B".
+-cols, --columns : arbitrary number of str, optional
+    The columns of the binary mixture .csv file to perform fitting on.
+    Provide the LABEL for each column. Default is None (fit all columns).
+-icols, --index_columns : arbitrary number of ints, optional
+    Specify the columns of the binary mixture .csv file to perform fitting on.
+    Provide the IDX for each column. Default is None (fit all columns).
+-win, --window : int int, optional
+    Set the range of wavelengths (in nm) to use from the given spectra
+    for fitting. Default is 300 1100.
+-i, --interactive : flag, optional
+    Enable interactive mode. Show an interactive matplotlib figure
+    of the binary mixture fitting.
 
 browse (br)
 -----------
@@ -188,8 +217,10 @@ Examples
 
 @author: David Hebert
 """
+
 import sys
 from random import choice
+from rich import print
 from uv_pro import __version__, __author__
 from uv_pro.commands import get_args
 from uv_pro.utils.config import Config
@@ -213,7 +244,7 @@ class CLI:
     def __init__(self):
         self.args = get_args()
         self.args.config = Config()
-        self.get_config_values()
+        self.apply_config()
 
         try:
             self.args.func(args=self.args)
@@ -222,44 +253,16 @@ class CLI:
             print(self)
 
     def __str__(self) -> str:
-        return self._splash()
+        print(*self._splash(), sep='\n')
+        return ''
 
-    def get_config_values(self) -> None:
-        self.args.root_dir = self._get_root_dir()
-        self.args.plot_size = self._get_plot_size()
+    def apply_config(self):
+        for arg_name, value in self.args.config.broadcast():
+            setattr(self.args, arg_name, value)
 
-    def _get_plot_size(self) -> tuple[int, int]:
-        return tuple(map(int, self.args.config.get('Settings', 'plot_size').split()))
-
-    def _get_root_dir(self) -> str:
-        root_dir = self.args.config.get('Settings', 'root_directory')
-        return root_dir if root_dir else None
-
-    def _splash(self) -> str:
-        COLORS = {
-            'text': {
-                'red': '\033[31m',
-                'blue': '\033[34m',
-                'green': '\033[32m',
-                'yellow': '\033[33m',
-                'cyan': '\033[36m',
-                'purple': '\033[35m',
-                'reset': '\033[0m'
-            },
-            'background': {
-                'red': '\033[41m',
-                'blue': '\033[44m',
-                'green': '\033[42m',
-                'yellow': '\033[43m',
-                'cyan': '\033[46m',
-                'purple': '\033[45m',
-                'reset': '\033[47m'
-            }
-        }
-
-        random_color = choice(list(COLORS['text'].keys()))
-        text_color = COLORS['text'][random_color] + COLORS['background'][random_color]
-        reset = COLORS['text']['reset']
+    def _splash(self) -> list[str]:
+        colors = ['red', 'blue', 'green', 'yellow', 'cyan', 'magenta']
+        random_color = choice(colors)
 
         splash = [
             '                                                      ',
@@ -271,12 +274,11 @@ class CLI:
             '                            ███                       ',
         ]
 
-        splash = [line.translate(line.maketrans({'█': f'{text_color}█{reset}'})) for line in splash]
-        splash.append(COLORS['text']['reset'])
+        splash = [f'[{random_color}]{line}[/{random_color}]' for line in splash]
         splash.append(f'Version: {__version__}\nAuthor: {__author__}')
         splash.append('\nFor help with commands, type: uvp -h')
 
-        return '\n'.join(splash)
+        return splash
 
 
 def main() -> None:

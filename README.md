@@ -32,6 +32,7 @@ Command Line Arguments
 - [Data Processing Args (process, proc, p)](#data-processing-args-process-proc-p)
 - [Batch Exporting Args (batch)](#batch-exporting-args-batch)
 - [Peak Detection Args (peaks)](#peak-detection-args-peaks)
+- [Binary Mixture Fitting Args (binmix)](#binary-mixture-fitting-args-binmix)
 - [User Config Args (config, cfg)](#user-config-args-config-cfg)
 - [Other Args](#other-args-and-subcommands)
 
@@ -95,6 +96,7 @@ Set the time trace wavelength range (min, max) (in nm). The default is (300, 106
 
 #### ``-v`` : flag, optional
 Enable *view-only* mode. No data processing is performed and a plot of the data is shown.
+
 ___
 ### Batch Exporting Args (batch)
 Batch export UV-vis data from .KD files in the current working directory. Currently, only batch exporting of time traces is supported.
@@ -107,7 +109,7 @@ A list of time trace wavelengths (in nm) to export.
 #### ``-f``, ``--search_filters`` : arbitrary number of strings, optional
 A sequence of search filter strings. For example, passing ``-f copper A`` will select .KD files which contain 'copper' OR 'A' in their filename. Passing no filters selects all .KD files in the current working directory.
 
----
+___
 ### Peak Detection Args (peaks)
 Find peaks in UV-vis spectra with the ``peaks`` subcommand.
 
@@ -142,6 +144,40 @@ Set the (min, max) peak detection window (in nm). Search for peaks within the gi
 Set the Savitzky-Golay smoothing window. Default is 15. See [scipy.signal.savgol_filter()](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_filter.html#savgol-filter) for more information.
 
 ___
+### Binary Mixture Fitting Args (binmix)
+Estimate the relative concentrations of two species in a binary mixture with the ``binmix`` subcommand.
+
+**Usage:**
+``uvp binmix <path> <component_a> <component_b> <options>``
+
+#### ``path`` : str, required
+Path to a UV-vis data file (.csv format) of one or more binary mixture spectra.
+
+#### ``component_a`` : str, required
+Path to a UV-vis spectrum (.csv format) of pure component "A".
+
+#### ``component_b`` : str, required
+Path to a UV-vis spectrum (.csv format) of pure component "B".
+
+#### ``-a``, ``--molarity_a`` : float, optional
+Specify the concentration (in M) of pure component "A".
+
+#### ``-b``, ``--molarity_b`` : float, optional
+Specify the concentration (in M) of pure component "B".
+
+#### ``-cols``, ``--columns`` : arbitrary number of str, optional
+Specify the columns of the binary mixture .csv file to perform fitting on. Provide the label (header) for each column. Default is None (fit all columns).
+
+#### ``-icols``, ``--index_columns`` : arbitrary number of ints, optional
+Specify the columns of the binary mixture .csv file to perform fitting on. Provide the index for each column. Default is None (fit all columns).
+
+#### ``-win``, ``--window`` : int int, optional
+Set the range of wavelengths (in nm) to use from the given spectra for fitting. Default is (300, 1100).
+
+#### ``-i``, ``--interactive`` : flag, optional
+Enable interactive mode. Show an interactive matplotlib figure of the binary mixture fitting.
+
+___
 ### User Config Args (config, cfg)
 View, edit, or reset user-configured settings with the ``config`` subcommand.
 
@@ -150,7 +186,7 @@ View, edit, or reset user-configured settings with the ``config`` subcommand.
 
 Current user-configurable settings: 
     ``root_directory`` - A base directory which contains UV-vis data files. Set a root directory to enable the use of shorter, relative file paths.
-    ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``width height``
+    ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``WIDTH HEIGHT``
 
 #### ``-delete`` : flag, optional
 Delete the config file and directory. The config file is located in ``.config/uv_pro/`` inside the user's home directory.

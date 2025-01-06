@@ -4,13 +4,16 @@ Functions for the ``peaks`` command.
 @author: David Hebert
 """
 import argparse
+from rich import print
+from rich.table import Table, Column
 from uv_pro.commands import command, argument
 from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
+from uv_pro.plots import plot_peakfinder
 
 
 HELP = {
-    'path': '''A path to a UV-vis Data File (.KD format).''',
+    'path': '''A path to a UV-vis data file (.KD format).''',
     'conc': '''The molar concentration of the species in the spectrum. Used for calculating
                 molar absorptivity (ε). Default is None.''',
     'dist': '''Set the minimum distance between peaks (in nm). Default is 10.''',
@@ -114,7 +117,7 @@ def peaks(args: argparse.Namespace) -> None:
     """
     _handle_path(args)
 
-    PeakFinder(
+    pf = PeakFinder(
         path=args.path,
         method=args.method,
         num_peaks=args.num_peaks,
@@ -123,6 +126,34 @@ def peaks(args: argparse.Namespace) -> None:
         s_win=args.smooth_window,
         dist=args.distance,
         prom=args.prominance,
-        max_iter=args.max_iter,
-        plot_size=args.plot_size
+        max_iter=args.max_iter
     )
+
+    plot_peakfinder(pf, figsize=args.plot_size)
+
+    if pf.peaks['peaks']:
+        print(_rich_text(pf.peaks))
+
+
+def _rich_text(peaks: dict) -> Table:
+    has_epsilon = 'epsilon' in peaks['info'].columns
+    table = Table(
+        Column('λ', justify='center'),
+        Column('abs', justify='center'),
+        title='Peak Finder Results',
+        width=30
+    )
+
+    if has_epsilon:
+        table.add_column('ε', justify='center')
+
+    for wavelength in peaks['info'].index:
+        absorbance = '{:^.3f}'.format(peaks['info']['abs'].loc[wavelength])
+        row = [str(wavelength), absorbance]
+
+        if has_epsilon:
+            row.append('{:^.3e}'.format(peaks['info']['epsilon'].loc[wavelength]))
+
+        table.add_row(*row)
+
+    return table

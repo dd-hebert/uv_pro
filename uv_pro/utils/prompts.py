@@ -4,6 +4,8 @@ Helper functions for interactive terminal prompts.
 @author: David Hebert
 """
 
+from rich import print
+
 
 def user_choice(header: str, options: list[dict]) -> list[str]:
     """

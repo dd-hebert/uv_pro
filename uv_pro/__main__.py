@@ -9,7 +9,7 @@ from uv_pro.cli import CLI
 
 def main():
     """Run uv_pro from cli script entry point."""
-    cli = CLI()
+    CLI()
     return 0
 
 

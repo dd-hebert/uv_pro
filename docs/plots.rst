@@ -1,7 +1,7 @@
-uv_pro.plots
-============
+uv_pro.plots.dataset_plots
+==========================
 
-.. automodule:: uv_pro.plots
+.. automodule:: uv_pro.plots.dataset_plots
    :members:
    :undoc-members:
    :show-inheritance:
