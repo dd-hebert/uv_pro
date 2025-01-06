@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uv_pro"
-version = "0.6.1"
+version = "0.6.2"
 authors = [
   { name="David Hebert", email="david@ddhebert.com" },
 ]
@@ -46,7 +46,8 @@ dependencies = [
   "pandas>=1.5.2",
   "pybaselines>=1.0.0",
   "matplotlib>=3.6.2",
-  "scipy>=1.12.0"
+  "scipy>=1.12.0",
+  "rich>=13.7.1"
 ]
 
 [project.scripts]
