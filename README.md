@@ -152,14 +152,28 @@ Estimate the relative concentrations of two species in a binary mixture with the
 
 #### ``path`` : str, required
 Path to a UV-vis data file (.csv format) of one or more binary mixture spectra.
+
 #### ``component_a`` : str, required
 Path to a UV-vis spectrum (.csv format) of pure component "A".
+
 #### ``component_b`` : str, required
 Path to a UV-vis spectrum (.csv format) of pure component "B".
-#### ``-cols``, ``--columns`` : arbitrary number of ints, optional
-The columns of the binary mixture .csv file to perform fitting on. Default is None (fit all columns).
+
+#### ``-a``, ``--molarity_a`` : float, optional
+Specify the concentration (in M) of pure component "A".
+
+#### ``-b``, ``--molarity_b`` : float, optional
+Specify the concentration (in M) of pure component "B".
+
+#### ``-cols``, ``--columns`` : arbitrary number of str, optional
+Specify the columns of the binary mixture .csv file to perform fitting on. Provide the label (header) for each column. Default is None (fit all columns).
+
+#### ``-icols``, ``--index_columns`` : arbitrary number of ints, optional
+Specify the columns of the binary mixture .csv file to perform fitting on. Provide the index for each column. Default is None (fit all columns).
+
 #### ``-win``, ``--window`` : int int, optional
 Set the range of wavelengths (in nm) to use from the given spectra for fitting. Default is (300, 1100).
+
 #### ``-i``, ``--interactive`` : flag, optional
 Enable interactive mode. Show an interactive matplotlib figure of the binary mixture fitting.
 
@@ -172,7 +186,7 @@ View, edit, or reset user-configured settings with the ``config`` subcommand.
 
 Current user-configurable settings: 
     ``root_directory`` - A base directory which contains UV-vis data files. Set a root directory to enable the use of shorter, relative file paths.
-    ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``width height``
+    ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``WIDTH HEIGHT``
 
 #### ``-delete`` : flag, optional
 Delete the config file and directory. The config file is located in ``.config/uv_pro/`` inside the user's home directory.
