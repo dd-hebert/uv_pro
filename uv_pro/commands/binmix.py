@@ -8,7 +8,9 @@ import argparse
 import os
 from collections import namedtuple
 import pandas as pd
-from uv_pro.commands import command, argument
+from rich import print
+from rich.table import Table
+from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.binarymixture import BinaryMixture
 from uv_pro.plots import plot_binarymixture
 from uv_pro.io.export import prompt_for_export, export_csv
@@ -19,8 +21,12 @@ HELP = {
     'path': '''Path to a UV-vis data file (.csv format) of binary mixture spectra.''',
     'component_a': '''Path to a UV-vis spectrum (.csv format) of pure component "A".''',
     'component_b': '''Path to a UV-vis spectrum (.csv format) of pure component "B".''',
-    'columns': '''The columns of the binary mixture .csv file to perform fitting on.
-                  Default is None (fit all columns).''',
+    'molarity_a': '''Specify the concentration (in M) of pure component "A".''',
+    'molarity_b': '''Specify the concentration (in M) of pure component "B".''',
+    'columns': '''Specify the columns of the binary mixture .csv file to perform fitting on.
+                  Provide the LABEL for each column. Default is None (fit all columns).''',
+    'index_columns': '''Specify the columns of the binary mixture .csv file to perform fitting on.
+                  Provide the IDX for each column. Default is None (fit all columns).''',
     'window': '''Set the range of wavelengths (in nm) to use from the given spectra
                  for fitting. Default is (300, 1100).''',
     'interactive': '''Enable interactive mode. Show an interactive matplotlib figure
@@ -53,7 +59,7 @@ ARGS = [
         type=float,
         default=None,
         metavar='',
-        help=HELP['columns']
+        help=HELP['molarity_a']
     ),
     argument(
         '-b',
@@ -62,16 +68,7 @@ ARGS = [
         type=float,
         default=None,
         metavar='',
-        help=HELP['columns']
-    ),
-    argument(
-        '-cols',
-        '--columns',
-        action='store',
-        nargs='*',
-        default=[],
-        metavar='',
-        help=HELP['columns']
+        help=HELP['molarity_b']
     ),
     argument(
         '-win',
@@ -80,7 +77,7 @@ ARGS = [
         type=int,
         nargs=2,
         default=[300, 1100],
-        metavar='',
+        metavar=('MIN', 'MAX'),
         help=HELP['window']
     ),
     argument(
@@ -98,9 +95,32 @@ ARGS = [
         help=HELP['no_export']
     ),
 ]
+MUTEX_ARGS = [
+    mutually_exclusive_group(
+        argument(
+            '-cols',
+            '--columns',
+            action='store',
+            nargs='*',
+            default=[],
+            metavar='LABEL',
+            help=HELP['columns']
+        ),
+        argument(
+            '-icols',
+            '--index_columns',
+            action='store',
+            type=int,
+            nargs='*',
+            default=[],
+            metavar='IDX',
+            help=HELP['index_columns']
+        )
+    )
+]
 
 
-@command(args=ARGS)
+@command(args=ARGS, mutually_exclusive_args=MUTEX_ARGS)
 def binmix(args: argparse.Namespace) -> None:
     """
     Parser Info
@@ -111,13 +131,21 @@ def binmix(args: argparse.Namespace) -> None:
     mixture = pd.read_csv(args.path, index_col=0)
     component_a = pd.read_csv(args.component_a, index_col=0, usecols=[0, 1])
     component_b = pd.read_csv(args.component_b, index_col=0, usecols=[0, 1])
-    columns = args.columns if args.columns else mixture.columns
     # args.interactive = args.interactive if len(columns) == 1 else False
+
+    if args.columns:
+        mixture = mixture.loc[:, args.columns]
+
+    elif args.index_columns:
+        mixture = mixture.iloc[:, args.index_columns]
+
+    else:
+        columns = mixture.columns
 
     fit_results = []
     fit_specta = []
 
-    for column in columns:
+    for column in mixture.columns:
         try:
             bm = BinaryMixture(
                 mixture=mixture[column],
@@ -145,51 +173,49 @@ def binmix(args: argparse.Namespace) -> None:
             continue
 
     if fit_results:
-        print(_to_string(args, fit_results))
+        print(*results_table(args, fit_results), sep='\n')
 
         if args.no_export is False:
             prompt_for_export(args, fit_results, fit_specta)
 
 
-def _to_string(args, results: list[dict]) -> str:
-    headings = [('label', 10), ('coeff_a', 7), ('coeff_b', 7), ('MSE', 8)]
-    if args.molarity_a:
-        headings.append(('conc_a', 8))
-    if args.molarity_b:
-        headings.append(('conc_b', 8))
-
-    formatters = {
-        'label': lambda x: f'{x:<10}',
-        'coeff_a': lambda x: f'{x:.3}',
-        'coeff_b': lambda x: f'{x:.3}',
-        'MSE': lambda x: f'{x:.2e}',
-        'conc_a': lambda x: f'{x:.2e}',
-        'conc_b': lambda x: f'{x:.2e}',
-    }
-
-    table_width = sum(width + 3 for _, width in headings) - 1
-    table_headings = '│ ' + '   '.join(f"\033[1m{{:^{width}}}" for _, width in headings) + '\033[22m │'
-    table_row = '│ ' + '   '.join(f"{{:<{width}}}" for _, width in headings) + ' │'
-
+def results_table(args, results):
     out = [
-        f'Binary mixture: {os.path.basename(args.path)}',
-        f'Component A: {os.path.basename(args.component_a)}',
-        f'Component B: {os.path.basename(args.component_b)}\n',
-        '┌' + '─' * table_width + '┐',
-        table_headings.format(*(name for name, _ in headings)),
-        '├' + '─' * table_width + '┤',
+        f'Binary Mixture: {args.path}',
+        f'Component A: {args.component_a}',
+        f'Component B: {args.component_b}'
     ]
 
+    table = Table(title='Binary Mixture Fitting Results')
+
+    table.add_column('Label', justify='center', max_width=20, overflow='fold')
+    table.add_column('Coeff. A', justify='center')
+
+    if args.molarity_a:
+        table.add_column('Conc. A', justify='center')
+
+    table.add_column('Coeff B', justify='center',)
+
+    if args.molarity_b:
+        table.add_column('Conc. B', justify='center',)
+
+    table.add_column('MSE', justify='center')
+
+    formatters = {
+        'label': lambda x: f'{x}',
+        'coeff_a': lambda x: f'{x:.3}',
+        'conc_a': lambda x: f'{x:.2e}',
+        'coeff_b': lambda x: f'{x:.3}',
+        'conc_b': lambda x: f'{x:.2e}',
+        'MSE': lambda x: f'{x:.2e}',
+    }
+
     for result in results:
-        row_data = [
-            formatters[name](result[name]) if name in result else ''
-            for name, _ in headings
-        ]
-        out.append(table_row.format(*row_data))
+        table.add_row(*[formatters[key](val) for key, val in result.items() if val])
 
-    out.append('└' + '─' * table_width + '┘')
+    out.extend(['', table])
 
-    return '\n'.join(out)
+    return out
 
 
 def prompt_for_export(args: argparse.Namespace, results: list[dict], spectra: list[pd.Series]) -> None:
