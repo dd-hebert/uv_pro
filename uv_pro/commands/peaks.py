@@ -4,8 +4,10 @@ Functions for the ``peaks`` command.
 @author: David Hebert
 """
 import argparse
-from rich import print
+from rich import print, box
+from rich.panel import Panel
 from rich.table import Table, Column
+from rich.text import Text
 from uv_pro.commands import command, argument
 from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
@@ -64,6 +66,7 @@ ARGS = [
         action='store',
         type=str,
         default='localmax',
+        choices=['localmax', 'deriv'],
         metavar='',
         help=HELP['method']
     ),
@@ -115,6 +118,17 @@ def peaks(args: argparse.Namespace) -> None:
     *desc : UV-vis spectrum peak detection.
     *help : Find peaks in UV-vis spectra.
     """
+    print(
+        '',
+        Panel(
+            Text('Close plot window to continue...', style='bold grey100', justify='center'),
+            title=Text('uv_pro Peak Finder', style='table.title'),
+            border_style='grey27',
+            width=34,
+            box=box.SIMPLE
+        )
+    )
+
     _handle_path(args)
 
     pf = PeakFinder(
@@ -132,16 +146,17 @@ def peaks(args: argparse.Namespace) -> None:
     plot_peakfinder(pf, figsize=args.plot_size)
 
     if pf.peaks['peaks']:
-        print(_rich_text(pf.peaks))
+        print('', _rich_text(args, pf.peaks))
 
 
-def _rich_text(peaks: dict) -> Table:
+def _rich_text(args: argparse.Namespace, peaks: dict) -> Table:
     has_epsilon = 'epsilon' in peaks['info'].columns
     table = Table(
         Column('λ', justify='center'),
         Column('abs', justify='center'),
-        title='Peak Finder Results',
-        width=30
+        width=30,
+        box=box.SIMPLE,
+        row_styles=['grey100', 'white'],
     )
 
     if has_epsilon:
@@ -156,4 +171,10 @@ def _rich_text(peaks: dict) -> Table:
 
         table.add_row(*row)
 
-    return table
+    return Panel(
+        table,
+        title=Text('Peak Finder Results', style='grey0 on medium_purple3'),
+        subtitle=Text(f'Method: {args.method}', style='table.caption'),
+        width=34,
+        box=box.ROUNDED
+    )
