@@ -538,28 +538,3 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
 
     else:
         plot_spectra(dataset, dataset.raw_spectra)
-
-
-def nm_to_color(wavelength: int) -> str:
-    colors = [
-        ((685, 740), 'dark_red'),
-        ((625, 685), 'red1'),
-        ((607, 625), 'orange_red1'),
-        ((590, 607), 'orange1'),
-        ((577, 590), 'gold1'),
-        ((565, 577), 'yellow1'),
-        ((532, 565), 'green_yellow'),
-        ((500, 532), 'green1'),
-        ((492, 500), 'aquamarine1'),
-        ((485, 492), 'cyan1'),
-        ((462, 485), 'deep_sky_blue1'),
-        ((440, 462), 'blue1'),
-        ((410, 440), 'blue_violet'),
-        ((380, 410), 'dark_violet')
-    ]
-
-    for (low, high), color in colors:
-        if low < wavelength <= high:
-            return color
-
-    return 'none'
