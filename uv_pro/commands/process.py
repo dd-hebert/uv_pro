@@ -6,10 +6,11 @@ Functions for the ``process`` command.
 
 import os
 import argparse
-from rich import print
+from rich import print, box
 from rich.console import RenderableType
-from rich.table import Table, Column
+from rich.columns import Columns
 from rich.panel import Panel
+from rich.table import Table, Column
 from rich.text import Text
 from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.dataset import Dataset
@@ -286,91 +287,153 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
 
 
 def _rich_text(dataset: Dataset) -> list[RenderableType]:
-    def fit_table(fit: dict) -> Table:
+    def processing_panel(dataset: Dataset) -> Panel:
+        title = dataset.name
+        if len(title) > 74:
+            title = title[:36] + '...' + title[-35:]
+
+        subtitle = [
+            f'Total Spectra: {len(dataset.raw_spectra.columns)}',
+            f'Total time: {dataset.spectra_times.max()} s'
+        ]
+
+        subtitle += [f'Cycle time: {dataset.cycle_time} s'] if dataset.cycle_time else []
+
+        left = Table('', '', show_header=False, box=box.SIMPLE, expand=False)
+        right = Table('', '', show_header=False, box=box.SIMPLE, expand=False)
+
+        if dataset.is_processed:
+            if dataset.trim:
+                start, end = dataset.trim
+                left.add_row(
+                    'Trimmed start (s)',
+                    Text(f'{start}', style='medium_purple1')
+                )
+                left.add_row(
+                    'Trimmed end (s)',
+                    Text(f'{end}', style='medium_purple1')
+                )
+
+            left.add_row(
+                'Outliers found ',
+                Text(f'{len(dataset.outliers)}', style='medium_purple1')
+            )
+
+            if dataset.slicing is None:
+                right.add_row(
+                    'Spectra remaining ',
+                    Text(f'{len(dataset.processed_spectra.columns)}', style='medium_purple1')
+                )
+
+            else:
+                right.add_row(
+                    'Slicing mode',
+                    Text(f'{dataset.slicing["mode"]}', style='medium_purple1')
+                )
+
+                if dataset.slicing['mode'] == 'gradient':
+                    right.add_row(
+                        'Slicing coefficient',
+                        Text(f'{dataset.slicing["coeff"]}', style='medium_purple1')
+                    )
+                    right.add_row(
+                        'Slicing exponent',
+                        Text(f'{dataset.slicing["expo"]}', style='medium_purple1')
+                    )
+
+                right.add_row(
+                    'Slices ',
+                    Text(f'{len(dataset.processed_spectra.columns)}', style='medium_purple1')
+                )
+
+        return Panel(
+            Columns([left, right], expand=True, align='left'),
+            title=Text(title, style='grey0 on medium_purple3'),
+            subtitle=Text('\t'.join(subtitle), style='table.caption'),
+            width=80,
+            box=box.ROUNDED,
+            expand=True
+        )
+
+    def fit_panel(fit: dict) -> Panel:
         equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
         table = Table(
-            Column('λ', justify='center'),
-            Column('kobs', justify='center'),
-            Column('abs_0', justify='center'),
-            Column('abs_f', justify='center'),
-            Column('r²', justify='center'),
-            title='Exponential Fit Results',
-            caption=f'Fit function: {equation}',
-            width=65
+            Column('λ (nm)', justify='right', ratio=1),
+            Column('kobs (s-1)', justify='center', style='medium_purple1', ratio=3),
+            Column('abs_0 (a.u.)', justify='center', ratio=2),
+            Column('abs_f (a.u.)', justify='center', ratio=2),
+            Column('r²', justify='center', ratio=2),
+            width=80,
+            box=box.HORIZONTALS,
+            row_styles=['grey100', 'white'],
         )
 
         for wavelength in fit['params'].columns:
             params = fit['params'][wavelength]
+            color = 'red' if params['r2'] < 0.85 else 'none'
             table.add_row(
                 str(wavelength),
-                '{:.2e} ± {:.2e}'.format(params['kobs'], params['kobs err']),
-                '{: .2e}'.format(params['abs_0']),
-                '{: .2e}'.format(params['abs_f']),
-                '{:.4f}'.format(params['r2'])
+                '{: .2e} ± {:.2e}'.format(params['kobs'], params['kobs err']),
+                '{: .3f}'.format(params['abs_0']),
+                '{: .3f}'.format(params['abs_f']),
+                Text('{:.4f}'.format(params['r2']), style=color)
             )
 
-        return table
+        return Panel(
+            table,
+            title=Text('Exponential Fit Results', style='grey0 on medium_purple3'),
+            subtitle=Text(f'Fit function: {equation}', style='table.caption'),
+            width=80,
+            box=box.SIMPLE
+        )
 
-    def init_rate_table(init_rate: dict) -> Table:
+    def init_rate_panel(init_rate: dict) -> Panel:
         table = Table(
-            Column('λ', justify='center'),
-            Column('rate', justify='center'),
-            Column('Δabs', justify='center'),
-            Column('Δt', justify='center'),
-            Column('r²', justify='center'),
-            title='Initial Rates Results',
-            width=65
+            Column('λ (nm)', justify='right', ratio=1),
+            Column('rate (a.u./s)', justify='center', style='medium_purple1', ratio=3),
+            Column('Δabs (%)', justify='center', ratio=2),
+            Column('Δt (s)', justify='center', ratio=2),
+            Column('r²', justify='center', ratio=2),
+            width=80,
+            expand=True,
+            box=box.HORIZONTALS,
+            row_styles=['grey100', 'white'],
         )
 
         for wavelength in init_rate['params'].columns:
             params = init_rate['params'][wavelength]
+            color = 'red' if params['r2'] < 0.85 else 'none'
             table.add_row(
                 str(wavelength),
                 '{: .2e} ± {:.2e}'.format(params['slope'], params['slope err']),
                 '{:.2%}'.format(abs(params['delta_abs_%'])),
                 '{:.1f}'.format(params['delta_t']),
-                '{:.4f}'.format(params['r2'])
+                Text('{:.4f}'.format(params['r2']), style=color)
             )
 
-        return table
+        return Panel(
+            table,
+            title=Text('Initial Rates Results', style='grey0 on medium_purple3'),
+            width=80,
+            box=box.SIMPLE
+        )
 
-    out = []
-    out.append(f'Filename: [bold cyan]{dataset.name}[/bold cyan]')
-    out.append(f'Spectra found: {len(dataset.raw_spectra.columns)}')
+    renderables = ['', processing_panel(dataset)]
+    log = []
 
-    if dataset.cycle_time:
-        out.append(f'Cycle time (s): {dataset.cycle_time}')
+    if dataset.fit is not None:
+        renderables.extend(['', fit_panel(dataset.fit)])
 
-    if dataset.is_processed is True:
-        out.append(f'Outliers found: {len(dataset.outliers)}')
+        if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
+            log.append(Text(f'Unable to fit exponential to: {", ".join(map(str, unable_to_fit))} nm.', style='red'))
 
-        if dataset.trim:
-            start, end = dataset.trim
-            start = '[bold cyan]start[/bold cyan]' if start <= dataset.spectra_times.iloc[0] else f'{start} seconds'
-            end = '[bold cyan]end[/bold cyan]' if end >= dataset.spectra_times.iloc[-1] else f'{end} seconds'
+    if dataset.init_rate is not None:
+        renderables.extend(['', init_rate_panel(dataset.init_rate)])
 
-            out.append(f'Keeping data from {start} to {end}.')
+    if log:
+        renderables.extend(log)
 
-        if dataset.slicing is None:
-            out.append(f'Spectra remaining: {len(dataset.processed_spectra.columns)}')
-
-        else:
-            out.append(f'Slicing mode: [bold cyan]{dataset.slicing["mode"]}[/bold cyan]')
-            if dataset.slicing['mode'] == 'gradient':
-                out.append(f'Coefficient: {dataset.slicing["coeff"]}')
-                out.append(f'Exponent: {dataset.slicing["expo"]}')
-
-            out.append(f'Slices: {len(dataset.processed_spectra.columns)}')
-
-        if dataset.fit is not None:
-            out.extend(['', fit_table(dataset.fit)])
-            if unable_to_fit := set(dataset.chosen_traces.columns).difference(set(dataset.fit['curves'].columns)):
-                out.append(f'[underline red]Unable to fit: {", ".join(map(str, unable_to_fit))} nm.[/underline red]')
-
-        if dataset.init_rate is not None:
-            out.extend(['', init_rate_table(dataset.init_rate)])
-
-    return out
+    return renderables
 
 
 def prompt_for_export(dataset) -> list[str]:
@@ -445,21 +508,58 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
 
         if args.quick_fig is True:
             try:
+                print(
+                    '',
+                    Panel(
+                        Text('Enter ctrl-c to quit', style='bold grey100', justify='center'),
+                        title=Text('uv_pro Quick Figure', style='table.title'),
+                        border_style='grey27',
+                        width=80,
+                        box=box.SIMPLE
+                    )
+                )
+
                 files_exported.append(getattr(QuickFig(dataset), 'exported_figure'))
 
             except AttributeError:
                 pass
 
         else:
+            print('Close plot window to continue...')
             plot_2x2(dataset, figsize=args.plot_size)
 
         if args.no_export is False:
             files_exported.extend(prompt_for_export(dataset))
 
         if files_exported:
-            print(f'\nExport location: {os.path.dirname(args.path)}')
+            print(f'\nExport location: [repr.path]{os.path.dirname(args.path)}[/repr.path]')
             print('Files exported:')
-            [print(f'\t{file}') for file in files_exported]
+            [print(f'\t[repr.filename]{file}[/repr.filename]') for file in files_exported]
 
     else:
         plot_spectra(dataset, dataset.raw_spectra)
+
+
+def nm_to_color(wavelength: int) -> str:
+    colors = [
+        ((685, 740), 'dark_red'),
+        ((625, 685), 'red1'),
+        ((607, 625), 'orange_red1'),
+        ((590, 607), 'orange1'),
+        ((577, 590), 'gold1'),
+        ((565, 577), 'yellow1'),
+        ((532, 565), 'green_yellow'),
+        ((500, 532), 'green1'),
+        ((492, 500), 'aquamarine1'),
+        ((485, 492), 'cyan1'),
+        ((462, 485), 'deep_sky_blue1'),
+        ((440, 462), 'blue1'),
+        ((410, 440), 'blue_violet'),
+        ((380, 410), 'dark_violet')
+    ]
+
+    for (low, high), color in colors:
+        if low < wavelength <= high:
+            return color
+
+    return 'none'

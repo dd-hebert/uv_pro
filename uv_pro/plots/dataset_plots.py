@@ -31,7 +31,6 @@ def plot_spectra(dataset: Dataset, spectra) -> None:
     plt.title(dataset.name, fontweight='bold')
     plt.plot(spectra)
     plt.xlim(200, 1100)
-    print('Close plot window to continue...', end='\n')
     plt.show()
 
 
@@ -73,7 +72,6 @@ def plot_1x2(dataset: Dataset, **fig_kw) -> None:
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset)
 
-    print('Close plot window to continue...', end='\n')
     plt.show()
 
 
@@ -98,7 +96,6 @@ def plot_1x3(dataset: Dataset, **fig_kw) -> None:
     _processed_data_subplot(ax_processed_data, dataset)
     _time_traces_subplot(ax_time_traces, dataset)
 
-    print('Close plot window to continue...', end='\n')
     plt.show()
 
 
@@ -131,7 +128,6 @@ def plot_2x2(dataset: Dataset, **fig_kw) -> None:
     _time_traces_subplot(ax_time_traces, dataset)
     _outliers_subplot(ax_outliers, dataset)
 
-    print('Close plot window to continue...')
     plt.show()
 
 

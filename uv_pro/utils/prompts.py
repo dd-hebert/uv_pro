@@ -5,6 +5,8 @@ Helper functions for interactive terminal prompts.
 """
 
 from rich import print
+from rich.console import Console
+from rich.text import Text
 
 
 def user_choice(header: str, options: list[dict]) -> list[str]:
@@ -24,18 +26,22 @@ def user_choice(header: str, options: list[dict]) -> list[str]:
     list[str]
         The user's input selections.
     """
-    prompt = f'\n{header}\n{"=" * len(header)}\n'
-    prompt += '\n'.join([f'({option["key"]}) {option["name"]}' for option in options])
-    prompt += '\n\nChoice: '
+    prompt = Text(f'\n{header}\n{"=" * len(header)}\n', style='prompt')
+    for opt in options:
+        choice = Text(f'({opt["key"]}) {opt["name"]}\n')
+        choice.stylize('prompt.choices', 1, 2)
+        prompt.append(choice)
 
+    prompt.append('\nChoice: ', style='none')
+    _input = Console().input
     valid_choices = [option['key'] for option in options]
 
     try:
-        user_choices = [key for key in input(prompt).strip().split() if key in valid_choices]
+        user_choices = [key for key in _input(prompt).strip().split() if key in valid_choices]
 
         while not user_choices:
             print('\nInvalid selection. Enter one or more of the displayed options or ctrl-c to quit.')
-            user_choices = [key for key in input(prompt).strip().split() if key in valid_choices]
+            user_choices = [key for key in _input(prompt).strip().split() if key in valid_choices]
 
         return user_choices
 

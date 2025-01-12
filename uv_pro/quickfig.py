@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.artist import Artist
 from matplotlib.figure import Figure
+from rich import print
 from uv_pro.dataset import Dataset
 from uv_pro.plots.dataset_plots import _processed_data_subplot, _time_traces_subplot
 from uv_pro.utils.prompts import user_choice
@@ -31,17 +32,7 @@ class QuickFig:
     exported_figure : str
         The filename of the exported quick figure.
     """
-    logo = '\n'.join(
-        [
-            '\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓',
-            '┇ uv_pro Quick Figure ┇',
-            '┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛',
-            'Enter ctrl-c to quit.\n'
-        ]
-    )
-
     def __init__(self, dataset: Dataset) -> None:
-        print(QuickFig.logo)
         self.dataset = dataset
         self.quick_figure()
 

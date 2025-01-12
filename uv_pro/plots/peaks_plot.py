@@ -10,19 +10,8 @@ from uv_pro.peakfinder import PeakFinder
 from uv_pro.peaks import smooth_spectrum
 
 
-SPLASH = '\n'.join(
-    [
-        '\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓',
-        '┇ uv_pro Peak Finder ┇',
-        '┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛',
-        'Close plot window to continue.\n'
-    ]
-)
-
-
 def plot_peakfinder(pf: PeakFinder, **fig_kw) -> None:
     """Interactive peak finder plot."""
-    print(SPLASH)
     fig, ax = _create_fig(pf, **fig_kw)
 
     spectrum_scatter = _plot_spectrum_scatter(ax, pf)

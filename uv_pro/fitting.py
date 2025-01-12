@@ -6,6 +6,7 @@ Contains data fitting functions.
 import warnings
 from collections import namedtuple
 from typing import Optional, Callable
+from rich import print
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
 import numpy as np
@@ -186,13 +187,13 @@ def _fit_time_traces(time_traces: pd.DataFrame, fit_func: Callable,
         parameters and the fits.
     """
     if len(time_traces.index) <= min_data_points:
-        print('Fitting skipped. Not enough data points...\n')
+        print('[repr.error]Fitting skipped. Not enough data points...[/repr.error]\n')
         return None
 
     fit_params = {}
     fitted_data = {}
 
-    for column in time_traces.columns:
+    for column in sorted(time_traces.columns):
         if trace_prehandler:
             trace = trace_prehandler(time_traces[column])
         else:

@@ -16,16 +16,6 @@ from matplotlib.text import Annotation
 from uv_pro.binarymixture import BinaryMixture
 
 
-SPLASH = '\n'.join(
-    [
-        '\n┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┓',
-        '┇ uv_pro Binary Mixture Fitter ┇',
-        '┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┛',
-        'Close plot window to continue.\n'
-    ]
-)
-
-
 def plot_binarymixture(bm: BinaryMixture, **fig_kw) -> None:
     """
     Interactive binary mixture solver plot.
@@ -40,7 +30,6 @@ def plot_binarymixture(bm: BinaryMixture, **fig_kw) -> None:
     binary_mixture : :class:`~uv_pro.binarymix.BinaryMixture`.
         The :class:`~uv_pro.binarymix.BinaryMixture` to plot.
     """
-    print(SPLASH)
     fig, ax_binmix, ax_diff, ax_mesh = _create_fig(**fig_kw)
 
     _ = _mixture_subplot(ax_binmix, bm)
