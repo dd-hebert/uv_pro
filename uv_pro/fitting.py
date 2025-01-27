@@ -8,7 +8,7 @@ from collections import namedtuple
 from typing import Optional, Callable
 from rich import print
 from scipy.optimize import curve_fit
-from scipy.stats import linregress
+import scipy.stats as stats
 import numpy as np
 import pandas as pd
 
@@ -54,10 +54,11 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
 
         return curve_fit_params
 
-    def post_fit_handler(trace, fit_params, fit_errors) -> tuple[dict, pd.Series]:
+    def post_fit_handler(trace, fit_params, fit_cov) -> tuple[dict, pd.Series]:
         """Handle result output and formatting."""
         abs_0, abs_f, kobs = fit_params
-        abs_0_err, abs_f_err, kobs_err = np.sqrt(np.diag(fit_errors))
+        abs_0_err, abs_f_err, kobs_err = np.sqrt(np.diag(fit_cov))
+        kobs_ci = stats.t.interval(0.95, len(trace) - 3, loc=kobs, scale=kobs_err)
 
         curve = pd.Series(
             data=exponential_func(trace.index, *fit_params),
@@ -72,6 +73,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
             'abs_f err': abs_f_err,
             'kobs': kobs,
             'kobs err': kobs_err,
+            'kobs ci': (kobs_ci[1] - kobs_ci[0]) * 0.5,
             'r2': rsquared(trace, curve)
         }, curve
 
@@ -127,6 +129,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
         abs_0 = trace.iloc[0]
         abs_f = trace.iloc[-1]
         m, b, _, _, m_err = fit_params
+        ci = stats.t.interval(0.95, len(trace) - 2, loc=m, scale=m_err)
 
         line = pd.Series(
             data=linear_func(trace.index, m, b),
@@ -137,6 +140,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
         return {
             'slope': m,
             'slope err': m_err,
+            'slope ci': (ci[1] - ci[0]) * 0.5,
             'intercept': b,
             'abs_0': abs_0,
             'abs_f': abs_f,
@@ -147,7 +151,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
 
     if fit := _fit_time_traces(
         time_traces,
-        linregress,
+        stats.linregress,
         fit_params_handler,
         post_fit_handler,
         trace_prehandler=cutoff_handler
