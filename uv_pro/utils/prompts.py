@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.text import Text
 
 
-def user_choice(header: str, options: list[dict]) -> list[str]:
+def user_choice(header: str, options: list[dict]) -> list[str] | list:
     """
     Prompt the user for input.
 
