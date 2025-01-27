@@ -8,17 +8,13 @@ import argparse
 import os
 from collections import namedtuple
 import pandas as pd
-from rich import print, box
-from rich.columns import Columns
-from rich.console import RenderableType
-from rich.panel import Panel
-from rich.table import Table, Column
-from rich.text import Text
+from rich import print
 from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.binarymixture import BinaryMixture
 from uv_pro.plots import plot_binarymixture
 from uv_pro.io.export import export_csv
 from uv_pro.utils.prompts import user_choice
+from uv_pro.utils._rich import splash, BinmixOutput
 
 
 HELP = {
@@ -162,15 +158,7 @@ def binmix(args: argparse.Namespace) -> None:
             if args.interactive:
                 if first_iteration:
                     first_iteration = False
-                    print(
-                        Panel(
-                            Text('Close plot window to continue...', style='bold grey100', justify='center'),
-                            title=Text('uv_pro Binary Mixture Fitter', style='table.title'),
-                            border_style='grey27',
-                            width=80,
-                            box=box.SIMPLE
-                        )
-                    )
+                    print('', splash(text='Close plot window to continue...', title='uv_pro Binary Mixture Fitter'))
 
                 plot_binarymixture(bm, figsize=args.plot_size)
 
@@ -190,107 +178,14 @@ def binmix(args: argparse.Namespace) -> None:
             continue
 
     if fit_results:
-        print(*_rich_text(args, fit_results), sep='\n')
+        fit_df = pd.DataFrame(fit_results).set_index('label')
+        print('', BinmixOutput(args, fit_df.T), sep='\n')
 
         if args.no_export is False:
-            prompt_for_export(args, fit_results, fit_specta)
+            prompt_for_export(args, fit_df, fit_specta)
 
 
-def _rich_text(args, results) -> list[RenderableType]:
-    """Pretty print fitting results with ``rich``."""
-    def files_panel() -> Panel:
-        title = os.path.basename(args.path)
-        if len(title) > 74:
-            title = title[:36] + '...' + title[-35:]
-
-        subtitle = [f'{k}: {v:.3e} M' for k, v in {'[A]': args.molarity_a, '[B]': args.molarity_b}.items() if v]
-        subtitle = '\t\t'.join(subtitle) if subtitle else ''
-
-        path_a = Text.assemble(
-            Text(f'{os.path.dirname(args.component_a)}\\', style='medium_purple4'),
-            Text(f'{os.path.basename(args.component_a)}', style='bold medium_purple1')
-        )
-        path_b = Text.assemble(
-            Text(f'{os.path.dirname(args.component_b)}\\', style='medium_purple4'),
-            Text(f'{os.path.basename(args.component_b)}', style='bold medium_purple1')
-        )
-
-        caption_a = f'[A]: {args.molarity_a:.3e} (M)' if args.molarity_a else None
-        caption_b = f'[B]: {args.molarity_b:.3e} (M)' if args.molarity_b else None
-
-        left = Table(
-            Column('Component A', justify='center', overflow='fold'),
-            caption=caption_a,
-            # style='medium_purple4',
-            # header_style='bold medium_purple4',
-            width=35,
-            box=box.ROUNDED,
-            expand=False,
-        )
-        right = Table(
-            Column('Component B', justify='center', overflow='fold'),
-            caption=caption_b,
-            # style='medium_purple4',
-            # header_style='bold medium_purple4',
-            width=35,
-            box=box.ROUNDED,
-            expand=False,
-        )
-
-        left.add_row(path_a)
-        right.add_row(path_b)
-
-        return Panel(
-            Columns([left, right], expand=True, align='center'),
-            title=Text(title, style='grey0 on medium_purple3'),
-            width=80,
-            box=box.SIMPLE,
-            expand=False
-        )
-
-    def fit_panel() -> None:
-        fit_table = Table(
-            width=80,
-            box=box.HORIZONTALS,
-            row_styles=['grey100', 'white'],
-        )
-
-        fit_table.add_column('Label', justify='center', max_width=20, overflow='fold')
-        fit_table.add_column('Coeff. A', justify='center')
-
-        if args.molarity_a:
-            fit_table.add_column('[A] (M)', justify='center')
-
-        fit_table.add_column('Coeff. B', justify='center',)
-
-        if args.molarity_b:
-            fit_table.add_column('[B] (M)', justify='center',)
-
-        fit_table.add_column('MSE', justify='center')
-
-        formatters = {
-            'label': lambda x: f'{x}',
-            'coeff_a': lambda x: f'{x:.3}',
-            'conc_a': lambda x: f'{x:.2e}',
-            'coeff_b': lambda x: f'{x:.3}',
-            'conc_b': lambda x: f'{x:.2e}',
-            'MSE': lambda x: f'{x:.2e}',
-        }
-
-        for result in results:
-            fit_table.add_row(*[formatters[key](val) for key, val in result.items() if val])
-
-        return Panel(
-            fit_table,
-            title=Text('Binary Mixture Fitting Results', style='grey0 on medium_purple3'),
-            width=80,
-            box=box.SIMPLE
-        )
-
-    return ['', files_panel(), '', fit_panel()]
-
-
-def prompt_for_export(args: argparse.Namespace, results: list[dict], spectra: list[pd.Series]) -> None:
+def prompt_for_export(args: argparse.Namespace, results: pd.DataFrame, spectra: list[pd.Series]) -> None:
     """
     Prompt the user for data export.
 
@@ -325,8 +220,7 @@ def prompt_for_export(args: argparse.Namespace, results: list[dict], spectra: li
 
     if user_choices := user_choice(header=header, options=options):
         if '1' in user_choices:
-            out = pd.DataFrame(results).set_index('label')
-            files_exported.append(export_csv(ds, out, suffix='Binmix Params'))
+            files_exported.append(export_csv(ds, results, suffix='Binmix Params'))
 
         if str(spectra_key) in user_choices:
             out = pd.DataFrame(spectra).T

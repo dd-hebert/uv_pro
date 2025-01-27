@@ -4,14 +4,12 @@ Functions for the ``peaks`` command.
 @author: David Hebert
 """
 import argparse
-from rich import print, box
-from rich.panel import Panel
-from rich.table import Table, Column
-from rich.text import Text
+from rich import print
 from uv_pro.commands import command, argument
 from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
 from uv_pro.plots import plot_peakfinder
+from uv_pro.utils._rich import splash, PeaksOutput
 
 
 HELP = {
@@ -118,16 +116,7 @@ def peaks(args: argparse.Namespace) -> None:
     *desc : UV-vis spectrum peak detection.
     *help : Find peaks in UV-vis spectra.
     """
-    print(
-        '',
-        Panel(
-            Text('Close plot window to continue...', style='bold grey100', justify='center'),
-            title=Text('uv_pro Peak Finder', style='table.title'),
-            border_style='grey27',
-            width=34,
-            box=box.SIMPLE
-        )
-    )
+    print('', splash(text='Close plot window to continue...', title='uv_pro Peak Finder', width=34))
 
     _handle_path(args)
 
@@ -146,35 +135,4 @@ def peaks(args: argparse.Namespace) -> None:
     plot_peakfinder(pf, figsize=args.plot_size)
 
     if pf.peaks['peaks']:
-        print('', _rich_text(args, pf.peaks))
-
-
-def _rich_text(args: argparse.Namespace, peaks: dict) -> Table:
-    has_epsilon = 'epsilon' in peaks['info'].columns
-    table = Table(
-        Column('λ', justify='center'),
-        Column('abs', justify='center'),
-        width=30,
-        box=box.SIMPLE,
-        row_styles=['grey100', 'white'],
-    )
-
-    if has_epsilon:
-        table.add_column('ε', justify='center')
-
-    for wavelength in peaks['info'].index:
-        absorbance = '{:^.3f}'.format(peaks['info']['abs'].loc[wavelength])
-        row = [str(wavelength), absorbance]
-
-        if has_epsilon:
-            row.append('{:^.3e}'.format(peaks['info']['epsilon'].loc[wavelength]))
-
-        table.add_row(*row)
-
-    return Panel(
-        table,
-        title=Text('Peak Finder Results', style='grey0 on medium_purple3'),
-        subtitle=Text(f'Method: {args.method}', style='table.caption'),
-        width=34,
-        box=box.ROUNDED
-    )
+        print('', PeaksOutput(args, pf.peaks))
