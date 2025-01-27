@@ -99,7 +99,9 @@ def _delete_config(config: Config) -> None:
 
 def _edit_config(config: Config, setting: str) -> None:
     if value := get_value(title=setting, prompt='Enter a new value: '):
-        if config.modify(section='Settings', key=setting, value=value):
+        config.set(section='Settings', option=setting, value=value)
+        if config.validate():
+            config._write()
             return
 
         else:
@@ -107,7 +109,8 @@ def _edit_config(config: Config, setting: str) -> None:
 
 
 def _reset_config(config: Config, setting: str) -> None:
-    config.modify('Settings', setting, config.defaults[setting])
+    config.remove_option('Settings', setting)
+    config._write()
 
 
 def _print_config(config: Config) -> None:

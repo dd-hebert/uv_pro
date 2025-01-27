@@ -30,6 +30,6 @@ def validate_plot_size(plot_size: str, verbose: bool) -> bool:
     print(f'Config error: Plot size {plot_size} is invalid.')
 
     if verbose:
-        print('Resetting to default...')
+        print('Resetting to plot size to default...')
 
     return False

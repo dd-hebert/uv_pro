@@ -9,96 +9,50 @@ can be found in the user's home directory.
 
 import os
 from configparser import ConfigParser
-from uv_pro.utils._validate import validate_root_dir, validate_plot_size
 from uv_pro.utils._defaults import CONFIG_MAP
 
 
-class Config:
-    """
-    A class for handling config files.
+name = 'uv_pro'
+CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', f'{name}')
+CONFIG_FILENAME = 'settings.ini'
+CONFIG_PATH = os.path.join(CONFIG_DIR, CONFIG_FILENAME)
+DEFAULTS = {cfg['key']: cfg['default_str'] for (_, cfg) in CONFIG_MAP.items()}
 
-    Attributes
-    ----------
-    config : :class:`configparser.ConfigParser`
-        The current configuration.
-    defaults : dict
-        The default config values.
-    directory : str
-        The path to the configuration file directory.
-    filename : str
-        The name of the configuration file.
-    name : str
-        The name of the configuration file.
-    """
-    name = 'uv_pro'
-    directory = os.path.join(os.path.expanduser('~'), '.config', f'{name}')
-    filename = 'settings.ini'
-    defaults = {cfg['key']: cfg['default_str'] for (_, cfg) in CONFIG_MAP.items()}
 
-    def __init__(self) -> None:
-        if not self.exists():
-            self.create()
-            self.write(self.get_defaults())
+class Config(ConfigParser):
+    """wrapper for ConfigParser"""
+    def __init__(self):
+        super().__init__(
+            defaults=DEFAULTS,
+            default_section='Settings'
+        )
 
-        self.config = self.read()
-        self.validate(self.config, fallback=Config.defaults, verbose=True)
+        if not os.path.exists(CONFIG_PATH):
+            os.makedirs(CONFIG_DIR, exist_ok=True)
+            self._write()
 
-    def exists(self) -> bool:
-        """Check if config file exists."""
-        return os.path.exists(os.path.join(Config.directory, Config.filename))
+        else:
+            self.read(CONFIG_PATH)
+            self.validate(verbose=True)
+            self._write()
 
-    def create(self) -> None:
-        """Create the config file directory."""
-        os.makedirs(Config.directory, exist_ok=True)
-
-    def get(self, section: str, option: str) -> str:
-        return self.config.get(section, option)
-
-    def items(self, section: str) -> list[tuple[str, str]]:
-        return self.config.items(section)
-
-    def get_defaults(self) -> ConfigParser:
-        """Get the default configuration."""
-        default_config = ConfigParser()
-        default_config['Settings'] = Config.defaults
-        return default_config
-
-    def reset(self) -> None:
-        """Reset the configuration to the default values."""
-        self.write(self.get_defaults())
-
-    def write(self, config: ConfigParser) -> None:
+    def _write(self) -> None:
         """Write settings to the config file."""
-        with open(os.path.join(Config.directory, Config.filename), "w") as f:
-            config.write(f)
+        with open(CONFIG_PATH, "w") as f:
+            self.write(f)
 
-    def read(self) -> ConfigParser:
-        """Get the current configuration."""
-        config = ConfigParser()
-        config.read(os.path.join(Config.directory, Config.filename))
-        return config
-
-    def modify(self, section: str, key: str, value: str) -> bool:
-        """Modify a config value and write to file if valid. Return True if successful."""
-        new_config = self.read()
-        new_config.set(section, key, value)
-        return self.validate(new_config, fallback=dict(self.config['Settings']))
-
-    def validate(self, config: ConfigParser, fallback: dict, verbose: bool = False) -> bool:
+    def validate(self, verbose: bool = False) -> bool:
         """Validate config values. Return True if validated."""
         valid = True
-        root_dir = config.get('Settings', 'root_directory')
-        plot_size = config.get('Settings', 'plot_size')
 
-        if not validate_root_dir(root_dir, verbose):
-            config.set('Settings', 'root_directory', fallback['root_directory'])
-            valid = False
+        for _, config_mapping in CONFIG_MAP.items():
+            if self.has_option('Settings', config_mapping['key']):
+                config_value = self.get('Settings', config_mapping['key'])
+                validation_func = config_mapping['validate_func']
 
-        if not validate_plot_size(plot_size, verbose):
-            config.set('Settings', 'plot_size', fallback['plot_size'])
-            valid = False
-
-        self.write(config)
+                if not validation_func(config_value, verbose):
+                    self.remove_option('Settings', config_mapping['key'])
+                    valid = False
 
         return valid
 
@@ -125,7 +79,7 @@ class Config:
         """
         def get_val(section: str, key: str, type: callable, default_val=None, **kwargs):
             try:
-                if value := self.config.get(section, key):
+                if value := self.get(section, key):
                     return type(value)
 
             except Exception as e:
@@ -133,4 +87,4 @@ class Config:
 
             return default_val
 
-        return [(arg_name, get_val(**config_details)) for arg_name, config_details in CONFIG_MAP.items()]
+        return [(arg_name, get_val(**config_mapping)) for arg_name, config_mapping in CONFIG_MAP.items()]
