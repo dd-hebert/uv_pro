@@ -12,6 +12,7 @@ from uv_pro.dataset import Dataset
 
 
 plt.style.use('seaborn-v0_8-bright')
+CMAPS = plt.colormaps()
 
 
 def plot_spectra(dataset: Dataset, spectra) -> None:
@@ -53,7 +54,7 @@ def plot_time_traces(dataset: Dataset) -> None:
     plt.show()
 
 
-def plot_1x2(dataset: Dataset, **fig_kw) -> None:
+def plot_1x2(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     """
     Show the 1-by-2 plot.
 
@@ -64,18 +65,22 @@ def plot_1x2(dataset: Dataset, **fig_kw) -> None:
     ----------
     dataset : :class:`~uv_pro.dataset.Dataset`
         The :class:`~uv_pro.dataset.Dataset` to be plotted.
+    cmap : str or None
+        The name of a ``matplotlib`` built-in colormap.
+        Sets the colors of the processed spectra plot.
+        Default is ``'default'``.
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
     fig, (ax_raw_data, ax_processed_data) = plt.subplots(1, 2, layout='constrained', **fig_kw)
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
-    _processed_data_subplot(ax_processed_data, dataset)
+    _processed_data_subplot(ax_processed_data, dataset, cmap)
 
     plt.show()
 
 
-def plot_1x3(dataset: Dataset, **fig_kw) -> None:
+def plot_1x3(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     """
     Show the 1-by-3 plot.
 
@@ -87,19 +92,23 @@ def plot_1x3(dataset: Dataset, **fig_kw) -> None:
     ----------
     dataset : :class:`~uv_pro.dataset.Dataset`
         The :class:`~uv_pro.dataset.Dataset` to be plotted.
+    cmap : str or None
+        The name of a ``matplotlib`` built-in colormap.
+        Sets the colors of the processed spectra plot.
+        Default is ``'default'``.
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
     fig, (ax_raw_data, ax_processed_data, ax_time_traces) = plt.subplots(1, 3, layout='constrained', **fig_kw)
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
-    _processed_data_subplot(ax_processed_data, dataset)
+    _processed_data_subplot(ax_processed_data, dataset, cmap)
     _time_traces_subplot(ax_time_traces, dataset)
 
     plt.show()
 
 
-def plot_2x2(dataset: Dataset, **fig_kw) -> None:
+def plot_2x2(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     """
     Show the 2-by-2 plot.
 
@@ -118,13 +127,17 @@ def plot_2x2(dataset: Dataset, **fig_kw) -> None:
     ----------
     dataset : :class:`~uv_pro.dataset.Dataset`
         The :class:`~uv_pro.dataset.Dataset` to be plotted.
+    cmap : str or None
+        The name of a ``matplotlib`` built-in colormap.
+        Sets the colors of the processed spectra plot.
+        Default is ``'default'``.
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
     fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_outliers)) = plt.subplots(2, 2, constrained_layout=True, **fig_kw)
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
-    _processed_data_subplot(ax_processed_data, dataset)
+    _processed_data_subplot(ax_processed_data, dataset, cmap)
     _time_traces_subplot(ax_time_traces, dataset)
     _outliers_subplot(ax_outliers, dataset)
 
@@ -143,6 +156,8 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset) -> None:
         The :class:`~uv_pro.dataset.Dataset` to be plotted.
     """
     spectra = dataset.raw_spectra
+    cycler = _get_linestyles(spectra)
+    ax.set_prop_cycle(cycler)
     ax.set_title('Raw Data', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(190, 1100)
     ax.set(
@@ -153,7 +168,7 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset) -> None:
     ax.plot(spectra)
 
 
-def _processed_data_subplot(ax: Axes, dataset: Dataset) -> None:
+def _processed_data_subplot(ax: Axes, dataset: Dataset, cmap: str = 'default') -> None:
     """
     Create a processed data subplot.
 
@@ -163,9 +178,12 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset) -> None:
         The axes to plot on.
     dataset : :class:`~uv_pro.dataset.Dataset`
         The :class:`~uv_pro.dataset.Dataset` to be plotted.
+    cmap : str or None
+        The name of a ``matplotlib`` built-in colormap.
+        Default is ``'default'``.
     """
     spectra = dataset.processed_spectra
-    cycler = _get_linestyles(spectra)
+    cycler = _get_linestyles(spectra, cmap)
     ax.set_prop_cycle(cycler)
     ax.set_title('Processed Data', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(300, 1100)
@@ -303,7 +321,7 @@ def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
     ax.text(
         x=0.99,
         y=0.99,
-        s=f'lam={dataset.baseline_lambda} tol={dataset.baseline_tolerance}',
+        s=f'smooth={dataset.baseline_smoothness} tol={dataset.baseline_tolerance}',
         verticalalignment='top',
         horizontalalignment='right',
         transform=ax.transAxes,
@@ -362,11 +380,19 @@ def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
         ax.set_xlim(left=left_bound, right=right_bound)
 
 
-def _get_linestyles(dataframe: DataFrame) -> cycler:
+def _get_linestyles(dataframe: DataFrame, color: str = 'default') -> cycler:
+    import numpy as np
     num_lines = len(dataframe.columns)
-    colors = ['k'] + ['0.8'] * (num_lines - 2) + ['r']
     linewidths = [3] + [1] * (num_lines - 2) + [3]
-    line_styles = cycler(color=colors) + cycler(linewidth=linewidths)
+
+    if color == 'default':
+        line_colors = ['k'] + ['0.8'] * (num_lines - 2) + ['r']
+    else:
+        cmap = plt.get_cmap(color)
+        line_colors = cmap(np.linspace(0, 1, num_lines))
+
+    line_styles = cycler(color=line_colors) + cycler(linewidth=linewidths)
+
     return line_styles
 
 

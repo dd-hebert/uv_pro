@@ -15,6 +15,7 @@ from matplotlib.axes import Axes
 from matplotlib.artist import Artist
 from matplotlib.figure import Figure
 from rich import print
+from rich.columns import Columns
 from uv_pro.dataset import Dataset
 from uv_pro.plots.dataset_plots import _processed_data_subplot, _time_traces_subplot
 from uv_pro.utils.prompts import user_choice
@@ -36,7 +37,8 @@ class QuickFig:
         self.dataset = dataset
         self.quick_figure()
 
-    def quick_figure(self, title: str | None = None, x_bounds: tuple[int] | None = None) -> None:
+    def quick_figure(self, title: str | None = None, x_bounds: tuple[int] | None = None,
+                     cmap: str | None = 'default') -> None:
         """
         Create a quick figure for exporting.
 
@@ -58,15 +60,17 @@ class QuickFig:
                 title = self._get_plot_title()
             if x_bounds is None:
                 x_bounds = self._get_plot_xbounds()
+            if cmap is None:
+                cmap = self._get_colormap()
 
         except (EOFError, KeyboardInterrupt):
             return
 
         if self.dataset.chosen_traces is None:
-            fig, ax_processed_data = self._processed_data_plot()
+            fig, ax_processed_data = self._processed_data_plot(cmap)
 
         else:
-            fig, (ax_processed_data, ax_traces) = self._1x2_plot()
+            fig, (ax_processed_data, ax_traces) = self._1x2_plot(cmap)
 
         fig.suptitle(title, fontweight='bold', wrap=True)
         self._touchup_processed_data_plot(ax_processed_data, x_bounds)
@@ -98,15 +102,29 @@ class QuickFig:
 
         return tuple(x_bounds)
 
-    def _processed_data_plot(self) -> tuple[Figure, Axes]:
+    def _get_colormap(self) -> str:
+        cmap = input('Enter a colormap name: ')
+
+        while cmap not in plt.colormaps():
+            if cmap in ['list', 'l']:
+                print(Columns(sorted(plt.colormaps(), key=str.lower), column_first=True))
+
+            else:
+                print('Invalid colormap. Type "list" for the list of valid colormaps.')
+
+            cmap = input('Enter a colormap name: ')
+
+        return cmap
+
+    def _processed_data_plot(self, cmap: str = 'default') -> tuple[Figure, Axes]:
         """Create processed data plot."""
         fig, ax_processed_data = plt.subplots()
-        _processed_data_subplot(ax_processed_data, self.dataset)
+        _processed_data_subplot(ax_processed_data, self.dataset, cmap)
         ax_processed_data.set(title=None)
 
         return fig, ax_processed_data
 
-    def _1x2_plot(self) -> tuple[Figure, tuple[Axes, Axes]]:
+    def _1x2_plot(self, cmap: str = 'default') -> tuple[Figure, tuple[Axes, Axes]]:
         """Create 1x2 plot with processed data and time traces."""
         fig, (ax_processed_data, ax_traces) = plt.subplots(
             nrows=1,
@@ -116,7 +134,7 @@ class QuickFig:
             sharey=True
         )
 
-        _processed_data_subplot(ax_processed_data, self.dataset)
+        _processed_data_subplot(ax_processed_data, self.dataset, cmap)
         _time_traces_subplot(ax_traces, self.dataset, show_slices=False)
         self._touchup_time_traces_plot(ax_traces)
 
@@ -165,13 +183,19 @@ class QuickFig:
         options = [
             {'key': '1', 'name': 'Save plot'},
             {'key': '2', 'name': 'Change title'},
-            {'key': '3', 'name': 'Change x-axis bounds'}
+            {'key': '3', 'name': 'Change x-axis bounds'},
+            {'key': '4', 'name': 'Change colors'}
         ]
 
         if user_choices := user_choice(header=header, options=options):
             if '1' in user_choices:
                 self.exported_figure = self.export(fig)
+                return
             if '2' in user_choices:
-                self.quick_figure(x_bounds=x_bounds)
+                title = None
             if '3' in user_choices:
-                self.quick_figure(title=title)
+                x_bounds = None
+            if '4' in user_choices:
+                cmap = None
+
+            self.quick_figure(title=title, x_bounds=x_bounds, cmap=cmap)

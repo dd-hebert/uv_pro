@@ -45,36 +45,39 @@ Process UV-vis data with the ``process`` subcommand.
 #### ``path`` : string, required
 The path to a .KD file. You have three options for specifying the path: you can use a **path relative to the current working directory**, an **absolute path**, or a **path relative to the root directory** (if one has been set).
 
-#### ``-bll``, ``-–baseline_lambda`` : float, optional
+#### ``-bs``, ``-–baseline-smoothness`` : float, optional
 Set the smoothness of the baseline (for outlier detection). Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See [pybaselines.whittaker.asls()](https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares) for more information.
 
-#### ``-blt``, ``-–baseline_tolerance`` : float, optional
+#### ``-bt``, ``-–baseline-tolerance`` : float, optional
 Set the exit criteria for the baseline algorithm. Try values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker.asls() for more information.
 
-#### ``-fit``, ``--fitting`` : flag, optional
+#### ``-c``, ``--colormap`` : str, optional
+Set the colormap for the processed spectra plot. Accepts any built-in Matplotlib colormap name. See [Matplotlib colormaps](https://matplotlib.org/stable/tutorials/colors/colormaps.html) for available options. Default is 'default'.
+
+#### ``-fx``, ``--fit-exponential`` : flag, optional
 Perform an exponential fitting of time traces. You must specify the wavelengths to fit with the ``-tt`` argument. 
 
-#### ``-gsl``, ``--gradient_slice`` : float float, optional
+#### ``-gsl``, ``--gradient-slice`` : float float, optional
 Reduce the dataset down to a number of unequally-spaced "slices". This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay. Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. 
 
 Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
 
-#### ``-lsw``, ``-–low_signal_window`` : narrow, wide, or none, optional
+#### ``-lw``, ``-–low-signal-window`` : narrow, wide, or none, optional
 Set the width of the low signal outlier detection window. Set to ``wide`` if low signals are interfering with the baseline. The default is ``narrow``. If set to ``none``, low signal outlier detection is skipped. This is useful when processing spectra with very low absorbance across a majority of measured wavelengths.
 
-#### ``-ne``, ``--no_export`` : flag, optional
+#### ``-ne``, ``--no-export`` : flag, optional
 Bypass the data export prompt at the end of the script.
 
-#### ``-ot``, ``--outlier_threshold`` : float between 0 and 1, optional
+#### ``-ot``, ``--outlier-threshold`` : float between 0 and 1, optional
 The threshold by which spectra are considered outliers. Values closer to 0 will produce more outliers, while values closer to 1 will produce fewer outliers. A value of 1 will produce no outliers. The default value is 0.1.
 
-#### ``-qf``, ``--quick_fig`` : flag, optional
+#### ``-qf``, ``--quick-fig`` : flag, optional
 Generate (and optionally export) a quick figure with a custom plot title and other settings.
 
-#### ``-sl``, ``--slice_spectra`` : integer, optional
+#### ``-sl``, ``--slice`` : integer, optional
 Reduce the dataset down to a number of equally-spaced "slices". Example: if a dataset contains 250 spectra and ``-sl`` is 10, then every 25th spectrum will be plotted and exported. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
 
-#### ``-ssl``, ``--specific_slice`` : abritrary number of floats, optional
+#### ``-ssl``, ``--specific-slice`` : abritrary number of floats, optional
 Select spectra slices at specific times. The default is ``None``, where *all* spectra are plotted and exported (no slicing).
 
 #### ``-tr``, ``--trim`` : 2 integers, optional
@@ -85,13 +88,13 @@ Remove spectra outside a given time range. The first integer is the beginning of
 uvp p C:\\Desktop\\MyData\\myfile.KD -tr 50 250
 ```
 
-#### ``-tt``, ``--time_traces`` : arbitrary number of ints, optional
+#### ``-tt``, ``--time-traces`` : arbitrary number of ints, optional
 Get time traces for the specified wavelengths. These time traces are independent from the time traces used for outlier detection.
 
-#### ``-tti``, ``--time_trace_interval`` : int, optional
+#### ``-ti``, ``--time-trace-interval`` : int, optional
 Set the time trace wavelength interval (in nm). An interval of 20 would create time traces like: (window min, window min + 20, ... , window max - 20, window max). Smaller intervals may result in increased loading times. Default is 10. These time traces are used for outlier detection.
 
-#### ``-ttw``, ``--time_trace_window`` : int int, optional
+#### ``-tw``, ``--time-trace-window`` : int int, optional
 Set the time trace wavelength range (min, max) (in nm). The default is (300, 1060). These time traces are used for outlier detection.
 
 #### ``-v`` : flag, optional
