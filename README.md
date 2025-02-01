@@ -223,7 +223,7 @@ uvp p C:\\Desktop\\myfile.KD -tr 50 250 -ot 0.2 -sl 10
 ```
 Process the data in ``somefile.KD``, trim the data to keep the spectra from 20 seconds to 120 seconds, show 15 slices, get time traces for 390, 450, 670 nm, and fit an exponential function to the specified time traces:
 ```
-uvp p C:\\Desktop\\data\\somefile.KD -tr 20 120 -sl 15 -tt 390 450 670 -fit
+uvp p C:\\Desktop\\data\\somefile.KD -tr 20 120 -sl 15 -tt 390 450 670 -fx
 ```
 
 File Paths & Root Directory
