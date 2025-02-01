@@ -21,54 +21,59 @@ path : str, required
     quotes "". The script will first look for the file inside the current
     working directory, then look at the absolute path, and lastly
     inside the root directory (if a root directory has been set).
--bll, --baseline_lambda : float, optional
+-bs, --baseline-smoothness : float, optional
     Set the smoothness of the baseline (for outlier detection). Higher values
     give smoother baselines. Try values between 0.001 and 10000. The
     default is 10. See :func:`pybaselines.whittaker.asls()` for more information.
--blt, --baseline_tolerance : float, optional
+-bt, --baseline-tolerance : float, optional
     Set the exit criteria for the baseline algorithm. Try values between
     0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
     for more information.
--fit, --fitting : flag, optional
+-c, --colormap : str, optional  
+    Set the colormap for the processed spectra plot. Accepts any built-in
+    Matplotlib colormap name. See available options at:
+    https://matplotlib.org/stable/tutorials/colors/colormaps.html 
+    Default is 'default'.
+-fx, --fit-exponential : flag, optional
     Perform exponential fitting on time traces given by ``-tt``.
--gsl, --gradient_slice : float float, optional
+-gsl, --gradient-slice : float float, optional
     Slice the data in non-equally spaced slices. Give a coefficient
     and an exponent. The data slicing will be determined by the equation
     y = coefficient*x^exponent + 1, where y is the step size between slices.
     The default is None, where all spectra are plotted or exported.
--lsw, --low_signal_window : ``narrow``, ``wide``, or ``none`` optional
+-lw, --low-signal-window : ``narrow``, ``wide``, or ``none`` optional
     Set the width of the low signal outlier detection window (see
     :func:`~uv_pro.outliers.find_outliers()`). Set to ``wide`` if low
     signals are interfering with the baseline. Default is ``none``.
--ne, --no_export : flag, optional
+-ne, --no-export : flag, optional
     Use this argument to bypass the export data prompt at the end of the script.
--ot, --outlier_threshold : float, optional
+-ot, --outlier-threshold : float, optional
     The threshold by which spectra are considered outliers. Values closer to 0
     produce more outliers. Values closer to 1 produce fewer outliers. A value
     >> 1 will produce no outliers. The default value is 0.1.
--qf, --quick_fig : flag, optional
+-qf, --quick-fig : flag, optional
     Use the quick figure generator to create and export plot figures.
 -sl, --slice : int, optional
     The number of equally-spaced slices to plot or export. Example: if
     :attr:`~uv_pro.dataset.Dataset.processed_spectra` contains 100 spectra and
     ``slice`` is 10, then every tenth spectrum will be kept. The
     default is None, where all spectra are plotted or exported.
--ssl, --specific_slice : list[int], optional
+-ssl, --specific-slice : list[int], optional
     Get slices at specific times. Takes an arbitrary number of floats.
     The default is None, where all spectra are plotted or exported.
 -tr, --trim : int int, optional
     Trim data outside a given time range: ``[trim_before, trim_after]``.
     Default value is None (no trimming).
--tt, --time_traces : arbitrary number of ints, optional
+-tt, --time-traces : arbitrary number of ints, optional
     A list of specific wavelengths (in nm) to create time traces for.
     These time traces are independent from the time traces created by
     :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
--tti, --time_trace_interval : int, optional
+-ti, --time-trace-interval : int, optional
     Set the interval (in nm) for time traces. An interval of 10 will create
     time traces from the window min to max every 10 nm. Smaller intervals
     may increase loading times. Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
     The default is 10.
--ttw, --time_trace_window : int int, optional
+-tw, --time-trace-window : int int, optional
     Set the (min, max) wavelength (in nm) range to get time traces for.
     Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
     The default is 300 1060.
@@ -213,7 +218,7 @@ Examples
     # Open C:/Desktop/myfile.KD, show 10 spectra from 50 to 250 seconds
     # with outlier threshold of 0.2. Get time traces at 780 nm and 1020 nm.
     # Fit exponential to time traces at 780 nm and 1020 nm.
-    uvp p myfile.KD -tr 50 250 -ot 0.2 -sl 10 -tt 780 1020 -fit
+    uvp p myfile.KD -tr 50 250 -ot 0.2 -sl 10 -tt 780 1020 -fx
 
 @author: David Hebert
 """
