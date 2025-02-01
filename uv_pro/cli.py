@@ -33,15 +33,10 @@ path : str, required (unless using --list-colormaps).
 -c, --colormap : str, optional
     Set the colormap for the processed spectra plot. Accepts any built-in
     Matplotlib colormap name. For a full description of colormaps see:
-    https://matplotlib.org/stable/tutorials/colors/colormaps.html
+    https://matplotlib.org/stable/tutorials/colors/colormaps.html.
     Default is 'default'.
 -fx, --fit-exponential : flag, optional
     Perform exponential fitting on time traces given by ``-tt``.
--gsl, --gradient-slice : float float, optional
-    Slice the data in non-equally spaced slices. Give a coefficient
-    and an exponent. The data slicing will be determined by the equation
-    y = coefficient*x^exponent + 1, where y is the step size between slices.
-    The default is None, where all spectra are plotted or exported.
 --list_colormaps : flag, optional
     List available colormaps and exit (path not required).
 -lw, --low-signal-window : ``narrow``, ``wide``, or ``none`` optional
@@ -57,32 +52,52 @@ path : str, required (unless using --list-colormaps).
 -qf, --quick-fig : flag, optional
     Use the quick figure generator to create and export plot figures.
 -sl, --slice : int, optional
-    The number of equally-spaced slices to plot or export. Example: if
-    :attr:`~uv_pro.dataset.Dataset.processed_spectra` contains 100 spectra and
-    ``slice`` is 10, then every tenth spectrum will be kept. The
-    default is None, where all spectra are plotted or exported.
--ssl, --specific-slice : list[int], optional
-    Get slices at specific times. Takes an arbitrary number of floats.
-    The default is None, where all spectra are plotted or exported.
+    Defines the number of equally-spaced slices to plot or export.
+    For example, if :attr:`~uv_pro.dataset.Dataset.processed_spectra`
+    contains 100 spectra and ``slice`` is set to 10, every tenth spectrum
+    will be kept. This option allows you to reduce the number of spectra
+    by selecting evenly spaced slices from the dataset.
+    Default value: None (all spectra are plotted or exported)
+-ssl, --specific-slice : arbitrary number of floats, optional
+    Select specific slices at given times. The values should be provided
+    as an arbitrary number of floats representing the time of each slice.
+    This option allows you to select slices from specific positions in the dataset.
+    Default value: None (all spectra are plotted or exported).
 -tr, --trim : int int, optional
-    Trim data outside a given time range: ``[trim_before, trim_after]``.
-    Default value is None (no trimming).
+    Trim data outside a specified time range. The values should be provided
+    as two integers representing the time range: [START, END]. This option
+    allows you to exclude spectra outside the defined time window.
+    Default value: None (no trimming).
 -tt, --time-traces : arbitrary number of ints, optional
     A list of specific wavelengths (in nm) to create time traces for.
     These time traces are independent from the time traces created by
     :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
 -ti, --time-trace-interval : int, optional
-    Set the interval (in nm) for time traces. An interval of 10 will create
-    time traces from the window min to max every 10 nm. Smaller intervals
-    may increase loading times. Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
-    The default is 10.
+    Specifies the interval (in nm) between time traces. 
+    For example, setting an interval of 10 will generate time traces
+    every 10 nm within the specified wavelength window (from the minimum
+    to maximum wavelength). Smaller intervals can result in longer loading
+    times due to the increased number of time traces. This option is used
+    in the :meth:`~uv_pro.dataset.Dataset.get_time_traces()` function.
+    Default value: 10 nm.
 -tw, --time-trace-window : int int, optional
-    Set the (min, max) wavelength (in nm) range to get time traces for.
-    Used in :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
-    The default is 300 1060.
+    Specifies the wavelength range (in nanometers) for which time traces
+    will be generated. The value should be provided as a pair of integers
+    representing the minimum and maximum wavelengths, e.g., '300 1060'. 
+    This option defines the range of wavelengths over which the time traces
+    are computed by the :meth:`~uv_pro.dataset.Dataset.get_time_traces()`
+    function. Default value: 300 1060 nm.
 -v : flag, optional
     Enable view-only mode. No data processing is performed and a plot of
     the data set is shown. Default is False.
+-vsl, --variable-slice : float float, optional
+    Slice the data into non-equally spaced slices. You need to provide two
+    values: a coefficient and an exponent. The data slicing will be determined
+    by the equation: ``y = coefficient * x^exponent + 1``, where ``y`` is the
+    step size between slices and ``x`` is the index of the slice. This option
+    allows you to create slices with progressively changing intervals,
+    based on the variable defined by the coefficient and exponent.
+    Default value: None (all spectra are plotted or exported).
 
 peaks
 -----

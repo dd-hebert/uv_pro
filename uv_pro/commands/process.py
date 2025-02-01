@@ -27,7 +27,7 @@ HELP = {
                             Values closer to 0 result in higher sensitivity (more outliers).
                             Values closer to 1 result in lower sensitivity (fewer outliers).''',
     'slice': 'Set the number of slices to plot. Default: None (no slicing).',
-    'gradient-slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
+    'variable-slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
                          Default: None (no slicing).''',
     'specific-slice': '''Get spectra slices from specific times. Takes an arbitrary number of floats.''',
     'baseline-smoothness': 'Set the smoothness of the baseline. Default: 10.',
@@ -201,14 +201,14 @@ MUTEX_ARGS = [
             help=HELP['slice']
         ),
         argument(
-            '-gsl',
-            '--gradient-slice',
+            '-vsl',
+            '--variable-slice',
             action='store',
             type=float,
             nargs=2,
             default=None,
             metavar='',
-            help=HELP['gradient-slice']
+            help=HELP['variable-slice']
         ),
         argument(
             '-ssl',
@@ -291,11 +291,11 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
     if args.slice:
         return {'mode': 'equal', 'slices': args.slice}
 
-    elif args.gradient_slice:
+    elif args.variable_slice:
         return {
-            'mode': 'gradient',
-            'coeff': args.gradient_slice[0],
-            'expo': args.gradient_slice[1]
+            'mode': 'variable',
+            'coeff': args.variable_slice[0],
+            'expo': args.variable_slice[1]
         }
 
     elif args.specific_slice:

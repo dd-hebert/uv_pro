@@ -174,7 +174,7 @@ class ProcessingOutput:
             else:
                 table.add_row('Slicing mode', bold_text(f'{dataset.slicing["mode"]}'))
 
-                if dataset.slicing['mode'] == 'gradient':
+                if dataset.slicing['mode'] == 'variable':
                     table.add_row('Slicing coefficient', bold_text(f'{dataset.slicing["coeff"]}'))
                     table.add_row('Slicing exponent', bold_text(f'{dataset.slicing["expo"]}'))
 

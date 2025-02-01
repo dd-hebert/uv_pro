@@ -11,10 +11,10 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
     """
     Reduce the given ``spectra`` down to a selection of slices.
 
-    Slices can be taken at using equally- or unequally-spaced (gradient) intervals \
+    Slices can be taken at using equally- or unequally-spaced (variable) intervals \
     or from specific times. Equal slicing requires a single integer (e.g., a value \
-    of 10 will produce 10 equally-spaced slices). Gradient slicing requires two \
-    floats, a coefficient and an exponent. For gradient slicing, the step size \
+    of 10 will produce 10 equally-spaced slices). Variable slicing requires two \
+    floats, a coefficient and an exponent. For variable slicing, the step size \
     between slices is calculated by the equation step_size = coeff * x^expo + 1. \
     Specific slicing requires a list of float (time) values.
 
@@ -30,7 +30,7 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
     slicing : dict
         The slicing parameters.
         For equal slicing: ``{'mode': 'equal', 'slices': int}``
-        For gradient (unequally-spaced) slicing: ``{'mode': 'gradient', \
+        For variable (unequally-spaced) slicing: ``{'mode': 'variable', \
         'coeff': float, 'expo': float}``
         For specific slicing: ``{'mode': 'specific', 'times': list[float]}``.
 
@@ -42,8 +42,8 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
     if slicing['mode'] == 'equal':
         return equal_slicing(spectra, slicing['slices'])
 
-    if slicing['mode'] == 'gradient':
-        return gradient_slicing(spectra, slicing['coeff'], slicing['expo'])
+    if slicing['mode'] == 'variable':
+        return variable_slicing(spectra, slicing['coeff'], slicing['expo'])
 
     if slicing['mode'] == 'specific':
         return specific_slicing(spectra, slicing['times'])
@@ -51,9 +51,9 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
     raise ValueError(f'Invalid slicing mode: `{slicing.get("mode", None)}`.')
 
 
-def gradient_slicing(spectra: DataFrame, coeff: float, expo: float) -> DataFrame:
+def variable_slicing(spectra: DataFrame, coeff: float, expo: float) -> DataFrame:
     """Get unequally-spaced slices from ``spectra``."""
-    _check_gradient_slice_coeff(coeff)
+    _check_variable_slice_coeff(coeff)
     slices = [0]
     for i in range(1, len(spectra.columns)):
         next_slice = slices[-1] + round(coeff * i**expo + 1)
@@ -66,9 +66,9 @@ def gradient_slicing(spectra: DataFrame, coeff: float, expo: float) -> DataFrame
     return spectra.iloc[:, slices]
 
 
-def _check_gradient_slice_coeff(coeff) -> None:
+def _check_variable_slice_coeff(coeff) -> None:
     if coeff <= 0:
-        raise ValueError('Invalid gradient slicing coefficient. Value must be >0.')
+        raise ValueError('Invalid variable slicing coefficient. Value must be >0.')
 
 
 def equal_slicing(spectra: DataFrame, num_slices: int) -> DataFrame:

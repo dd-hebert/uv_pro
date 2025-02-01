@@ -80,9 +80,9 @@ class Dataset:
             Default value is None (no trimming).
         slicing : dict or None, optional
             Reduce the data down to a selection of slices. Slices can be taken in \
-            equally- or unequally-spaced (gradient) intervals, or at specific times.
+            equally- or unequally-spaced (variable) intervals, or at specific times.
             For equal slicing: ``{'mode': 'equal', 'slices': int}``.
-            For gradient slicing: ``{'mode': 'gradient', 'coeff': float, 'expo': float}``.
+            For variable slicing: ``{'mode': 'variable', 'coeff': float, 'expo': float}``.
             For specific slicing: ``{'mode': 'specific', 'times': list[float]}``.
         fit_exp : bool, optional
             Perform exponential fitting on the time traces specified with ``wavelengths``.
