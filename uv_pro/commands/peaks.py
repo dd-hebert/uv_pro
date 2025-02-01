@@ -9,7 +9,7 @@ from uv_pro.commands import command, argument
 from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
 from uv_pro.plots import plot_peakfinder
-from uv_pro.utils._rich import splash, PeaksOutput
+from uv_pro.utils._rich import splash
 
 
 HELP = {

@@ -78,7 +78,7 @@ path : str, required (unless using --list-colormaps).
     These time traces are independent from the time traces created by
     :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
 -ti, --time-trace-interval : int, optional
-    Specifies the interval (in nm) between time traces. 
+    Specifies the interval (in nm) between time traces.
     For example, setting an interval of 10 will generate time traces
     every 10 nm within the specified wavelength window (from the minimum
     to maximum wavelength). Smaller intervals can result in longer loading
@@ -88,7 +88,7 @@ path : str, required (unless using --list-colormaps).
 -tw, --time-trace-window : int int, optional
     Specifies the wavelength range (in nanometers) for which time traces
     will be generated. The value should be provided as a pair of integers
-    representing the minimum and maximum wavelengths, e.g., '300 1060'. 
+    representing the minimum and maximum wavelengths, e.g., '300 1060'.
     This option defines the range of wavelengths over which the time traces
     are computed by the :meth:`~uv_pro.dataset.Dataset.get_time_traces()`
     function. Default value: 300 1060 nm.
