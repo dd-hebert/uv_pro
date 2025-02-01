@@ -39,7 +39,7 @@ class QuickFig:
 
         Parameters
         ----------
-        dataset : :class:`~uv_pro.dataset.Dataset``
+        dataset : :class:`~uv_pro.dataset.Dataset`
             The Dataset to create a figure with.
         cmap : str, optional
             The name of a Matplotlib built-in colormap, by default 'default'.

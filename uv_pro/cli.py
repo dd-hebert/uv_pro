@@ -37,6 +37,11 @@ path : str, required (unless using --list-colormaps).
     Default is 'default'.
 -fx, --fit-exponential : flag, optional
     Perform exponential fitting on time traces given by ``-tt``.
+-ir, --initial-rates : flag or float, optional
+    Perform initial rates linear regression fitting on the time traces
+    given by ``-tt``. An optional float value can be provided to specify
+    the cutoff for the % change in absorbance. The default is 0.05 (5% change
+    in absorbance).
 --list_colormaps : flag, optional
     List available colormaps and exit (path not required).
 -lw, --low-signal-window : ``narrow``, ``wide``, or ``none`` optional

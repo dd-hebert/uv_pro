@@ -48,7 +48,9 @@ class Dataset:
         The processed chosen traces with :attr:`outliers` removed and
         trimming applied.
     fit : dict
-        The fitting curves and parameters.
+        The exponential fitting curves and parameters.
+    init_rate : dict
+        The initial rates fitting lines and parameters.
     is_processed : bool
         Indicates if the data has been processed. Data is processed only if the \
         :class:`Dataset` was initialized with ``view_only=False`` \
@@ -88,7 +90,8 @@ class Dataset:
             Perform exponential fitting on the time traces specified with ``wavelengths``.
         fit_init_rate : float or None, optional
             Perform initial rates linear regression fitting on the time traces specified \
-            with ``wavelengths``.
+            with ``wavelengths``. The float value provided indicates the cutoff for \
+            the % change in absorbance of the time trace. The default is 0.05 (5% change).
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
