@@ -7,6 +7,7 @@ An interactive UV-vis peak finder based on Matplotlib.
 import pandas as pd
 from uv_pro.dataset import Dataset
 from uv_pro.peaks import find_peaks, find_peaks_dxdy
+from uv_pro.utils._rich import PeaksOutput
 
 
 class PeakFinder:
@@ -78,6 +79,9 @@ class PeakFinder:
         self.time = self.dataset.spectra_times[0]
         self.spectrum = self._get_spectrum()
         self.peaks = self.find_peaks()
+
+    def __rich__(self):
+        return PeaksOutput(self)
 
     def find_peaks(self) -> dict:
         """

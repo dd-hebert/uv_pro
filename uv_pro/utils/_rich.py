@@ -12,7 +12,8 @@ from rich.table import Table, Column
 from rich.text import Text
 
 if TYPE_CHECKING:
-    from dataset import Dataset
+    from uv_pro.dataset import Dataset
+    from uv_pro.peakfinder import PeakFinder
 
 
 STYLES = {
@@ -267,7 +268,7 @@ class PeaksOutput:
     peaks : :class:`pandas.DataFrame`
         The peak detection output from :py:mod:`~uv_pro.commands.peaks`.
     """
-    def __init__(self, args: argparse.Namespace, peaks: dict) -> None:
+    def __init__(self, peakfinder: PeakFinder) -> None:
         """
         Create ``rich`` renderables for :py:mod:`~uv_pro.commands.peaks` results.
 
@@ -278,8 +279,8 @@ class PeaksOutput:
         peaks : dict
             The peak detection output.
         """
-        self.peaks = peaks['info']
-        self.method = args.method
+        self.peaks = peakfinder.peaks['info']
+        self.method = peakfinder.method
         self.has_epsilon = 'epsilon' in self.peaks.columns
 
     def __rich__(self) -> Panel:

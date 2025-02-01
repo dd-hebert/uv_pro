@@ -135,4 +135,4 @@ def peaks(args: argparse.Namespace) -> None:
     plot_peakfinder(pf, figsize=args.plot_size)
 
     if pf.peaks['peaks']:
-        print('', PeaksOutput(args, pf.peaks))
+        print(pf)
