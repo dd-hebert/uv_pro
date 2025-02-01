@@ -57,11 +57,6 @@ Set the colormap for the processed spectra plot. Accepts any built-in Matplotlib
 #### ``-fx``, ``--fit-exponential`` : flag, optional
 Perform an exponential fitting of time traces. You must specify the wavelengths to fit with the ``-tt`` argument. 
 
-#### ``-gsl``, ``--gradient-slice`` : float float, optional
-Reduce the dataset down to a number of unequally-spaced "slices". This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay. Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. 
-
-Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
-
 #### ``--list-colormaps`` : flag, optional
 List available colormaps and exit (path not required).
 
@@ -102,6 +97,11 @@ Set the time trace wavelength range (min, max) (in nm). The default is (300, 106
 
 #### ``-v`` : flag, optional
 Enable *view-only* mode. No data processing is performed and a plot of the data is shown.
+
+#### ``-vsl``, ``--variable-slice`` : float float, optional
+Reduce the dataset down to a number of unequally-spaced "slices". Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. This option allows you to create slices with progressively changing intervals, based on the power function defined by the coefficient and exponent. This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay.  
+
+Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
 
 ___
 ### Batch Exporting Args (batch)
