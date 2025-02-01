@@ -139,7 +139,7 @@ def binmix(args: argparse.Namespace) -> None:
 
     elif args.index_columns:
         idx_rng = range(-len(mixture.columns), len(mixture.columns))
-        columns = set([idx for idx in sorted(args.index_columns) if idx in idx_rng])
+        columns = sorted(set([idx for idx in args.index_columns if idx in idx_rng]))
         mixture = mixture.iloc[:, list(columns)].T.drop_duplicates().T
 
     fit_results = []
