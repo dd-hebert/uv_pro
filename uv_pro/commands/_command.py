@@ -40,14 +40,14 @@ def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
     Usage Example
     -------------
     ```
-    @command(args=[argument('-a', action='store_true')])
-    def some_func(args):
+    @command(args=[argument('-arg1', action='store_true')])
+    def hello_world(args):
     '''
-    docstring for some_func()
-    *desc : some_func command description
-    *help : some_func command help
+    docstring for hello_world()
+    *desc : hello_world command description
+    *help : hello_world command help
     '''
-        print(args)
+        print('hello world!')
     ```
 
     Returns
