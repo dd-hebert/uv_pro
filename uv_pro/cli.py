@@ -101,7 +101,7 @@ path : str, required (unless using --list-colormaps).
     by the equation: ``y = coefficient * x^exponent + 1``, where ``y`` is the
     step size between slices and ``x`` is the index of the slice. This option
     allows you to create slices with progressively changing intervals,
-    based on the variable defined by the coefficient and exponent.
+    based on the power function defined by the coefficient and exponent.
     Default value: None (all spectra are plotted or exported).
 
 peaks
