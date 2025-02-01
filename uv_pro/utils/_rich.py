@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import os
 import argparse
 from functools import partial
@@ -8,7 +10,9 @@ from rich.console import RenderableType, TextType, Group
 from rich.panel import Panel
 from rich.table import Table, Column
 from rich.text import Text
-from uv_pro.dataset import Dataset
+
+if TYPE_CHECKING:
+    from dataset import Dataset
 
 
 STYLES = {

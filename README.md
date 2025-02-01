@@ -42,8 +42,8 @@ Process UV-vis data with the ``process`` subcommand.
 **Usage:**
 ``uvp process <path> <options>``, ``uvp proc <path> <options>``, or ``uvp p <path> <options>``
 
-#### ``path`` : string, required
-The path to a .KD file. You have three options for specifying the path: you can use a **path relative to the current working directory**, an **absolute path**, or a **path relative to the root directory** (if one has been set).
+#### ``path`` : string, required (unless using ``list-colormaps``)
+The path to a .KD file. You have three options for specifying the path: you can use a **path relative to the current working directory**, an **absolute path**, or a **path relative to the root directory** (if one has been set). A path is not required if using `--list-colormaps``.
 
 #### ``-bs``, ``-–baseline-smoothness`` : float, optional
 Set the smoothness of the baseline (for outlier detection). Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See [pybaselines.whittaker.asls()](https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares) for more information.
@@ -52,7 +52,7 @@ Set the smoothness of the baseline (for outlier detection). Higher values give s
 Set the exit criteria for the baseline algorithm. Try values between 0.001 and 10000. The default is 0.1. See pybaselines.whittaker.asls() for more information.
 
 #### ``-c``, ``--colormap`` : str, optional
-Set the colormap for the processed spectra plot. Accepts any built-in Matplotlib colormap name. See [Matplotlib colormaps](https://matplotlib.org/stable/tutorials/colors/colormaps.html) for available options. Default is 'default'.
+Set the colormap for the processed spectra plot. Accepts any built-in Matplotlib colormap name. See [Matplotlib colormaps](https://matplotlib.org/stable/tutorials/colors/colormaps.html) for more information on colormap options. Default is 'default'.
 
 #### ``-fx``, ``--fit-exponential`` : flag, optional
 Perform an exponential fitting of time traces. You must specify the wavelengths to fit with the ``-tt`` argument. 
@@ -61,6 +61,9 @@ Perform an exponential fitting of time traces. You must specify the wavelengths 
 Reduce the dataset down to a number of unequally-spaced "slices". This slicing mode is ideal when there are rapid changes in absorbance at the beginning or end of the experiment, such as a fast decay. Takes two float values ``coefficient`` and ``exponent``. The step size between slices is calculated by the formula ``step_size = coefficient*x^exponent + 1``. 
 
 Use a small coefficient (<=1) and positive exponent (>1) when slicing spectra that change rapidly in the beginning and slowly at the end. Large coefficients (>5) and negative exponents (<-1) work best for spectra that change slowly in the beginning and rapidly at the end. The default is ``None``, where *all* spectra are plotted or exported (no slicing).
+
+#### ``--list-colormaps`` : flag, optional
+List available colormaps and exit (path not required).
 
 #### ``-lw``, ``-–low-signal-window`` : narrow, wide, or none, optional
 Set the width of the low signal outlier detection window. Set to ``wide`` if low signals are interfering with the baseline. The default is ``narrow``. If set to ``none``, low signal outlier detection is skipped. This is useful when processing spectra with very low absorbance across a majority of measured wavelengths.

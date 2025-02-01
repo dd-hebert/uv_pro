@@ -12,7 +12,7 @@ from uv_pro.dataset import Dataset
 
 
 plt.style.use('seaborn-v0_8-bright')
-CMAPS = plt.colormaps()
+CMAPS = sorted(plt.colormaps(), key=str.lower)
 
 
 def plot_spectra(dataset: Dataset, spectra) -> None:

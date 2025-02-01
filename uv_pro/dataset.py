@@ -13,6 +13,7 @@ from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
 from uv_pro.fitting import fit_exponential, initial_rates
 from uv_pro.slicing import slice_spectra
+from uv_pro.utils._rich import ProcessingOutput
 
 
 class Dataset:
@@ -144,6 +145,9 @@ class Dataset:
 
         if not view_only:
             self.process_data()
+
+    def __rich__(self):
+        return ProcessingOutput(self)
 
     def _import_data(self) -> None:
         kd_file = KDFile(self.path)

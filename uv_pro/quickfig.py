@@ -17,7 +17,7 @@ from matplotlib.figure import Figure
 from rich import print
 from rich.columns import Columns
 from uv_pro.dataset import Dataset
-from uv_pro.plots.dataset_plots import _processed_data_subplot, _time_traces_subplot
+from uv_pro.plots.dataset_plots import _processed_data_subplot, _time_traces_subplot, CMAPS
 from uv_pro.utils.prompts import user_choice
 from uv_pro.io.export import export_figure
 
@@ -33,9 +33,19 @@ class QuickFig:
     exported_figure : str
         The filename of the exported quick figure.
     """
-    def __init__(self, dataset: Dataset) -> None:
+    def __init__(self, dataset: Dataset, cmap: str = 'default') -> None:
+        """
+        Create a quick figure with :class:`~uv_pro.dataset.Dataset`.
+
+        Parameters
+        ----------
+        dataset : :class:`~uv_pro.dataset.Dataset``
+            The Dataset to create a figure with.
+        cmap : str, optional
+            The name of a Matplotlib built-in colormap, by default 'default'.
+        """
         self.dataset = dataset
-        self.quick_figure()
+        self.quick_figure(cmap=cmap)
 
     def quick_figure(self, title: str | None = None, x_bounds: tuple[int] | None = None,
                      cmap: str | None = 'default') -> None:
@@ -105,9 +115,9 @@ class QuickFig:
     def _get_colormap(self) -> str:
         cmap = input('Enter a colormap name: ')
 
-        while cmap not in plt.colormaps():
+        while cmap not in CMAPS:
             if cmap in ['list', 'l']:
-                print(Columns(sorted(plt.colormaps(), key=str.lower), column_first=True))
+                print(Columns(CMAPS, column_first=True))
 
             else:
                 print('Invalid colormap. Type "list" for the list of valid colormaps.')

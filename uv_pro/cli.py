@@ -16,11 +16,12 @@ process (p, proc)
 -----------------
 Usage: ``uvp p <path> <options>``, ``uvp proc <path> <options>``, or ``uvp process <path> <options>``
 
-path : str, required
+path : str, required (unless using --list-colormaps).
     The path to a .KD file. Paths containing spaces should be wrapped in double
     quotes "". The script will first look for the file inside the current
     working directory, then look at the absolute path, and lastly
     inside the root directory (if a root directory has been set).
+    If using ``--list-colormaps``, the path can be omitted.
 -bs, --baseline-smoothness : float, optional
     Set the smoothness of the baseline (for outlier detection). Higher values
     give smoother baselines. Try values between 0.001 and 10000. The
@@ -29,10 +30,10 @@ path : str, required
     Set the exit criteria for the baseline algorithm. Try values between
     0.001 and 10000. The default is 0.1. See :func:`pybaselines.whittaker.asls()`
     for more information.
--c, --colormap : str, optional  
+-c, --colormap : str, optional
     Set the colormap for the processed spectra plot. Accepts any built-in
-    Matplotlib colormap name. See available options at:
-    https://matplotlib.org/stable/tutorials/colors/colormaps.html 
+    Matplotlib colormap name. For a full description of colormaps see:
+    https://matplotlib.org/stable/tutorials/colors/colormaps.html
     Default is 'default'.
 -fx, --fit-exponential : flag, optional
     Perform exponential fitting on time traces given by ``-tt``.
@@ -41,6 +42,8 @@ path : str, required
     and an exponent. The data slicing will be determined by the equation
     y = coefficient*x^exponent + 1, where y is the step size between slices.
     The default is None, where all spectra are plotted or exported.
+--list_colormaps : flag, optional
+    List available colormaps and exit (path not required).
 -lw, --low-signal-window : ``narrow``, ``wide``, or ``none`` optional
     Set the width of the low signal outlier detection window (see
     :func:`~uv_pro.outliers.find_outliers()`). Set to ``wide`` if low

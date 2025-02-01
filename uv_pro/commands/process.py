@@ -7,17 +7,18 @@ Functions for the ``process`` command.
 import os
 import argparse
 from rich import print
+from rich.columns import Columns
 from uv_pro.commands import command, argument, mutually_exclusive_group
 from uv_pro.dataset import Dataset
 from uv_pro.quickfig import QuickFig
 from uv_pro.plots import plot_spectra, plot_2x2, CMAPS
 from uv_pro.io.export import export_csv
 from uv_pro.utils.prompts import user_choice
-from uv_pro.utils._rich import splash, ProcessingOutput
+from uv_pro.utils._rich import splash
 
 
 HELP = {
-    'path': '''A path to a UV-vis data file (.KD format).''',
+    'path': '''A path to a UV-vis data file (.KD format). Required unless using --list-colormaps.''',
     'view': '''Enable view-only mode (no data processing).''',
     'trim': '''Remove spectra outside the given time range.
                Data before time = T1 and after time = T2 will be removed.
@@ -45,15 +46,17 @@ HELP = {
     'time-traces': 'Specific wavelengths (in nm) to create time traces for.',
     'no-export': 'Skip the export data prompt at the end of the script.',
     'quick-fig': 'Use the quick-figure generator.',
-    'colormap': '''Set the colormap for the processed spectra plot. Accepts any built-in  
-                   Matplotlib colormap name. See available options at:
+    'colormap': '''Set the colormap for the processed spectra plot. Accepts any built-in
+                   Matplotlib colormap name. For a full description of colormaps see:
                    https://matplotlib.org/stable/tutorials/colors/colormaps.html.
-                   Default is 'default'.'''
+                   Default is 'default'.''',
+    'list-colormaps': 'List available colormaps and exit (path not required).'
 }
 ARGS = [
     argument(
         'path',
         action='store',
+        nargs='?',
         default=None,
         help=HELP['path']
     ),
@@ -176,8 +179,14 @@ ARGS = [
         action='store',
         metavar='NAME',
         default='default',
-        choices=sorted(CMAPS),
+        choices=CMAPS,
         help=HELP['colormap']
+    ),
+    argument(
+        '--list-colormaps',
+        action='store_true',
+        default=False,
+        help=HELP['list-colormaps']
     )
 ]
 MUTEX_ARGS = [
@@ -231,6 +240,9 @@ def process(args: argparse.Namespace) -> None:
         plot the result, and export data (optional).
     *help : Process .KD UV-vis data files.
     """
+    if args.list_colormaps:
+        return list_colormaps()
+
     _handle_path(args)
 
     if args.view is True:
@@ -252,7 +264,7 @@ def process(args: argparse.Namespace) -> None:
             wavelengths=args.time_traces
         )
 
-    print('', ProcessingOutput(dataset), sep='\n')
+    print('', dataset, sep='\n')
     _plot_and_export(args, dataset)
 
 
@@ -293,6 +305,15 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
         }
 
     return None
+
+
+def list_colormaps():
+    link = 'https://matplotlib.org/stable/tutorials/colors/colormaps.html'
+    print(
+        'Valid colormaps:\n',
+        Columns(CMAPS, column_first=True),
+        f'\nSee {link} for more info.'
+    )
 
 
 def prompt_for_export(dataset) -> list[str]:
@@ -369,7 +390,7 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
             try:
                 print('', splash(text='Enter ctrl-c to quit', title='uv_pro Quick Figure'))
 
-                files_exported.append(getattr(QuickFig(dataset), 'exported_figure'))
+                files_exported.append(getattr(QuickFig(dataset, args.colormap), 'exported_figure'))
 
             except AttributeError:
                 pass
