@@ -57,7 +57,7 @@ class Dataset:
     def __init__(self, path: str, *, trim: tuple[int, int] | None = None,
                  slicing: dict | None = None, fit_exp: bool = False,
                  fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
-                 baseline_lambda: float = 10.0, baseline_tolerance: float = 0.1,
+                 baseline_smoothness: float = 10.0, baseline_tolerance: float = 0.1,
                  low_signal_window: str = 'none', time_trace_window: tuple[int, int] = (300, 1060),
                  time_trace_interval: int = 10, wavelengths: list | None = None,
                  view_only: bool = False) -> None:
@@ -93,7 +93,7 @@ class Dataset:
             are considered outliers. Values closer to 0 produce more outliers,
             while values closer to 1 produce fewer outliers. Use a value >>1 to guarantee
             no data are considered outliers. The default value is 0.1.
-        baseline_lambda : float, optional
+        baseline_smoothness : float, optional
             Set the smoothness of the baseline (for outlier detection). Higher values \
             give smoother baselines. Try values between 0.001 and 10000.
             See :func:`~uv_pro.outliers.find_outliers`. The default is 10.
@@ -134,7 +134,7 @@ class Dataset:
         self.wavelengths = wavelengths
         self.outlier_threshold = outlier_threshold
         self.low_signal_window = low_signal_window
-        self.baseline_lambda = baseline_lambda
+        self.baseline_smoothness = baseline_smoothness
         self.baseline_tolerance = baseline_tolerance
         self.fit = None
         self.init_rate = None
@@ -159,10 +159,7 @@ class Dataset:
         and traces, and performs data fitting according to the
         attributes of the :class:`~uv_pro.dataset.Dataset`.
         """
-        if len(self.raw_spectra.columns) <= 2:
-            pass
-
-        else:
+        if len(self.raw_spectra.columns) > 2:
             self.time_traces = self.get_time_traces(
                 window=self.time_trace_window,
                 interval=self.time_trace_interval
@@ -172,7 +169,7 @@ class Dataset:
                 time_traces=self.time_traces,
                 threshold=self.outlier_threshold,
                 lsw=self.low_signal_window,
-                lam=self.baseline_lambda,
+                lam=self.baseline_smoothness,
                 tol=self.baseline_tolerance
             )
 
