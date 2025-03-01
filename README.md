@@ -135,7 +135,7 @@ Set the minimum distance between peaks (in nm). Default is 10. Only used with ``
 The max number of peak finding iterations. The default is 1000. Only used with ``localmax`` method.
 
 #### ``--method`` : str, optional
-The peak detection method: either ``localmax`` or deriv. Default is ``localmax``.
+The peak detection method: either ``localmax`` or ``deriv``. Default is ``localmax``.
 
 #### ``-num``, ``--num_peaks`` : int, optional
 The number of peaks that should be found. Default is 0 (find all peaks). Only used with ``localmax`` method.
