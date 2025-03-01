@@ -194,16 +194,16 @@ Current user-configurable settings:
     ``root_directory`` - A base directory which contains UV-vis data files. Set a root directory to enable the use of shorter, relative file paths.
     ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``WIDTH HEIGHT``
 
-#### ``-delete`` : flag, optional
+#### ``--delete`` : flag, optional
 Delete the config file and directory. The config file is located in ``.config/uv_pro/`` inside the user's home directory.
 
-#### ``-edit`` : flag, optional
+#### ``-e``, ``--edit`` : flag, optional
 Edit configuration settings. Will prompt the user for a selection of configuration settings to edit.
 
-#### ``-list`` : flag, optional
+#### ``-l``, ``--list`` : flag, optional
 Print the current configuration settings to the console.
 
-#### ``-reset`` : flag, optional
+#### ``-r``, ``--reset`` : flag, optional
 Reset configuration settings back to their default value. Will prompt the user for a selection of configuration settings to reset.
 
 ### Other args and subcommands
@@ -272,9 +272,9 @@ You can open multiple .KD files (in *view-only* mode) simultaneously with the ``
 uvp mv -f some search filters
 ```
 
-The script will open .KD files which contain any of the supplied search filters in *view-only* mode. If no filters are provided, then *all* .KD files in the current working directory will opened.
+The script will open .KD files which contain any of the supplied search filters in *view-only* mode. You can omit the ``-f`` argument to open *all* .KD files in the current working directory.
 
-The default search behavior is an *OR* search. You can use the ``-a`` or ``--and_filter`` argument to perform an *AND* search:
+The default search behavior is an *OR* search. You can use the ``-a`` or ``--and-filter`` argument to perform an *AND* search:
 ```
 uvp mv -f some search filters -a
 ```

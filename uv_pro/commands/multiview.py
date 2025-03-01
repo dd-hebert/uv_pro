@@ -8,16 +8,16 @@ Navigate to a directory containing .KD files and run the command::
 The script will open .KD files which contain any of the supplied search filters
 in ``view_only`` mode.
 
-The default search behavior is an `OR` search. You can use supply the ``-a`` or
-``--and_filter`` argument to perform an `AND` search::
+The default search behavior is an `OR` search. You can supply the ``-a`` or
+``--and-filter`` argument to perform an `AND` search::
 
     uvp mv -f some search filters -a
 
 Now only .KD files with contain all of the search filters in their name will be
 opened.
 
-If no search filters are provided, then all .KD files in the current working
-directory will be opened.
+The ``-f`` filtering argument can be omitted to open all .KD files in the current working
+directory.
 
 @author: David
 """
@@ -30,28 +30,28 @@ from concurrent.futures import ThreadPoolExecutor
 from uv_pro.commands import argument, command
 
 HELP = {
-    'search_filters': """An arbitrary number of search filters""",
-    'and_filter': '``and`` filter mode.',
-    'or_filter': '``or`` filter mode.',
+    'filters': 'An arbitrary number of search filters.',
+    'and-filter': '``and`` filter mode.',
+    'or-filter': '``or`` filter mode.',
 }
 ARGS = [
     argument(
         '-f',
-        '--search_filters',
+        '--filters',
         action='store',
         nargs='*',
         default='*',
         metavar='',
-        help=HELP['search_filters'],
+        help=HELP['filters'],
     ),
     argument(
-        '-and',
-        '--and_filter',
+        '-a',
+        '--and-filter',
         dest='filter_mode',
         action='store_const',
         default='or',
         const='and',
-        help=HELP['and_filter'],
+        help=HELP['and'],
     ),
 ]
 

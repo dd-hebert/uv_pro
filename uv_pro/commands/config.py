@@ -11,33 +11,36 @@ from uv_pro.utils.config import Config
 from uv_pro.utils.prompts import get_value, user_choice
 
 HELP = {
-    'delete': """Delete the config file.""",
-    'edit': """Edit config settings.""",
-    'list': """Print the current config settings to the console.""",
-    'reset': """Reset config settings back to their default value.""",
+    'delete': 'Delete the config file.',
+    'edit': 'Edit config settings.',
+    'list': 'Print the current config settings to the console.',
+    'reset': 'Reset config settings back to their default value.',
 }
 MUTEX_ARGS = [
     mutually_exclusive_group(
         argument(
-            '-delete',
+            '--delete',
             action='store_true',
             default=False,
             help=HELP['delete'],
         ),
         argument(
-            '-edit',
+            '-e',
+            '--edit',
             action='store_true',
             default=False,
             help=HELP['edit'],
         ),
         argument(
-            '-list',
+            '-l',
+            '--list',
             action='store_true',
             default=False,
             help=HELP['list'],
         ),
         argument(
-            '-reset',
+            '-r',
+            '--reset',
             action='store_true',
             default=False,
             help=HELP['reset'],
