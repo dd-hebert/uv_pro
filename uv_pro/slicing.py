@@ -3,8 +3,9 @@ Contains functions for slicing UV-vis spectra.
 
 @author: David Hebert
 """
-from pandas import DataFrame
+
 import numpy as np
+from pandas import DataFrame
 
 
 def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
@@ -74,10 +75,14 @@ def _check_variable_slice_coeff(coeff) -> None:
 def equal_slicing(spectra: DataFrame, num_slices: int) -> DataFrame:
     """Get equally-spaced slices from ``spectra``."""
     num_slices = min(num_slices, len(spectra.columns))
-    return spectra.iloc[:, np.linspace(0, len(spectra.columns) - 1, num_slices).astype(int)]
+    return spectra.iloc[
+        :, np.linspace(0, len(spectra.columns) - 1, num_slices).astype(int)
+    ]
 
 
 def specific_slicing(spectra: DataFrame, times: list[int]) -> DataFrame:
     """Get the slices closest to the given ``times`` from ``spectra``."""
-    closest_times = sorted(set([min(spectra.columns, key=lambda t: abs(t - time)) for time in times]))
+    closest_times = sorted(
+        set([min(spectra.columns, key=lambda t: abs(t - time)) for time in times])
+    )
     return spectra[closest_times]

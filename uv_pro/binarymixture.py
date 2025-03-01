@@ -27,8 +27,15 @@ class BinaryMixture:
         component A and component B.
     """
 
-    def __init__(self, mixture: pd.Series, component_a: pd.Series, component_b: pd.Series,
-                 coeff_a: float = 0.5, coeff_b: float = 0.5, window: tuple[int, int] = (300, 1100)) -> None:
+    def __init__(
+        self,
+        mixture: pd.Series,
+        component_a: pd.Series,
+        component_b: pd.Series,
+        coeff_a: float = 0.5,
+        coeff_b: float = 0.5,
+        window: tuple[int, int] = (300, 1100),
+    ) -> None:
         """
         Initialize a :class:`~uv_pro.binarymix.BinaryMixture` and fit a binary mixture model.
 
@@ -55,9 +62,9 @@ class BinaryMixture:
         window : tuple[int, int], optional
             The range of wavelengths (in nm) to use from each spectrum, by default (300, 1100).
         """
-        self.mixture = mixture.loc[window[0]:window[1] + 1]
-        self.component_a = component_a.loc[window[0]:window[1] + 1]
-        self.component_b = component_b.loc[window[0]:window[1] + 1]
+        self.mixture = mixture.loc[window[0] : window[1] + 1]
+        self.component_a = component_a.loc[window[0] : window[1] + 1]
+        self.component_b = component_b.loc[window[0] : window[1] + 1]
         self.coeff_a_max = self.get_max_coefficient(self.component_a)
         self.coeff_b_max = self.get_max_coefficient(self.component_b)
         self.coeff_a, self.coeff_b = self.minimize((coeff_a, coeff_b))
@@ -89,6 +96,7 @@ class BinaryMixture:
             A tuple with initial guesses for the scalar coefficients of \
             component A and component B.
         """
+
         def fit_mean_squared_error(fit_vars: tuple[float, float]):
             self.fit = self.linear_combination(*fit_vars)
             squared_diffs = self.difference_spectrum() ** 2
@@ -97,7 +105,7 @@ class BinaryMixture:
         opt = minimize(
             fit_mean_squared_error,
             fit_vars,
-            bounds=[(0, self.coeff_a_max), (0, self.coeff_b_max)]
+            bounds=[(0, self.coeff_a_max), (0, self.coeff_b_max)],
         )
 
         return opt.x

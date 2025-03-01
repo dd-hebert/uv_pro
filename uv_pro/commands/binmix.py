@@ -7,50 +7,51 @@ Functions for the ``binmix`` command.
 import argparse
 import os
 from collections import namedtuple
+
 import pandas as pd
 from rich import print
-from uv_pro.commands import command, argument, mutually_exclusive_group
-from uv_pro.binarymixture import BinaryMixture
-from uv_pro.plots import plot_binarymixture
-from uv_pro.io.export import export_csv
-from uv_pro.utils.prompts import user_choice
-from uv_pro.utils._rich import splash, BinmixOutput
 
+from uv_pro.binarymixture import BinaryMixture
+from uv_pro.commands import argument, command, mutually_exclusive_group
+from uv_pro.io.export import export_csv
+from uv_pro.plots import plot_binarymixture
+from uv_pro.utils._rich import BinmixOutput, splash
+from uv_pro.utils.prompts import user_choice
 
 HELP = {
-    'path': '''Path to a UV-vis data file (.csv format) of binary mixture spectra.''',
-    'component_a': '''Path to a UV-vis spectrum (.csv format) of pure component "A".''',
-    'component_b': '''Path to a UV-vis spectrum (.csv format) of pure component "B".''',
-    'molarity_a': '''Specify the concentration (in M) of pure component "A".''',
-    'molarity_b': '''Specify the concentration (in M) of pure component "B".''',
-    'columns': '''Specify the columns of the binary mixture .csv file to perform fitting on.
-                  Provide the LABEL for each column. Default is None (fit all columns).''',
-    'index_columns': '''Specify the columns of the binary mixture .csv file to perform fitting on.
-                  Provide the IDX for each column. Default is None (fit all columns).''',
-    'window': '''Set the range of wavelengths (in nm) to use from the given spectra
-                 for fitting. Default is (300, 1100).''',
-    'interactive': '''Enable interactive mode. Show an interactive matplotlib figure
-                      of the binary mixture fitting.''',
-    'no_export': '''Skip the export results prompt at the end of the script.''',
+    'path': """Path to a UV-vis data file (.csv format) of binary mixture spectra.""",
+    'component_a': """Path to a UV-vis spectrum (.csv format) of pure component "A".""",
+    'component_b': """Path to a UV-vis spectrum (.csv format) of pure component "B".""",
+    'molarity_a': """Specify the concentration (in M) of pure component "A".""",
+    'molarity_b': """Specify the concentration (in M) of pure component "B".""",
+    'columns': """Specify the columns of the binary mixture .csv file to perform fitting on.
+                  Provide the LABEL for each column. Default is None (fit all columns).""",
+    'index_columns': """Specify the columns of the binary mixture .csv file to perform fitting on.
+                  Provide the IDX for each column. Default is None (fit all columns).""",
+    'window': """Set the range of wavelengths (in nm) to use from the given spectra
+                 for fitting. Default is (300, 1100).""",
+    'interactive': """Enable interactive mode. Show an interactive matplotlib figure
+                      of the binary mixture fitting.""",
+    'no_export': """Skip the export results prompt at the end of the script.""",
 }
 ARGS = [
     argument(
         'path',
         action='store',
         default=None,
-        help=HELP['path']
+        help=HELP['path'],
     ),
     argument(
         'component_a',
         action='store',
         default=None,
-        help=HELP['component_a']
+        help=HELP['component_a'],
     ),
     argument(
         'component_b',
         action='store',
         default=None,
-        help=HELP['component_b']
+        help=HELP['component_b'],
     ),
     argument(
         '-a',
@@ -59,7 +60,7 @@ ARGS = [
         type=float,
         default=None,
         metavar='',
-        help=HELP['molarity_a']
+        help=HELP['molarity_a'],
     ),
     argument(
         '-b',
@@ -68,7 +69,7 @@ ARGS = [
         type=float,
         default=None,
         metavar='',
-        help=HELP['molarity_b']
+        help=HELP['molarity_b'],
     ),
     argument(
         '-win',
@@ -78,21 +79,21 @@ ARGS = [
         nargs=2,
         default=[300, 1100],
         metavar=('MIN', 'MAX'),
-        help=HELP['window']
+        help=HELP['window'],
     ),
     argument(
         '-i',
         '--interactive',
         action='store_true',
         default=False,
-        help=HELP['interactive']
+        help=HELP['interactive'],
     ),
     argument(
         '-ne',
         '--no_export',
         action='store_true',
         default=False,
-        help=HELP['no_export']
+        help=HELP['no_export'],
     ),
 ]
 MUTEX_ARGS = [
@@ -104,7 +105,7 @@ MUTEX_ARGS = [
             nargs='*',
             default=[],
             metavar='LABEL',
-            help=HELP['columns']
+            help=HELP['columns'],
         ),
         argument(
             '-icols',
@@ -114,8 +115,8 @@ MUTEX_ARGS = [
             nargs='*',
             default=[],
             metavar='IDX',
-            help=HELP['index_columns']
-        )
+            help=HELP['index_columns'],
+        ),
     )
 ]
 
@@ -146,19 +147,24 @@ def binmix(args: argparse.Namespace) -> None:
     fit_specta = []
 
     for column in mixture.columns:
-
         try:
             bm = BinaryMixture(
                 mixture=mixture[column],
                 component_a=component_a.iloc[:, 0],
                 component_b=component_b.iloc[:, 0],
-                window=args.window
+                window=args.window,
             )
 
             if args.interactive:
                 if first_iteration:
                     first_iteration = False
-                    print('', splash(text='Close plot window to continue...', title='uv_pro Binary Mixture Fitter'))
+                    print(
+                        '',
+                        splash(
+                            text='Close plot window to continue...',
+                            title='uv_pro Binary Mixture Fitter',
+                        ),
+                    )
 
                 plot_binarymixture(bm, figsize=args.plot_size)
 
@@ -168,11 +174,13 @@ def binmix(args: argparse.Namespace) -> None:
                 'conc_a': bm.coeff_a * args.molarity_a if args.molarity_a else None,
                 'coeff_b': round(bm.coeff_b, 3),
                 'conc_b': bm.coeff_b * args.molarity_b if args.molarity_b else None,
-                'MSE': bm.mean_squared_error()
+                'MSE': bm.mean_squared_error(),
             }
 
             fit_results.append(results)
-            fit_specta.append(bm.linear_combination(bm.coeff_a, bm.coeff_b).rename(column))
+            fit_specta.append(
+                bm.linear_combination(bm.coeff_a, bm.coeff_b).rename(column)
+            )
 
         except KeyError:
             continue
@@ -185,7 +193,9 @@ def binmix(args: argparse.Namespace) -> None:
             prompt_for_export(args, fit_df, fit_specta)
 
 
-def prompt_for_export(args: argparse.Namespace, results: pd.DataFrame, spectra: list[pd.Series]) -> None:
+def prompt_for_export(
+    args: argparse.Namespace, results: pd.DataFrame, spectra: list[pd.Series]
+) -> None:
     """
     Prompt the user for data export.
 
@@ -208,7 +218,9 @@ def prompt_for_export(args: argparse.Namespace, results: pd.DataFrame, spectra: 
     options = [{'key': str(key), 'name': 'Fitting results'}]
     files_exported = []
 
-    dummy = namedtuple('Dummy_Dataset', ['path', 'name'])  # Hacky way to get around having to use a real Dataset
+    dummy = namedtuple(
+        'Dummy_Dataset', ['path', 'name']
+    )  # Hacky way to get around having to use a real Dataset
     ds = dummy(path=args.path, name=os.path.basename(args.path))
 
     spectra_key = None
@@ -232,6 +244,7 @@ def prompt_for_export(args: argparse.Namespace, results: pd.DataFrame, spectra: 
         [print(f'\t{file}') for file in files_exported]
 
     return files_exported
+
 
 # TODO
 # Add options for concentrations/equivalents

@@ -4,53 +4,54 @@ Functions for the ``process`` command.
 @author: David Hebert
 """
 
-import os
 import argparse
+import os
+
 from rich import print
 from rich.columns import Columns
-from uv_pro.commands import command, argument, mutually_exclusive_group
-from uv_pro.dataset import Dataset
-from uv_pro.quickfig import QuickFig
-from uv_pro.plots import plot_spectra, plot_2x2, CMAPS
-from uv_pro.io.export import export_csv
-from uv_pro.utils.prompts import user_choice
-from uv_pro.utils._rich import splash
 
+from uv_pro.commands import argument, command, mutually_exclusive_group
+from uv_pro.dataset import Dataset
+from uv_pro.io.export import export_csv
+from uv_pro.plots import CMAPS, plot_2x2, plot_spectra
+from uv_pro.quickfig import QuickFig
+from uv_pro.utils._rich import splash
+from uv_pro.utils.prompts import user_choice
 
 HELP = {
-    'path': '''A path to a UV-vis data file (.KD format). Required unless using --list-colormaps.''',
-    'view': '''Enable view-only mode (no data processing).''',
-    'trim': '''Remove spectra outside the given time range.
+    'path': """A path to a UV-vis data file (.KD format). Required unless using --list-colormaps.""",
+    'view': """Enable view-only mode (no data processing).""",
+    'trim': """Remove spectra outside the given time range.
                Data before time = T1 and after time = T2 will be removed.
-               Use -1 for END to indicate the end of the data.''',
-    'outlier-threshold': '''Set the threshold (0-1) for outlier detection. Default: 0.1.
+               Use -1 for END to indicate the end of the data.""",
+    'outlier-threshold': """Set the threshold (0-1) for outlier detection. Default: 0.1.
                             Values closer to 0 result in higher sensitivity (more outliers).
-                            Values closer to 1 result in lower sensitivity (fewer outliers).''',
+                            Values closer to 1 result in lower sensitivity (fewer outliers).""",
     'slice': 'Set the number of slices to plot. Default: None (no slicing).',
-    'variable-slice': '''Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
-                         Default: None (no slicing).''',
-    'specific-slice': '''Get spectra slices from specific times. Takes an arbitrary number of floats.''',
+    'variable-slice': """Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
+                         Default: None (no slicing).""",
+    'specific-slice': """Get spectra slices from specific times. Takes an arbitrary number of floats.""",
     'baseline-smoothness': 'Set the smoothness of the baseline. Default: 10.',
     'baseline-tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
-    'low-signal-window': '''"narrow", "wide", or "none". Set the width of the low signal outlier detection window.
-                             Default: "none". If "none", low signal outlier detection is skipped.''',
+    'low-signal-window': """"narrow", "wide", or "none". Set the width of the low signal outlier detection window.
+                             Default: "none". If "none", low signal outlier detection is skipped.""",
     'fit-exponential': 'Perform exponential fitting of specified time traces. Default: False.',
-    'initial-rates': '''Perform linear regression of specified time traces for initial rates. Default False.
+    'initial-rates': """Perform linear regression of specified time traces for initial rates. Default False.
                     If performing initial rates fitting, you can supply an optional float value for
-                    the change in absorbance cutoff. Default cutoff is 0.1 (10%% change in absorbance).''',
-    'time-trace-window': '''Set the (min, max) wavelength (in nm) window for the time traces used in
-                            outlier detection''',
-    'time-trace-interval': '''Set the interval (in nm) for time traces. An interval of 10 will create time
+                    the change in absorbance cutoff. Default cutoff is 0.1 (10%% change in absorbance).""",
+    'time-trace-window': """Set the (min, max) wavelength (in nm) window for the time traces used in
+                            outlier detection""",
+    'time-trace-interval': """Set the interval (in nm) for time traces. An interval of 10 will create time
                               traces from the window min to max every 10 nm. Smaller intervals may
-                              increase loading times.''',
+                              increase loading times.""",
     'time-traces': 'Specific wavelengths (in nm) to create time traces for.',
     'no-export': 'Skip the export data prompt at the end of the script.',
     'quick-fig': 'Use the quick-figure generator.',
-    'colormap': '''Set the colormap for the processed spectra plot. Accepts any built-in
+    'colormap': """Set the colormap for the processed spectra plot. Accepts any built-in
                    Matplotlib colormap name. For a full description of colormaps see:
                    https://matplotlib.org/stable/tutorials/colors/colormaps.html.
-                   Default is 'default'.''',
-    'list-colormaps': 'List available colormaps and exit (path not required).'
+                   Default is 'default'.""",
+    'list-colormaps': 'List available colormaps and exit (path not required).',
 }
 ARGS = [
     argument(
@@ -58,14 +59,14 @@ ARGS = [
         action='store',
         nargs='?',
         default=None,
-        help=HELP['path']
+        help=HELP['path'],
     ),
     argument(
         '-v',
         '--view',
         action='store_true',
         default=False,
-        help=HELP['view']
+        help=HELP['view'],
     ),
     argument(
         '-tr',
@@ -75,7 +76,7 @@ ARGS = [
         nargs=2,
         default=None,
         metavar=('T1', 'T2'),
-        help=HELP['trim']
+        help=HELP['trim'],
     ),
     argument(
         '-ot',
@@ -84,7 +85,7 @@ ARGS = [
         type=float,
         default=0.1,
         metavar='',
-        help=HELP['outlier-threshold']
+        help=HELP['outlier-threshold'],
     ),
     argument(
         '-bs',
@@ -93,7 +94,7 @@ ARGS = [
         type=float,
         default=10,
         metavar='',
-        help=HELP['baseline-smoothness']
+        help=HELP['baseline-smoothness'],
     ),
     argument(
         '-bt',
@@ -102,7 +103,7 @@ ARGS = [
         type=float,
         default=0.1,
         metavar='',
-        help=HELP['baseline-tolerance']
+        help=HELP['baseline-tolerance'],
     ),
     argument(
         '-lw',
@@ -110,14 +111,14 @@ ARGS = [
         action='store',
         default='none',
         choices=['narrow', 'wide', 'none'],
-        help=HELP['low-signal-window']
+        help=HELP['low-signal-window'],
     ),
     argument(
         '-fx',
         '--fit-exponential',
         action='store_true',
         default=False,
-        help=HELP['fit-exponential']
+        help=HELP['fit-exponential'],
     ),
     argument(
         '-ir',
@@ -128,7 +129,7 @@ ARGS = [
         const='0.1',
         default=None,
         metavar='',
-        help=HELP['initial-rates']
+        help=HELP['initial-rates'],
     ),
     argument(
         '-tw',
@@ -138,7 +139,7 @@ ARGS = [
         nargs=2,
         default=[300, 1060],
         metavar=('MIN', 'MAX'),
-        help=HELP['time-trace-window']
+        help=HELP['time-trace-window'],
     ),
     argument(
         '-ti',
@@ -147,7 +148,7 @@ ARGS = [
         type=int,
         default=10,
         metavar='',
-        help=HELP['time-trace-interval']
+        help=HELP['time-trace-interval'],
     ),
     argument(
         '-tt',
@@ -157,21 +158,21 @@ ARGS = [
         type=int,
         default=None,
         metavar='',
-        help=HELP['time-traces']
+        help=HELP['time-traces'],
     ),
     argument(
         '-ne',
         '--no-export',
         action='store_true',
         default=False,
-        help=HELP['no-export']
+        help=HELP['no-export'],
     ),
     argument(
         '-qf',
         '--quick-fig',
         action='store_true',
         default=False,
-        help=HELP['quick-fig']
+        help=HELP['quick-fig'],
     ),
     argument(
         '-c',
@@ -180,14 +181,14 @@ ARGS = [
         metavar='NAME',
         default='default',
         choices=CMAPS,
-        help=HELP['colormap']
+        help=HELP['colormap'],
     ),
     argument(
         '--list-colormaps',
         action='store_true',
         default=False,
-        help=HELP['list-colormaps']
-    )
+        help=HELP['list-colormaps'],
+    ),
 ]
 MUTEX_ARGS = [
     mutually_exclusive_group(
@@ -198,7 +199,7 @@ MUTEX_ARGS = [
             type=int,
             default=None,
             metavar='',
-            help=HELP['slice']
+            help=HELP['slice'],
         ),
         argument(
             '-vsl',
@@ -208,7 +209,7 @@ MUTEX_ARGS = [
             nargs=2,
             default=None,
             metavar='',
-            help=HELP['variable-slice']
+            help=HELP['variable-slice'],
         ),
         argument(
             '-ssl',
@@ -218,8 +219,8 @@ MUTEX_ARGS = [
             type=float,
             default=None,
             metavar='',
-            help=HELP['specific-slice']
-        )
+            help=HELP['specific-slice'],
+        ),
     )
 ]
 
@@ -261,7 +262,7 @@ def process(args: argparse.Namespace) -> None:
             low_signal_window=args.low_signal_window,
             time_trace_window=args.time_trace_window,
             time_trace_interval=args.time_trace_interval,
-            wavelengths=args.time_traces
+            wavelengths=args.time_traces,
         )
 
     print('', dataset, sep='\n')
@@ -280,11 +281,15 @@ def _handle_path(args: argparse.Namespace) -> None:
     if path_exists:
         args.path = os.path.join(current_dir, args.path)
 
-    elif args.root_dir is not None and os.path.exists(os.path.join(args.root_dir, args.path)):
+    elif args.root_dir is not None and os.path.exists(
+        os.path.join(args.root_dir, args.path)
+    ):
         args.path = os.path.join(args.root_dir, args.path)
 
     else:
-        raise FileNotFoundError(f'No such file or directory could be found: "{args.path}"')
+        raise FileNotFoundError(
+            f'No such file or directory could be found: "{args.path}"'
+        )
 
 
 def _handle_slicing(args: argparse.Namespace) -> dict | None:
@@ -295,14 +300,11 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
         return {
             'mode': 'variable',
             'coeff': args.variable_slice[0],
-            'expo': args.variable_slice[1]
+            'expo': args.variable_slice[1],
         }
 
     elif args.specific_slice:
-        return {
-            'mode': 'specific',
-            'times': args.specific_slice
-        }
+        return {'mode': 'specific', 'times': args.specific_slice}
 
     return None
 
@@ -312,7 +314,7 @@ def list_colormaps():
     print(
         'Valid colormaps:\n',
         Columns(CMAPS, column_first=True),
-        f'\nSee {link} for more info.'
+        f'\nSee {link} for more info.',
     )
 
 
@@ -359,21 +361,31 @@ def prompt_for_export(dataset) -> list[str]:
             files_exported.append(export_csv(dataset, dataset.processed_spectra))
 
         if str(traces_key) in user_choices:
-            files_exported.append(export_csv(dataset, dataset.chosen_traces, suffix='Traces'))
+            files_exported.append(
+                export_csv(dataset, dataset.chosen_traces, suffix='Traces')
+            )
 
         if str(fit_key) in user_choices:
             files_exported.extend(
                 [
                     export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
-                    export_csv(dataset, dataset.fit['params'].transpose(), suffix='Fit params')
+                    export_csv(
+                        dataset, dataset.fit['params'].transpose(), suffix='Fit params'
+                    ),
                 ]
             )
 
         if str(init_rate_key) in user_choices:
             files_exported.extend(
                 [
-                    export_csv(dataset, dataset.init_rate['lines'], suffix='Init rate lines'),
-                    export_csv(dataset, dataset.init_rate['params'].transpose(), suffix='Init rate params'),
+                    export_csv(
+                        dataset, dataset.init_rate['lines'], suffix='Init rate lines'
+                    ),
+                    export_csv(
+                        dataset,
+                        dataset.init_rate['params'].transpose(),
+                        suffix='Init rate params',
+                    ),
                 ]
             )
 
@@ -388,9 +400,13 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
 
         if args.quick_fig is True:
             try:
-                print('', splash(text='Enter ctrl-c to quit', title='uv_pro Quick Figure'))
+                print(
+                    '', splash(text='Enter ctrl-c to quit', title='uv_pro Quick Figure')
+                )
 
-                files_exported.append(getattr(QuickFig(dataset, args.colormap), 'exported_figure'))
+                files_exported.append(
+                    getattr(QuickFig(dataset, args.colormap), 'exported_figure')
+                )
 
             except AttributeError:
                 pass
@@ -403,9 +419,14 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
             files_exported.extend(prompt_for_export(dataset))
 
         if files_exported:
-            print(f'\nExport location: [repr.path]{os.path.dirname(args.path)}[/repr.path]')
+            print(
+                f'\nExport location: [repr.path]{os.path.dirname(args.path)}[/repr.path]'
+            )
             print('Files exported:')
-            [print(f'\t[repr.filename]{file}[/repr.filename]') for file in files_exported]
+            [
+                print(f'\t[repr.filename]{file}[/repr.filename]')
+                for file in files_exported
+            ]
 
     else:
         plot_spectra(dataset, dataset.raw_spectra)

@@ -3,17 +3,18 @@ Functions for the ``config`` command.
 
 @author: David Hebert
 """
-import argparse
-from uv_pro.commands import command, argument, mutually_exclusive_group
-from uv_pro.utils.config import Config
-from uv_pro.utils.prompts import user_choice, get_value
 
+import argparse
+
+from uv_pro.commands import argument, command, mutually_exclusive_group
+from uv_pro.utils.config import Config
+from uv_pro.utils.prompts import get_value, user_choice
 
 HELP = {
-    'delete': '''Delete the config file.''',
-    'edit': '''Edit config settings.''',
-    'list': '''Print the current config settings to the console.''',
-    'reset': '''Reset config settings back to their default value.''',
+    'delete': """Delete the config file.""",
+    'edit': """Edit config settings.""",
+    'list': """Print the current config settings to the console.""",
+    'reset': """Reset config settings back to their default value.""",
 }
 MUTEX_ARGS = [
     mutually_exclusive_group(
@@ -21,26 +22,26 @@ MUTEX_ARGS = [
             '-delete',
             action='store_true',
             default=False,
-            help=HELP['delete']
+            help=HELP['delete'],
         ),
         argument(
             '-edit',
             action='store_true',
             default=False,
-            help=HELP['edit']
+            help=HELP['edit'],
         ),
         argument(
             '-list',
             action='store_true',
             default=False,
-            help=HELP['list']
+            help=HELP['list'],
         ),
         argument(
             '-reset',
             action='store_true',
             default=False,
-            help=HELP['reset']
-        )
+            help=HELP['reset'],
+        ),
     )
 ]
 

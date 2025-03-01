@@ -9,8 +9,8 @@ can be found in the user's home directory.
 
 import os
 from configparser import ConfigParser
-from uv_pro.utils._defaults import CONFIG_MAP
 
+from uv_pro.utils._defaults import CONFIG_MAP
 
 name = 'uv_pro'
 CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', f'{name}')
@@ -21,11 +21,9 @@ DEFAULTS = {cfg['key']: cfg['default_str'] for (_, cfg) in CONFIG_MAP.items()}
 
 class Config(ConfigParser):
     """wrapper for ConfigParser"""
+
     def __init__(self):
-        super().__init__(
-            defaults=DEFAULTS,
-            default_section='Settings'
-        )
+        super().__init__(defaults=DEFAULTS, default_section='Settings')
 
         if not os.path.exists(CONFIG_PATH):
             os.makedirs(CONFIG_DIR, exist_ok=True)
@@ -38,7 +36,7 @@ class Config(ConfigParser):
 
     def _write(self) -> None:
         """Write settings to the config file."""
-        with open(CONFIG_PATH, "w") as f:
+        with open(CONFIG_PATH, 'w') as f:
             self.write(f)
 
     def validate(self, verbose: bool = False) -> bool:
@@ -77,14 +75,20 @@ class Config(ConfigParser):
         list[tuple[str, Any]]
             A list of tuples with config parameter names (str) and formatted values (any).
         """
+
         def get_val(section: str, key: str, type: callable, default_val=None, **kwargs):
             try:
                 if value := self.get(section, key):
                     return type(value)
 
             except Exception as e:
-                print(f"Warning: Could not retrieve config value for [{section}] {key}: {e}")
+                print(
+                    f'Warning: Could not retrieve config value for [{section}] {key}: {e}'
+                )
 
             return default_val
 
-        return [(arg_name, get_val(**config_mapping)) for arg_name, config_mapping in CONFIG_MAP.items()]
+        return [
+            (arg_name, get_val(**config_mapping))
+            for arg_name, config_mapping in CONFIG_MAP.items()
+        ]

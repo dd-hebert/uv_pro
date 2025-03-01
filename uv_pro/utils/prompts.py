@@ -37,11 +37,17 @@ def user_choice(header: str, options: list[dict]) -> list[str] | list:
     valid_choices = [option['key'] for option in options]
 
     try:
-        user_choices = [key for key in _input(prompt).strip().split() if key in valid_choices]
+        user_choices = [
+            key for key in _input(prompt).strip().split() if key in valid_choices
+        ]
 
         while not user_choices:
-            print('\nInvalid selection. Enter one or more of the displayed options or ctrl-c to quit.')
-            user_choices = [key for key in _input(prompt).strip().split() if key in valid_choices]
+            print(
+                '\nInvalid selection. Enter one or more of the displayed options or ctrl-c to quit.'
+            )
+            user_choices = [
+                key for key in _input(prompt).strip().split() if key in valid_choices
+            ]
 
         return user_choices
 

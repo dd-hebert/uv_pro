@@ -8,18 +8,24 @@ dataset.
 @author: David Hebert
 """
 
-import re
 import os
+import re
+
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 from matplotlib.artist import Artist
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from rich import print
 from rich.columns import Columns
+
 from uv_pro.dataset import Dataset
-from uv_pro.plots.dataset_plots import _processed_data_subplot, _time_traces_subplot, CMAPS
-from uv_pro.utils.prompts import user_choice
 from uv_pro.io.export import export_figure
+from uv_pro.plots.dataset_plots import (
+    CMAPS,
+    _processed_data_subplot,
+    _time_traces_subplot,
+)
+from uv_pro.utils.prompts import user_choice
 
 
 class QuickFig:
@@ -33,6 +39,7 @@ class QuickFig:
     exported_figure : str
         The filename of the exported quick figure.
     """
+
     def __init__(self, dataset: Dataset, cmap: str = 'default') -> None:
         """
         Create a quick figure with :class:`~uv_pro.dataset.Dataset`.
@@ -47,8 +54,12 @@ class QuickFig:
         self.dataset = dataset
         self.quick_figure(cmap=cmap)
 
-    def quick_figure(self, title: str | None = None, x_bounds: tuple[int] | None = None,
-                     cmap: str | None = 'default') -> None:
+    def quick_figure(
+        self,
+        title: str | None = None,
+        x_bounds: tuple[int] | None = None,
+        cmap: str | None = 'default',
+    ) -> None:
         """
         Create a quick figure for exporting.
 
@@ -137,11 +148,7 @@ class QuickFig:
     def _1x2_plot(self, cmap: str = 'default') -> tuple[Figure, tuple[Axes, Axes]]:
         """Create 1x2 plot with processed data and time traces."""
         fig, (ax_processed_data, ax_traces) = plt.subplots(
-            nrows=1,
-            ncols=2,
-            figsize=(10, 5),
-            layout='constrained',
-            sharey=True
+            nrows=1, ncols=2, figsize=(10, 5), layout='constrained', sharey=True
         )
 
         _processed_data_subplot(ax_processed_data, self.dataset, cmap)
@@ -155,7 +162,9 @@ class QuickFig:
         ax.set_title('UV-vis Spectra', fontstyle='normal')
         ax.set_xbound(*x_bounds)
         Artist.remove(ax.texts[0])
-        delta_t = int(self.dataset.processed_spectra.columns[-1]) - int(self.dataset.processed_spectra.columns[0])
+        delta_t = int(self.dataset.processed_spectra.columns[-1]) - int(
+            self.dataset.processed_spectra.columns[0]
+        )
         ax.text(
             x=0.99,
             y=0.99,
@@ -164,7 +173,7 @@ class QuickFig:
             horizontalalignment='right',
             transform=ax.transAxes,
             color='gray',
-            fontsize=8
+            fontsize=8,
         )
 
     def _touchup_time_traces_plot(self, ax: Axes) -> None:
@@ -173,10 +182,12 @@ class QuickFig:
         ax.tick_params(labelleft=True)
         ax.set_xbound(
             int(self.dataset.processed_spectra.columns[0]),
-            int(self.dataset.processed_spectra.columns[-1])
+            int(self.dataset.processed_spectra.columns[-1]),
         )
 
-    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple[int]) -> None:
+    def _prompt_for_changes(
+        self, fig: Figure, title: str, x_bounds: tuple[int]
+    ) -> None:
         """
         Prompt the user for plot changes or export.
 
@@ -194,7 +205,7 @@ class QuickFig:
             {'key': '1', 'name': 'Save plot'},
             {'key': '2', 'name': 'Change title'},
             {'key': '3', 'name': 'Change x-axis bounds'},
-            {'key': '4', 'name': 'Change colors'}
+            {'key': '4', 'name': 'Change colors'},
         ]
 
         if user_choices := user_choice(header=header, options=options):

@@ -3,7 +3,9 @@ Default entry point if running the package using ``python -m uv_pro``.
 
 @author: David Hebert
 """
+
 import sys
+
 from uv_pro.cli import CLI
 
 

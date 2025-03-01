@@ -5,6 +5,7 @@ An interactive UV-vis peak finder based on Matplotlib.
 """
 
 import pandas as pd
+
 from uv_pro.dataset import Dataset
 from uv_pro.peaks import find_peaks, find_peaks_dxdy
 from uv_pro.utils._rich import PeaksOutput
@@ -35,10 +36,19 @@ class PeakFinder:
         A scatter plot of the current spectrum.
     """
 
-    def __init__(self, path: str, *, method: str = 'localmax', num_peaks: int = 0,
-                 conc: float | None = None, p_win: tuple[int, int] | None = None,
-                 s_win: int = 15, dist: int = 10, prom: float = 0.0,
-                 max_iter: int = 1000) -> None:
+    def __init__(
+        self,
+        path: str,
+        *,
+        method: str = 'localmax',
+        num_peaks: int = 0,
+        conc: float | None = None,
+        p_win: tuple[int, int] | None = None,
+        s_win: int = 15,
+        dist: int = 10,
+        prom: float = 0.0,
+        max_iter: int = 1000,
+    ) -> None:
         """
         Initialize a :class:`~uv_pro.peakfinder.PeakFinder` and find peaks in UV-vis spectra.
 
@@ -108,7 +118,7 @@ class PeakFinder:
                 s_win=self.s_win,
                 dist=self.dist,
                 prom=self.prom,
-                max_iter=self.max_iter
+                max_iter=self.max_iter,
             )
 
         if self.method == 'deriv':
@@ -116,7 +126,7 @@ class PeakFinder:
                 spectrum=self.spectrum,
                 conc=self.conc,
                 p_win=self.p_win,
-                s_win=self.s_win
+                s_win=self.s_win,
             )
 
         return peaks

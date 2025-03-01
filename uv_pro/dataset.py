@@ -8,10 +8,12 @@ UV-vis Chemstation software.
 """
 
 import os
+
 import pandas as pd
+
+from uv_pro.fitting import fit_exponential, initial_rates
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
-from uv_pro.fitting import fit_exponential, initial_rates
 from uv_pro.slicing import slice_spectra
 from uv_pro.utils._rich import ProcessingOutput
 
@@ -57,13 +59,23 @@ class Dataset:
         and it contains more than 2 spectra.
     """
 
-    def __init__(self, path: str, *, trim: tuple[int, int] | None = None,
-                 slicing: dict | None = None, fit_exp: bool = False,
-                 fit_init_rate: float | None = None, outlier_threshold: float = 0.1,
-                 baseline_smoothness: float = 10.0, baseline_tolerance: float = 0.1,
-                 low_signal_window: str = 'none', time_trace_window: tuple[int, int] = (300, 1060),
-                 time_trace_interval: int = 10, wavelengths: list | None = None,
-                 view_only: bool = False) -> None:
+    def __init__(
+        self,
+        path: str,
+        *,
+        trim: tuple[int, int] | None = None,
+        slicing: dict | None = None,
+        fit_exp: bool = False,
+        fit_init_rate: float | None = None,
+        outlier_threshold: float = 0.1,
+        baseline_smoothness: float = 10.0,
+        baseline_tolerance: float = 0.1,
+        low_signal_window: str = 'none',
+        time_trace_window: tuple[int, int] = (300, 1060),
+        time_trace_interval: int = 10,
+        wavelengths: list | None = None,
+        view_only: bool = False,
+    ) -> None:
         """
         Initialize a :class:`Dataset`.
 
@@ -168,8 +180,7 @@ class Dataset:
         """
         if len(self.raw_spectra.columns) > 2:
             self.time_traces = self.get_time_traces(
-                window=self.time_trace_window,
-                interval=self.time_trace_interval
+                window=self.time_trace_window, interval=self.time_trace_interval
             )
 
             self.outliers, self.baseline = find_outliers(
@@ -177,19 +188,23 @@ class Dataset:
                 threshold=self.outlier_threshold,
                 lsw=self.low_signal_window,
                 lam=self.baseline_smoothness,
-                tol=self.baseline_tolerance
+                tol=self.baseline_tolerance,
             )
 
             self._check_trim_values()
             self.processed_spectra = self._process_spectra()
-            self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
+            self.chosen_traces, self.processed_traces = self._process_chosen_traces(
+                self.wavelengths
+            )
 
             if self.processed_traces is not None:
                 if self.fit_exp is True:
                     self.fit = fit_exponential(self.processed_traces)
 
                 if self.fit_init_rate is not None:
-                    self.init_rate = initial_rates(self.processed_traces, cutoff=self.fit_init_rate)
+                    self.init_rate = initial_rates(
+                        self.processed_traces, cutoff=self.fit_init_rate
+                    )
 
             self.is_processed = True
 
@@ -204,7 +219,9 @@ class Dataset:
 
         return processed_spectra
 
-    def _process_chosen_traces(self, wavelengths: list[int]) -> tuple[pd.DataFrame, pd.DataFrame] | tuple[None, None]:
+    def _process_chosen_traces(
+        self, wavelengths: list[int]
+    ) -> tuple[pd.DataFrame, pd.DataFrame] | tuple[None, None]:
         if wavelengths is None:
             return None, None
 
@@ -246,7 +263,7 @@ class Dataset:
         :class:`pandas.DataFrame`
             The raw time traces, where each column is a different wavelength.
         """
-        time_traces = self.raw_spectra.loc[window[0]:window[1]:interval]
+        time_traces = self.raw_spectra.loc[window[0] : window[1] : interval]
         return time_traces[time_traces.median(axis='columns') < 1.75].transpose()
 
     def get_chosen_traces(self, wavelengths: list[int]) -> pd.DataFrame | None:
@@ -266,7 +283,9 @@ class Dataset:
             the given wavelengths are not found in :attr:`raw_spectra`.
         """
         wavelengths = [
-            wavelength for wavelength in set(wavelengths) if wavelength in self.raw_spectra.index
+            wavelength
+            for wavelength in set(wavelengths)
+            if wavelength in self.raw_spectra.index
         ]
 
         return self.raw_spectra.loc[wavelengths].transpose() if wavelengths else None

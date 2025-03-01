@@ -3,16 +3,19 @@ Interactive Binary Mixture solver plot.
 
 @author: David Hebert
 """
+
 from functools import partial
-import numpy as np
+
+import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
+from matplotlib.collections import QuadMesh
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from matplotlib.collections import QuadMesh
-import matplotlib.colors as colors
-from matplotlib.widgets import Slider
 from matplotlib.text import Annotation
+from matplotlib.widgets import Slider
+
 from uv_pro.binarymixture import BinaryMixture
 
 
@@ -73,15 +76,26 @@ def _create_fig(**fig_kw) -> tuple[Figure, Axes, Axes, Axes]:
     return fig, ax_binmix, ax_diff, ax_mesh
 
 
-def _update_plots(bm: BinaryMixture, fig: Figure, fit_plot: Line2D, diff_plot: Line2D,
-                  mesh_plot_marker: Line2D, ax_diff: Axes, coeff: str, val: float) -> None:
+def _update_plots(
+    bm: BinaryMixture,
+    fig: Figure,
+    fit_plot: Line2D,
+    diff_plot: Line2D,
+    mesh_plot_marker: Line2D,
+    ax_diff: Axes,
+    coeff: str,
+    val: float,
+) -> None:
     """Update plots when a slider is changed."""
+
     def update_binary_mixture() -> None:
         setattr(bm, coeff, val)
         setattr(bm, 'fit', bm.linear_combination(bm.coeff_a, bm.coeff_b))
 
     def update_fit_plot() -> None:
-        fit_plot.set_color(_get_fit_color(bm.coeff_a, bm.coeff_a_max, bm.coeff_b, bm.coeff_b_max))
+        fit_plot.set_color(
+            _get_fit_color(bm.coeff_a, bm.coeff_a_max, bm.coeff_b, bm.coeff_b_max)
+        )
         fit_plot.set_ydata(bm.fit)
 
     def update_diff_plot() -> None:
@@ -108,16 +122,16 @@ def _mixture_subplot(ax: Axes, bm: BinaryMixture) -> Line2D:
         xlabel='Wavelength (nm)',
         ylabel='Absorbance (AU)',
         xlim=(bm.mixture.index.min(), bm.mixture.index.max()),
-        ylim=(ax.get_ylim()[0], bm.mixture.max() * 1.1)
+        ylim=(ax.get_ylim()[0], bm.mixture.max() * 1.1),
     )
 
-    plot, = ax.plot(
+    (plot,) = ax.plot(
         bm.mixture.index,
         bm.mixture,
         color='k',
         marker='o',
         linestyle='',
-        zorder=0
+        zorder=0,
     )
 
     return plot
@@ -128,23 +142,25 @@ def _fit_subplot(ax: Axes, bm: BinaryMixture) -> Line2D:
         bm.coeff_a,
         bm.coeff_a_max,
         bm.coeff_b,
-        bm.coeff_b_max
+        bm.coeff_b_max,
     )
 
-    plot, = ax.plot(
+    (plot,) = ax.plot(
         bm.fit.index,
         bm.fit,
         color=rgb,
         # marker='.',
         linestyle='-',
         linewidth=4,
-        zorder=1
+        zorder=1,
     )
 
     return plot
 
 
-def _get_fit_color(a: float, a_max: float, b: float, b_max: float) -> tuple[float, float, float]:
+def _get_fit_color(
+    a: float, a_max: float, b: float, b_max: float
+) -> tuple[float, float, float]:
     blue = min(max(a / a_max, 0), 1)
     red = min(max(b / b_max, 0), 1)
 
@@ -160,16 +176,16 @@ def _difference_subplot(ax: Axes, bm: BinaryMixture) -> Line2D:
         xlabel='Wavelength (nm)',
         # ylabel='Absorbance (AU)',
         xlim=(spectrum.index.min(), spectrum.index.max()),
-        ylim=(-ylim_max, ylim_max)
+        ylim=(-ylim_max, ylim_max),
     )
 
-    plot, = ax.plot(
+    (plot,) = ax.plot(
         spectrum.index,
         spectrum,
         color='k',
         marker='.',
         linestyle='',
-        zorder=0
+        zorder=0,
     )
 
     return plot
@@ -185,7 +201,7 @@ def _label_mean_squared_error(ax: Axes, mse: float) -> None:
         color='#000000',
         fontweight='bold',
         fontsize='medium',
-        zorder=3
+        zorder=3,
     )
 
 
@@ -203,13 +219,15 @@ def _heatmap_subplot(ax: Axes, bm: BinaryMixture) -> tuple[QuadMesh, Line2D]:
     x, y, z = _compute_mesh(bm)
 
     plot = ax.pcolormesh(
-        x, y, z,
+        x,
+        y,
+        z,
         norm=colors.LogNorm(vmin=z.min(), vmax=z.max()),
         cmap='BuPu_r',
-        shading='auto'
+        shading='auto',
     )
 
-    marker, = ax.plot(bm.coeff_a, bm.coeff_b, color='k', marker='+', linestyle='')
+    (marker,) = ax.plot(bm.coeff_a, bm.coeff_b, color='k', marker='+', linestyle='')
     return plot, marker
 
 
@@ -218,8 +236,12 @@ def _compute_mesh(bm: BinaryMixture) -> tuple[np.ndarray, np.ndarray, np.ndarray
     comp_b = bm.component_b.to_numpy().flatten()
     spectrum = bm.mixture.to_numpy().flatten()
 
-    rng_a = np.linspace(0, bm.coeff_a_max, num=int(bm.coeff_a_max / 0.01), endpoint=True)
-    rng_b = np.linspace(0, bm.coeff_b_max, num=int(bm.coeff_b_max / 0.01), endpoint=True)
+    rng_a = np.linspace(
+        0, bm.coeff_a_max, num=int(bm.coeff_a_max / 0.01), endpoint=True
+    )
+    rng_b = np.linspace(
+        0, bm.coeff_b_max, num=int(bm.coeff_b_max / 0.01), endpoint=True
+    )
     a_vals, b_vals = np.meshgrid(rng_a, rng_b, indexing='ij')
 
     combinations = a_vals[:, :, np.newaxis] * comp_a + b_vals[:, :, np.newaxis] * comp_b

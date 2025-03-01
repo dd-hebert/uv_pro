@@ -248,11 +248,12 @@ Examples
 
 import sys
 from random import choice
+
 from rich import print
-from uv_pro import __version__, __author__
+
+from uv_pro import __author__, __version__
 from uv_pro.commands import get_args
 from uv_pro.utils.config import Config
-
 
 sys.tracebacklimit = 0
 

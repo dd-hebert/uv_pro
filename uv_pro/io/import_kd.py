@@ -6,7 +6,9 @@ and experimental parameters.
 
 @author: David Hebert
 """
+
 import struct
+
 import pandas as pd
 
 
@@ -40,21 +42,22 @@ class KDFile:
 
     absorbance_data_header = {
         'header': b'\x28\x00\x41\x00\x55\x00\x29\x00',
-        'spacing': 17
+        'spacing': 17,
     }
     spectrum_time_header = {
-        'header': b'\x52\x00\x65\x00\x6C\x00\x54'
-        b'\x00\x69\x00\x6D\x00\x65\x00',
-        'spacing': 20
+        'header': b'\x52\x00\x65\x00\x6c\x00\x54\x00\x69\x00\x6d\x00\x65\x00',
+        'spacing': 20,
     }
     cycle_time_header = {
-        'header': b'\x43\x00\x79\x00\x63\x00\x6C\x00'
-        b'\x65\x00\x54\x00\x69\x00\x6D\x00'
+        'header': b'\x43\x00\x79\x00\x63\x00\x6c\x00'
+        b'\x65\x00\x54\x00\x69\x00\x6d\x00'
         b'\x65\x00\x77\x00\x00\x00\x00\x00',
-        'spacing': 24
+        'spacing': 24,
     }
 
-    def __init__(self, path: str, spectrometer_range: tuple[int, int] = (190, 1100)) -> None:
+    def __init__(
+        self, path: str, spectrometer_range: tuple[int, int] = (190, 1100)
+    ) -> None:
         """
         Initialize a KDFile object and parse a .KD file at ``path``.
 
@@ -73,14 +76,18 @@ class KDFile:
             The minimum and maximum wavelengths captured by the spectrometer.
         """
         self.path = path
-        self.wavelength_range = list(range(spectrometer_range[0], spectrometer_range[1]))
+        self.wavelength_range = list(
+            range(spectrometer_range[0], spectrometer_range[1])
+        )
         self.spectrum_bytes_length = self._get_spectrum_bytes_length()
         self.file_bytes = self._read_binary()
         self.spectra, self.spectra_times, self.cycle_time = self.parse_kd()
 
     def _get_spectrum_bytes_length(self) -> int:
         """8 hex chars per wavelength."""
-        spectrum_bytes_length = (self.wavelength_range[-1] - self.wavelength_range[0]) * 8 + 8
+        spectrum_bytes_length = (
+            self.wavelength_range[-1] - self.wavelength_range[0]
+        ) * 8 + 8
         return spectrum_bytes_length
 
     def _read_binary(self) -> bytes:
@@ -118,18 +125,24 @@ class KDFile:
             df.columns = spectra_times
             return df
 
-        if list_of_spectra := self._extract_data(KDFile.absorbance_data_header, self._parse_spectra):
+        if list_of_spectra := self._extract_data(
+            KDFile.absorbance_data_header, self._parse_spectra
+        ):
             return _spectra_dataframe(list_of_spectra, spectra_times)
         raise Exception('Error parsing file. No spectra found.')
 
     def _handle_spectratimes(self) -> pd.Series:
-        if spectra_times := self._extract_data(KDFile.spectrum_time_header, self._parse_spectratimes):
+        if spectra_times := self._extract_data(
+            KDFile.spectrum_time_header, self._parse_spectratimes
+        ):
             return pd.Series(spectra_times, name='Time (s)')
         raise Exception('Error parsing file. No spectra times found.')
 
     def _handle_cycletime(self) -> int | None:
         try:
-            return int(self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0])
+            return int(
+                self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0]
+            )
         except TypeError:
             return None
 
@@ -154,7 +167,9 @@ class KDFile:
     def _parse_spectra(self, data_start: int) -> pd.Series:
         data_end = data_start + self.spectrum_bytes_length
         absorbance_data = self.file_bytes[data_start:data_end]
-        absorbance_values = [value for value, in struct.iter_unpack('<d', absorbance_data)]
+        absorbance_values = [
+            value for (value,) in struct.iter_unpack('<d', absorbance_data)
+        ]
         return pd.Series(absorbance_values, index=self.wavelength_range)
 
     def _parse_spectratimes(self, data_start: int) -> float:

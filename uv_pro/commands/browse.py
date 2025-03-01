@@ -3,10 +3,12 @@ Functions for the ``browse`` command.
 
 @author: David Hebert
 """
+
 import argparse
+
 from uv_pro.commands import command
-from uv_pro.utils.filepicker import FilePicker
 from uv_pro.commands.process import process
+from uv_pro.utils.filepicker import FilePicker
 
 
 @command(aliases=['br'])

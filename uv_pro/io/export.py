@@ -49,11 +49,7 @@ def export_figure(fig, output_dir: str, filename: str) -> str:
     """Save a figure with `filename` as .png to the `output_dir`."""
     filename = _get_unique_filename(output_dir, filename, 'png')
 
-    fig.savefig(
-        fname=os.path.join(output_dir, filename),
-        format='png',
-        dpi=600
-    )
+    fig.savefig(fname=os.path.join(output_dir, filename), format='png', dpi=600)
 
     return filename
 

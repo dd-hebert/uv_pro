@@ -4,9 +4,9 @@ Provides a decorator for adding commands and arguments to the CLI.
 
 @author: David Hebert
 """
+
 import argparse
 import re
-
 
 main_parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
 subparsers = main_parser.add_subparsers(help='Commands')
@@ -17,8 +17,12 @@ def get_args() -> argparse.Namespace:
     return main_parser.parse_args()
 
 
-def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
-            aliases: list[str] = [], parent: argparse._SubParsersAction = subparsers):
+def command(
+    args: list[dict] = [],
+    mutually_exclusive_args: list[dict] = [],
+    aliases: list[str] = [],
+    parent: argparse._SubParsersAction = subparsers,
+):
     """
     Add a command and args to the CLI via a decorator.
 
@@ -55,13 +59,14 @@ def command(args: list[dict] = [], mutually_exclusive_args: list[dict] = [],
     function
         The function to add as a command.
     """
+
     def _decorator(func):
         subparser: argparse.ArgumentParser = parent.add_parser(
             name=func.__name__,
             # aliases=_get_aliases(func.__doc__),
             aliases=aliases,
             description=_get_description(func.__doc__),
-            help=_get_help(func.__doc__)
+            help=_get_help(func.__doc__),
         )
 
         _add_args(args, subparser)
@@ -111,15 +116,22 @@ def mutually_exclusive_group(*args, required=False) -> dict:
     return {'args': [*args], 'required': required}
 
 
-def _add_args(args: list[dict], parser_or_group: argparse.ArgumentParser | argparse._MutuallyExclusiveGroup) -> None:
+def _add_args(
+    args: list[dict],
+    parser_or_group: argparse.ArgumentParser | argparse._MutuallyExclusiveGroup,
+) -> None:
     for arg in args:
         parser_or_group.add_argument(*arg['name_or_flags'], **arg['kwargs'])
 
 
-def _add_mutually_exclusive_args(arg_groups: list[dict], parser: argparse.ArgumentParser) -> None:
+def _add_mutually_exclusive_args(
+    arg_groups: list[dict], parser: argparse.ArgumentParser
+) -> None:
     for group in arg_groups:
         required = group.get('required', False)
-        mutually_exclusive_group = parser.add_mutually_exclusive_group(required=required)
+        mutually_exclusive_group = parser.add_mutually_exclusive_group(
+            required=required
+        )
         _add_args(group['args'], mutually_exclusive_group)
 
 

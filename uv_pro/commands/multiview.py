@@ -26,13 +26,13 @@ import argparse
 import glob
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
-from uv_pro.commands import command, argument
 
+from uv_pro.commands import argument, command
 
 HELP = {
-    'search_filters': '''An arbitrary number of search filters''',
+    'search_filters': """An arbitrary number of search filters""",
     'and_filter': '``and`` filter mode.',
-    'or_filter': '``or`` filter mode.'
+    'or_filter': '``or`` filter mode.',
 }
 ARGS = [
     argument(
@@ -51,8 +51,8 @@ ARGS = [
         action='store_const',
         default='or',
         const='and',
-        help=HELP['and_filter']
-    )
+        help=HELP['and_filter'],
+    ),
 ]
 
 
@@ -101,10 +101,12 @@ def filter_files(search_filters: list[str], mode: str = 'or') -> set[str]:
         for pattern in search_patterns[1:]:
             files &= set(glob.glob(pattern))
     else:
-        files = set([matches for pattern in search_patterns for matches in glob.glob(pattern)])
+        files = set(
+            [matches for pattern in search_patterns for matches in glob.glob(pattern)]
+        )
 
     if len(files) == 0:
-        print("Error: No .KD files found with the specified filter(s).")
+        print('Error: No .KD files found with the specified filter(s).')
         return
 
     return files
@@ -123,11 +125,11 @@ def _run_uvp_subprocess(file: str) -> None:
         subprocess.run(
             ['uvp', 'process', file, '-v'],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT
+            stderr=subprocess.STDOUT,
         )
 
     except Exception as e:
-        print(f"An error occurred while processing the file: {str(e)}")
+        print(f'An error occurred while processing the file: {str(e)}')
 
 
 def _run_uvp_parallel(files: set[str]) -> None:
@@ -147,4 +149,4 @@ def _run_uvp_parallel(files: set[str]) -> None:
         pass
 
     except Exception as e:
-        print(f"An error occurred while processing the files: {str(e)}")
+        print(f'An error occurred while processing the files: {str(e)}')

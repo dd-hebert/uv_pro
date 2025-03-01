@@ -1,11 +1,19 @@
+"""
+Interactive peak detection plot.
+
+@author: David Hebert
+"""
+
 from functools import partial
-import pandas as pd
+
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
+import pandas as pd
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.text import Annotation
 from matplotlib.widgets import Slider
+
 from uv_pro.peakfinder import PeakFinder
 from uv_pro.peaks import smooth_spectrum
 
@@ -27,7 +35,7 @@ def plot_peakfinder(pf: PeakFinder, **fig_kw) -> None:
         valinit=pf.time,
         valstep=pf.dataset.spectra_times,
         color='#0400FF',
-        initcolor='none'
+        initcolor='none',
     )
 
     update_args = (pf, fig, ax, spectrum_scatter, smoothed_plot, peak_scatter)
@@ -46,15 +54,23 @@ def _create_fig(pf: PeakFinder, **fig_kw):
         title=pf.dataset.name,
         xlabel='Wavelength (nm)',
         ylabel='Absorbance (AU)',
-        xlim=(pf.spectrum.index.min(), pf.spectrum.index.max())
+        xlim=(pf.spectrum.index.min(), pf.spectrum.index.max()),
     )
 
     return fig, ax
 
 
-def _update_plot(pf: PeakFinder, fig: Figure, ax: Axes, spectrum_scatter: Line2D,
-                 smoothed_plot: Line2D, peak_scatter: Line2D, val: float) -> None:
+def _update_plot(
+    pf: PeakFinder,
+    fig: Figure,
+    ax: Axes,
+    spectrum_scatter: Line2D,
+    smoothed_plot: Line2D,
+    peak_scatter: Line2D,
+    val: float,
+) -> None:
     """Update the plot when the time slider is changed."""
+
     def update_peakfinder():
         setattr(pf, 'time', val)
         setattr(pf, 'spectrum', pf._get_spectrum())
@@ -85,13 +101,8 @@ def _update_plot(pf: PeakFinder, fig: Figure, ax: Axes, spectrum_scatter: Line2D
 
 
 def _plot_spectrum_scatter(ax: Axes, pf: PeakFinder):
-    plot, = ax.plot(
-        pf.spectrum.index,
-        pf.spectrum,
-        color='0.6',
-        marker='o',
-        linestyle='',
-        zorder=0
+    (plot,) = ax.plot(
+        pf.spectrum.index, pf.spectrum, color='0.6', marker='o', linestyle='', zorder=0
     )
 
     return plot
@@ -100,15 +111,10 @@ def _plot_spectrum_scatter(ax: Axes, pf: PeakFinder):
 def _plot_smoothed_spectrum(ax: Axes, pf: PeakFinder):
     spectrum = pd.DataFrame(
         smooth_spectrum(pf.spectrum, s_win=pf.s_win),
-        index=pf.spectrum.index
+        index=pf.spectrum.index,
     )
 
-    plot, = ax.plot(
-        spectrum.index,
-        spectrum,
-        color='k',
-        zorder=1
-    )
+    (plot,) = ax.plot(spectrum.index, spectrum, color='k', zorder=1)
 
     return plot
 
@@ -116,14 +122,14 @@ def _plot_smoothed_spectrum(ax: Axes, pf: PeakFinder):
 def _plot_peak_scatter(ax: Axes, pf: PeakFinder):
     peaks = pf.peaks['info']['abs']
 
-    plot, = ax.plot(
+    (plot,) = ax.plot(
         peaks.index,
         peaks,
         color='#0400FF',
         marker='|',
         markersize=15,
         linestyle='',
-        zorder=2
+        zorder=2,
     )
 
     return plot
@@ -141,7 +147,7 @@ def _label_peaks(ax: Axes, pf: PeakFinder) -> None:
                 color='#0400FF',
                 fontweight='bold',
                 fontsize='large',
-                zorder=3
+                zorder=3,
             )
         )
 

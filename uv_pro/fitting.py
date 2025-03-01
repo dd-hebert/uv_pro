@@ -3,15 +3,16 @@ Contains data fitting functions.
 
 @author: David Hebert
 """
+
 import warnings
 from collections import namedtuple
-from typing import Optional, Callable
-from rich import print
-from scipy.optimize import curve_fit
-import scipy.stats as stats
+from typing import Callable, Optional
+
 import numpy as np
 import pandas as pd
-
+import scipy.stats as stats
+from rich import print
+from scipy.optimize import curve_fit
 
 warnings.filterwarnings('ignore', message='overflow encountered in exp')
 
@@ -38,6 +39,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
     fit : dict or None
         The fitting parameters for the given time traces.
     """
+
     def exponential_func(t: float, abs_0: float, abs_f: float, kobs: float) -> float:
         return abs_f + (abs_0 - abs_f) * np.exp(-kobs * t)
 
@@ -49,7 +51,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
             'xdata': trace.index,
             'ydata': trace,
             'p0': p0,
-            'bounds': ([-4, -4, -1], [4, 4, np.inf])
+            'bounds': ([-4, -4, -1], [4, 4, np.inf]),
         }
 
         return curve_fit_params
@@ -63,7 +65,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
         curve = pd.Series(
             data=exponential_func(trace.index, *fit_params),
             index=trace.index,
-            name=trace.name
+            name=trace.name,
         )
 
         return {
@@ -74,14 +76,11 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
             'kobs': kobs,
             'kobs err': kobs_err,
             'kobs ci': (kobs_ci[1] - kobs_ci[0]) * 0.5,
-            'r2': rsquared(trace, curve)
+            'r2': rsquared(trace, curve),
         }, curve
 
     if fit := _fit_time_traces(
-        time_traces,
-        curve_fit,
-        fit_params_handler,
-        post_fit_handler
+        time_traces, curve_fit, fit_params_handler, post_fit_handler
     ):
         return {'params': fit.params, 'curves': fit.fits}
 
@@ -106,6 +105,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
     fit : dict or None
         The fitting parameters for the given time traces.
     """
+
     def linear_func(x, slope, intercept) -> float:
         return slope * x + intercept
 
@@ -115,7 +115,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
         # Handle both growing and decaying traces
         cutoff_idx = max(
             abs(trace.iloc[2:] - abs_0 * (1 - cutoff)).idxmin(),
-            abs(trace.iloc[2:] - abs_0 * (1 + cutoff)).idxmin()
+            abs(trace.iloc[2:] - abs_0 * (1 + cutoff)).idxmin(),
         )
 
         return trace[:cutoff_idx]
@@ -132,9 +132,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
         ci = stats.t.interval(0.95, len(trace) - 2, loc=m, scale=m_err)
 
         line = pd.Series(
-            data=linear_func(trace.index, m, b),
-            index=trace.index,
-            name=trace.name
+            data=linear_func(trace.index, m, b), index=trace.index, name=trace.name
         )
 
         return {
@@ -146,7 +144,7 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
             'abs_f': abs_f,
             'delta_abs_%': (abs_f - abs_0) / abs_0,
             'delta_t': trace.index[-1] - trace.index[0],
-            'r2': rsquared(trace, line)
+            'r2': rsquared(trace, line),
         }, line
 
     if fit := _fit_time_traces(
@@ -154,17 +152,21 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
         stats.linregress,
         fit_params_handler,
         post_fit_handler,
-        trace_prehandler=cutoff_handler
+        trace_prehandler=cutoff_handler,
     ):
         return {'params': fit.params, 'lines': fit.fits}
 
     return None
 
 
-def _fit_time_traces(time_traces: pd.DataFrame, fit_func: Callable,
-                     fit_params_handler: Callable, post_fit_handler: Callable,
-                     trace_prehandler: Optional[Callable] = None,
-                     min_data_points: int = 3) -> Optional[namedtuple]:
+def _fit_time_traces(
+    time_traces: pd.DataFrame,
+    fit_func: Callable,
+    fit_params_handler: Callable,
+    post_fit_handler: Callable,
+    trace_prehandler: Optional[Callable] = None,
+    min_data_points: int = 3,
+) -> Optional[namedtuple]:
     """
     General fitting function for time traces.
 
@@ -205,7 +207,9 @@ def _fit_time_traces(time_traces: pd.DataFrame, fit_func: Callable,
 
         try:
             fit_result = fit_func(**fit_params_handler(trace))
-            fit_params[column], fitted_data[column] = post_fit_handler(trace, *fit_result)
+            fit_params[column], fitted_data[column] = post_fit_handler(
+                trace, *fit_result
+            )
 
         except Exception:
             continue

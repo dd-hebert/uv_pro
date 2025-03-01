@@ -5,11 +5,11 @@ Functions for plotting and visualizing uv_pro Datasets.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 from cycler import cycler
+from matplotlib.axes import Axes
 from pandas import DataFrame
-from uv_pro.dataset import Dataset
 
+from uv_pro.dataset import Dataset
 
 plt.style.use('seaborn-v0_8-bright')
 CMAPS = sorted(plt.colormaps() + ['default'], key=str.lower)
@@ -72,7 +72,9 @@ def plot_1x2(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
-    fig, (ax_raw_data, ax_processed_data) = plt.subplots(1, 2, layout='constrained', **fig_kw)
+    fig, (ax_raw_data, ax_processed_data) = plt.subplots(
+        1, 2, layout='constrained', **fig_kw
+    )
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset, cmap)
@@ -99,7 +101,9 @@ def plot_1x3(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
-    fig, (ax_raw_data, ax_processed_data, ax_time_traces) = plt.subplots(1, 3, layout='constrained', **fig_kw)
+    fig, (ax_raw_data, ax_processed_data, ax_time_traces) = plt.subplots(
+        1, 3, layout='constrained', **fig_kw
+    )
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset, cmap)
@@ -134,7 +138,9 @@ def plot_2x2(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     fig_kw : any
         Any valid :class:`~matplotlib.figure.Figure` keyword arguments.
     """
-    fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_outliers)) = plt.subplots(2, 2, constrained_layout=True, **fig_kw)
+    fig, ((ax_raw_data, ax_processed_data), (ax_time_traces, ax_outliers)) = (
+        plt.subplots(2, 2, constrained_layout=True, **fig_kw)
+    )
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset, cmap)
@@ -160,10 +166,7 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset) -> None:
     ax.set_prop_cycle(cycler)
     ax.set_title('Raw Data', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(190, 1100)
-    ax.set(
-        xlabel='Wavelength (nm)',
-        ylabel='Absorbance (AU)'
-    )
+    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)')
 
     ax.plot(spectra)
 
@@ -187,10 +190,7 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset, cmap: str = 'default') -
     ax.set_prop_cycle(cycler)
     ax.set_title('Processed Data', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(300, 1100)
-    ax.set(
-        xlabel='Wavelength (nm)',
-        ylabel='Absorbance (AU)'
-    )
+    ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)')
 
     ax.text(
         x=0.99,
@@ -200,7 +200,7 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset, cmap: str = 'default') -
         horizontalalignment='right',
         transform=ax.transAxes,
         color='gray',
-        fontsize=8
+        fontsize=8,
     )
 
     ax.plot(spectra)
@@ -223,10 +223,7 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset, show_slices: bool = True) -
     linestyle = None
     alpha = 1
     ax.set_title('Time Traces', size=10, weight='bold', fontstyle='oblique')
-    ax.set(
-        xlabel='Time (s)',
-        ylabel='Absorbance (AU)'
-    )
+    ax.set(xlabel='Time (s)', ylabel='Absorbance (AU)')
 
     if dataset.chosen_traces is None:
         time_traces = dataset.time_traces
@@ -269,10 +266,7 @@ def _outliers_subplot(ax: Axes, dataset: Dataset) -> None:
     """
     ax.set_title('Baseline & Outliers', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(left=0, right=dataset.spectra_times.iloc[-1])
-    ax.set(
-        xlabel='Time (s)',
-        ylabel='Intensity (arb. units)'
-    )
+    ax.set(xlabel='Time (s)', ylabel='Intensity (arb. units)')
 
     _plot_baseline(ax, dataset)
 
@@ -283,15 +277,10 @@ def _outliers_subplot(ax: Axes, dataset: Dataset) -> None:
         y=summed_time_traces[dataset.outliers],
         color='red',
         marker='x',
-        zorder=2
+        zorder=2,
     )
 
-    ax.plot(
-        summed_time_traces,
-        color='black',
-        linestyle='solid',
-        zorder=3
-    )
+    ax.plot(summed_time_traces, color='black', linestyle='solid', zorder=3)
 
 
 def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
@@ -307,16 +296,10 @@ def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
         y1=upper_bound,
         y2=lower_bound,
         color='powderblue',
-        alpha=0.5
+        alpha=0.5,
     )
 
-    ax.plot(
-        dataset.baseline,
-        color='skyblue',
-        linestyle='dashed',
-        alpha=0.8,
-        zorder=1
-    )
+    ax.plot(dataset.baseline, color='skyblue', linestyle='dashed', alpha=0.8, zorder=1)
 
     ax.text(
         x=0.99,
@@ -326,20 +309,14 @@ def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
         horizontalalignment='right',
         transform=ax.transAxes,
         color='gray',
-        fontsize=8
+        fontsize=8,
     )
 
 
 def _plot_slices_lines(ax: Axes, dataset: Dataset) -> None:
     if dataset.slicing:
         for time in dataset.processed_spectra.columns:
-            ax.axvline(
-                x=time,
-                color='k',
-                linestyle='--',
-                alpha=0.1,
-                zorder=0
-            )
+            ax.axvline(x=time, color='k', linestyle='--', alpha=0.1, zorder=0)
 
 
 def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
@@ -351,7 +328,7 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
             color=linecolor,
             alpha=0.6,
             linewidth=6,
-            zorder=1
+            zorder=1,
         )
 
     if dataset.trim:
@@ -370,18 +347,24 @@ def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
             color=linecolor,
             alpha=0.6,
             linewidth=3,
-            zorder=2
+            zorder=2,
         )
 
     if dataset.trim:
-        x_padding = (dataset.init_rate['lines'].index[-1] - dataset.init_rate['lines'].index[0]) * 10
+        x_padding = (
+            dataset.init_rate['lines'].index[-1] - dataset.init_rate['lines'].index[0]
+        ) * 10
         left_bound = max(dataset.init_rate['lines'].index[0] - x_padding, 0)
-        right_bound = min(dataset.init_rate['lines'].index[-1] + x_padding, dataset.chosen_traces.index[-1])
+        right_bound = min(
+            dataset.init_rate['lines'].index[-1] + x_padding,
+            dataset.chosen_traces.index[-1],
+        )
         ax.set_xlim(left=left_bound, right=right_bound)
 
 
 def _get_linestyles(dataframe: DataFrame, color: str = 'default') -> cycler:
     import numpy as np
+
     num_lines = len(dataframe.columns)
     linewidths = [3] + [1] * (num_lines - 2) + [3]
 
@@ -397,7 +380,6 @@ def _get_linestyles(dataframe: DataFrame, color: str = 'default') -> cycler:
 
 
 def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
-
     def _add_text(text: list[str], row_number: int, text_color: str) -> None:
         ax.text(
             x=0.99,
@@ -407,7 +389,7 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
             horizontalalignment='right',
             transform=ax.transAxes,
             color=text_color,
-            fontsize=8
+            fontsize=8,
         )
 
     row_number = 0
@@ -420,7 +402,7 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
                 f'{dataset.init_rate["params"][wavelength]["slope"]:.2e}',
                 f'± {dataset.init_rate["params"][wavelength]["slope err"]:.2e}',
                 r'$r^2 =$',
-                f'{dataset.init_rate["params"][wavelength]["r2"]:.3f}'
+                f'{dataset.init_rate["params"][wavelength]["r2"]:.3f}',
             ]
 
             _add_text(' '.join(text), row_number, text_color)
@@ -435,7 +417,7 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
                 f'{dataset.fit["params"][wavelength]["kobs"]:.2e}',
                 f'± {dataset.fit["params"][wavelength]["kobs err"]:.2e}',
                 r'$r^2 =$',
-                f'{dataset.fit["params"][wavelength]["r2"]:.3f}'
+                f'{dataset.fit["params"][wavelength]["r2"]:.3f}',
             ]
 
             _add_text(' '.join(text), row_number, text_color)

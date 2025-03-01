@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-import os
+
 import argparse
+import os
 from functools import partial
+from typing import TYPE_CHECKING
+
 import pandas as pd
 from rich import box
 from rich.columns import Columns
-from rich.console import RenderableType, TextType, Group
+from rich.console import Group, RenderableType, TextType
 from rich.panel import Panel
-from rich.table import Table, Column
+from rich.table import Column, Table
 from rich.text import Text
 
 if TYPE_CHECKING:
@@ -18,14 +20,14 @@ if TYPE_CHECKING:
 
 STYLES = {
     'bold': 'bold medium_purple1',
-    'highlight': 'grey0 on medium_purple3'
+    'highlight': 'grey0 on medium_purple3',
 }
 
 
 def truncate_title(title: str, max_length: int = 74) -> str:
     """Truncate strings longer than ``max_length`` using elipsis."""
     half = max_length // 2
-    return title if len(title) < 74 else title[:half + 1] + '...' + title[-half:]
+    return title if len(title) < 74 else title[: half + 1] + '...' + title[-half:]
 
 
 def splash(text: str, title: str, width: int = 80, **kwargs) -> Panel:
@@ -36,12 +38,17 @@ def splash(text: str, title: str, width: int = 80, **kwargs) -> Panel:
         box=box.SIMPLE,
         border_style='grey27',
         width=width,
-        **kwargs
+        **kwargs,
     )
 
 
-def table_panel(table: Table, title: str, subtitle: TextType | None = None,
-                width: int = 80, **kwargs) -> Panel:
+def table_panel(
+    table: Table,
+    title: str,
+    subtitle: TextType | None = None,
+    width: int = 80,
+    **kwargs,
+) -> Panel:
     """A pre-formatted ``Panel`` for displaying tables."""
     return Panel(
         table,
@@ -49,13 +56,17 @@ def table_panel(table: Table, title: str, subtitle: TextType | None = None,
         subtitle=Text(subtitle, style='table.caption') if subtitle else None,
         box=box.SIMPLE,
         width=width,
-        **kwargs
+        **kwargs,
     )
 
 
-def fancy_panel(renderable: RenderableType, title: str,
-                subtitle: TextType | None = None, width: int = 80,
-                **kwargs) -> Panel:
+def fancy_panel(
+    renderable: RenderableType,
+    title: str,
+    subtitle: TextType | None = None,
+    width: int = 80,
+    **kwargs,
+) -> Panel:
     """A fancy pre-formatted rich ``Panel``."""
     return Panel(
         renderable,
@@ -63,7 +74,7 @@ def fancy_panel(renderable: RenderableType, title: str,
         subtitle=Text.assemble(subtitle, style='table.caption') if subtitle else None,
         box=box.ROUNDED,
         width=width,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -75,18 +86,13 @@ def simple_panel(renderable: RenderableType, title: str, **kwargs) -> Panel:
         title_align='center',
         expand=False,
         box=box.MINIMAL,
-        **kwargs
+        **kwargs,
     )
 
 
 def fancy_table(*columns, width: int = 77) -> Table:
     """A fancy pre-formatted rich ``Table``."""
-    return Table(
-        *columns,
-        width=width,
-        box=box.HORIZONTALS,
-        collapse_padding=True
-    )
+    return Table(*columns, width=width, box=box.HORIZONTALS, collapse_padding=True)
 
 
 class ProcessingOutput:
@@ -100,6 +106,7 @@ class ProcessingOutput:
     title : str
         The title (filename) of the processed UV-vis file.
     """
+
     def __init__(self, dataset: Dataset) -> None:
         """
         Create ``rich`` renderables for :class:`~uv_pro.dataset.Dataset``.
@@ -132,12 +139,21 @@ class ProcessingOutput:
 
     def _get_subtitle(self, dataset) -> list[Text]:
         subtitle = [
-            Text.assemble('Total Spectra: ', (f'{len(dataset.raw_spectra.columns)}', STYLES['bold'])),
-            Text.assemble('Total time: ', (f'{dataset.spectra_times.max()} s', STYLES['bold']))
+            Text.assemble(
+                'Total Spectra: ',
+                (f'{len(dataset.raw_spectra.columns)}', STYLES['bold']),
+            ),
+            Text.assemble(
+                'Total time: ', (f'{dataset.spectra_times.max()} s', STYLES['bold'])
+            ),
         ]
 
         if dataset.cycle_time:
-            subtitle.append(Text.assemble('Cycle time: ', (f'{dataset.cycle_time} s', STYLES['bold'])))
+            subtitle.append(
+                Text.assemble(
+                    'Cycle time: ', (f'{dataset.cycle_time} s', STYLES['bold'])
+                )
+            )
 
         return subtitle
 
@@ -169,23 +185,32 @@ class ProcessingOutput:
             table = Table('', '', show_header=False, box=box.SIMPLE)
 
             if dataset.slicing is None:
-                table.add_row('Spectra remaining', bold_text(f'{len(dataset.processed_spectra.columns)}'))
+                table.add_row(
+                    'Spectra remaining',
+                    bold_text(f'{len(dataset.processed_spectra.columns)}'),
+                )
 
             else:
                 table.add_row('Slicing mode', bold_text(f'{dataset.slicing["mode"]}'))
 
                 if dataset.slicing['mode'] == 'variable':
-                    table.add_row('Slicing coefficient', bold_text(f'{dataset.slicing["coeff"]}'))
-                    table.add_row('Slicing exponent', bold_text(f'{dataset.slicing["expo"]}'))
+                    table.add_row(
+                        'Slicing coefficient', bold_text(f'{dataset.slicing["coeff"]}')
+                    )
+                    table.add_row(
+                        'Slicing exponent', bold_text(f'{dataset.slicing["expo"]}')
+                    )
 
-                table.add_row('Slices ', bold_text(f'{len(dataset.processed_spectra.columns)}'))
+                table.add_row(
+                    'Slices ', bold_text(f'{len(dataset.processed_spectra.columns)}')
+                )
 
             return table
 
         return fancy_panel(
             Columns([left_table(), right_table()], expand=True, align='left'),
             title=self.title,
-            subtitle=Text('\t').join(subtitle)
+            subtitle=Text('\t').join(subtitle),
         )
 
     def fit_panel(self, fit: dict) -> Panel:
@@ -212,9 +237,7 @@ class ProcessingOutput:
         equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
 
         return table_panel(
-            table,
-            title='Exponential Fit Results',
-            subtitle=f'Fit function: {equation}'
+            table, title='Exponential Fit Results', subtitle=f'Fit function: {equation}'
         )
 
     def init_rate_panel(self, init_rate: dict) -> Panel:
@@ -238,10 +261,7 @@ class ProcessingOutput:
                 Text('{:.4f}'.format(vals['r2']), style=r2_color),
             )
 
-        return table_panel(
-            table,
-            title='Initial Rates Results'
-        )
+        return table_panel(table, title='Initial Rates Results')
 
     def _unable_to_fit(self, dataset: Dataset) -> list[Text] | list:
         chosen_wavelengths = set(dataset.chosen_traces.columns)
@@ -268,6 +288,7 @@ class PeaksOutput:
     peaks : :class:`pandas.DataFrame`
         The peak detection output from :py:mod:`~uv_pro.commands.peaks`.
     """
+
     def __init__(self, peakfinder: PeakFinder) -> None:
         """
         Create ``rich`` renderables for :py:mod:`~uv_pro.commands.peaks` results.
@@ -289,26 +310,26 @@ class PeaksOutput:
     def _create_table_panel(self) -> Panel:
         """Create a fancy rich ``Panel`` for peak detection data."""
         table = fancy_table(
-            Column("λ", justify="center"),
-            Column("abs", justify="center"),
+            Column('λ', justify='center'),
+            Column('abs', justify='center'),
             width=30,
         )
 
         if self.has_epsilon:
-            table.add_column("ε", justify="center")
+            table.add_column('ε', justify='center')
 
         for _, row in self.peaks.iterrows():
             table.add_row(
-                f"{row.name}",
-                f"{row['abs']:.3f}",
-                f"{row['epsilon']:.3e}" if self.has_epsilon else None
+                f'{row.name}',
+                f'{row["abs"]:.3f}',
+                f'{row["epsilon"]:.3e}' if self.has_epsilon else None,
             )
 
         return table_panel(
             table,
             title='Peak Finder Results',
             subtitle=f'Method: {self.method}',
-            width=34
+            width=34,
         )
 
 
@@ -327,6 +348,7 @@ class BinmixOutput:
     title : str
         The title (filename) of the fitted mixture .csv file.
     """
+
     def __init__(self, args: argparse.Namespace, results: pd.DataFrame):
         """
         Create ``rich`` renderables for the :py:mod:`~uv_pro.commands.binmix` command.
@@ -341,7 +363,10 @@ class BinmixOutput:
         self.results = results
         self.title = truncate_title(os.path.basename(args.path))
         self.component_paths = [args.component_a, args.component_b]
-        self.component_concs = [getattr(args, 'molarity_a', None), getattr(args, 'molarity_b', None)]
+        self.component_concs = [
+            getattr(args, 'molarity_a', None),
+            getattr(args, 'molarity_b', None),
+        ]
 
     def __rich__(self) -> Group:
         return Group(self.files_panel(), self.fit_panel())
@@ -350,18 +375,20 @@ class BinmixOutput:
         """Create a rich ``Panel`` for the binmix component .csv files."""
         tables = []
 
-        for letter, path, conc in zip(['A', 'B'], self.component_paths, self.component_concs):
+        for letter, path, conc in zip(
+            ['A', 'B'], self.component_paths, self.component_concs
+        ):
             table = Table(
                 Column(f'Component {letter}', justify='center', overflow='fold'),
                 caption=f'[{letter}]: {conc:.3e} (M)' if conc else None,
                 width=35,
                 box=box.ROUNDED,
-                expand=False
+                expand=False,
             )
 
             row = Text.assemble(
                 Text(f'{os.path.dirname(path)}\\', style='medium_purple4'),
-                Text(f'{os.path.basename(path)}', style=STYLES['bold'])
+                Text(f'{os.path.basename(path)}', style=STYLES['bold']),
             )
 
             table.add_row(row)
@@ -372,7 +399,7 @@ class BinmixOutput:
             title=Text(self.title, style=STYLES['highlight']),
             width=80,
             box=box.SIMPLE,
-            expand=False
+            expand=False,
         )
 
     def fit_panel(self) -> Panel:
@@ -383,7 +410,7 @@ class BinmixOutput:
             Column('[A] (M)', justify='center'),
             Column('Coeff. B', justify='center'),
             Column('[B] (M)', justify='center'),
-            Column('MSE', justify='center')
+            Column('MSE', justify='center'),
         )
 
         for label in self.results.columns:
@@ -394,10 +421,7 @@ class BinmixOutput:
                 '{:.2e}'.format(vals.loc['conc_a']) if vals.loc['conc_a'] else '--',
                 '{:.3}'.format(vals.loc['coeff_b']),
                 '{:.2e}'.format(vals.loc['conc_b']) if vals.loc['conc_b'] else '--',
-                '{:.2e}'.format(vals.loc['MSE'])
+                '{:.2e}'.format(vals.loc['MSE']),
             )
 
-        return table_panel(
-            table,
-            title='Binary Mixture Fitting Results'
-        )
+        return table_panel(table, title='Binary Mixture Fitting Results')

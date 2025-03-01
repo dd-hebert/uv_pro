@@ -42,7 +42,11 @@ class FilePicker:
         file_list = [
             (
                 os.path.relpath(path, self.root),
-                [file for file in files if os.path.splitext(file)[1].lower() == self.ext.lower()]
+                [
+                    file
+                    for file in files
+                    if os.path.splitext(file)[1].lower() == self.ext.lower()
+                ],
             )
             for path, subdirs, files in os.walk(self.root)
         ]
@@ -53,8 +57,9 @@ class FilePicker:
         print('No files found.')
         return None
 
-    def pick_file(self, mode: str = 'single', min_files: int = 0,
-                  max_files: int = 100) -> list[str] | None:
+    def pick_file(
+        self, mode: str = 'single', min_files: int = 0, max_files: int = 100
+    ) -> list[str] | None:
         """
         Pick files interactively from the terminal.
 
@@ -91,7 +96,7 @@ class FilePicker:
                 folder_name,
                 mode=mode,
                 min_files=min_files,
-                max_files=max_files
+                max_files=max_files,
             )
 
             if file_choices is None:
@@ -102,7 +107,9 @@ class FilePicker:
 
             else:
                 self._print_selection(file_choices)
-                return [os.path.join(folder_name, file_name) for file_name in file_choices]
+                return [
+                    os.path.join(folder_name, file_name) for file_name in file_choices
+                ]
 
     def _print_folders_in_root(self):
         print(f'\n{self.root}')
@@ -145,9 +152,14 @@ class FilePicker:
             else:
                 print(f'[{index}]{spacing}└───{file}\t')
 
-    def _get_file_choice(self, folder_index: int, folder_name: str,
-                         mode: str = 'single', min_files: int = 1,
-                         max_files: int = 100) -> list[str] | None:
+    def _get_file_choice(
+        self,
+        folder_index: int,
+        folder_name: str,
+        mode: str = 'single',
+        min_files: int = 1,
+        max_files: int = 100,
+    ) -> list[str] | None:
         try:
             if mode == 'single':
                 prompt = '\nSelect a file: '
@@ -167,14 +179,20 @@ class FilePicker:
         parameters = (folder_index, folder_name, mode, min_files, max_files)
 
         return (
-            self._validate_file_choice(selection, *parameters) if selection
+            self._validate_file_choice(selection, *parameters)
+            if selection
             else self._get_file_choice(*parameters)
         )
 
-    def _validate_file_choice(self, selection: list[str], folder_index: int,
-                              folder_name: str, mode: str, min_files: int,
-                              max_files: int) -> list[str]:
-
+    def _validate_file_choice(
+        self,
+        selection: list[str],
+        folder_index: int,
+        folder_name: str,
+        mode: str,
+        min_files: int,
+        max_files: int,
+    ) -> list[str]:
         def reprompt_with_message(message: str) -> list[str] | None:
             self._print_files_in_folder(folder_index, folder_name)
             print(f'\n{message}')
@@ -183,7 +201,7 @@ class FilePicker:
                 folder_name,
                 mode=mode,
                 min_files=min_files,
-                max_files=max_files
+                max_files=max_files,
             )
 
         if any((entry in ['b', 'back'] for entry in selection)):
@@ -191,8 +209,12 @@ class FilePicker:
 
         accepted_range = range(1, len(self.file_list[folder_index][1]) + 1)
 
-        if any((not entry.isdigit() or int(entry) not in accepted_range
-                for entry in selection)):
+        if any(
+            (
+                not entry.isdigit() or int(entry) not in accepted_range
+                for entry in selection
+            )
+        ):
             message = (
                 'Invalid selection. '
                 'Input a file number (shown in brackets) or b to go back.'
@@ -208,8 +230,7 @@ class FilePicker:
 
         if len(selection) > max_files:
             message = (
-                'Too many files selected. '
-                f'Select up to {max_files} {self.ext} file(s).'
+                f'Too many files selected. Select up to {max_files} {self.ext} file(s).'
             )
             return reprompt_with_message(message)
 
@@ -235,7 +256,6 @@ class FilePicker:
         print(self.root)
         if self.file_list:
             for index, entry in enumerate(self.file_list):
-
                 if index < len(self.file_list) - 1:
                     print(f'├───{entry[0]}')
                     for i, file in enumerate(entry[1]):

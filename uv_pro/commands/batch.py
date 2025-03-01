@@ -3,16 +3,17 @@ Functions for the ``batch`` command.
 
 @author: David Hebert
 """
+
 import argparse
-from uv_pro.commands import command, argument
+
+from uv_pro.commands import argument, command
 from uv_pro.commands.multiview import filter_files
 from uv_pro.dataset import Dataset
 from uv_pro.io.export import export_csv
 
-
 HELP = {
     'search_filters': 'An arbitrary number of search filters',
-    'wavelengths': 'The time trace wavelengths (in nm) to batch export.'
+    'wavelengths': 'The time trace wavelengths (in nm) to batch export.',
 }
 ARGS = [
     argument(
@@ -30,8 +31,8 @@ ARGS = [
         nargs='*',
         default='*',
         metavar='',
-        help=HELP['search_filters']
-    )
+        help=HELP['search_filters'],
+    ),
 ]
 
 
@@ -57,7 +58,7 @@ def batch(args: argparse.Namespace) -> None:
                     export_csv(
                         dataset=dataset,
                         data=dataset.get_chosen_traces(args.wavelengths),
-                        suffix='Traces'
+                        suffix='Traces',
                     )
                 )
 
@@ -65,7 +66,7 @@ def batch(args: argparse.Namespace) -> None:
                 msg = [
                     f'Error: {file}',
                     '\n\tNo time traces to export. Invalid wavelength(s): ',
-                    f'{", ".join(map(str, args.wavelengths))} nm.'
+                    f'{", ".join(map(str, args.wavelengths))} nm.',
                 ]
                 print(''.join(msg))
                 continue

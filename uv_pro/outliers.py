@@ -5,12 +5,19 @@ Contains functions for detecting outliers from UV-vis time traces.
 
 @author: David Hebert
 """
+
 import pandas as pd
 from pybaselines.whittaker import asls
 
 
-def find_outliers(time_traces: pd.DataFrame, *, threshold: float = 0.1,
-                  lsw: str = 'none', lam: float = 10.0, tol: float = 0.1) -> list:
+def find_outliers(
+    time_traces: pd.DataFrame,
+    *,
+    threshold: float = 0.1,
+    lsw: str = 'none',
+    lam: float = 10.0,
+    tol: float = 0.1,
+) -> list:
     """
     Find outlier spectra.
 
@@ -52,7 +59,9 @@ def find_outliers(time_traces: pd.DataFrame, *, threshold: float = 0.1,
 
     baseline = _compute_baseline(data=time_traces.sum(1), lam=lam, tol=tol)
     baselined_traces = time_traces.sum(1) - baseline
-    baseline_outliers = _find_baseline_outliers(data=baselined_traces, threshold=threshold)
+    baseline_outliers = _find_baseline_outliers(
+        data=baselined_traces, threshold=threshold
+    )
 
     outliers.extend(baseline_outliers)
     return outliers, baseline
@@ -88,7 +97,7 @@ def _find_low_signal_outliers(data: pd.DataFrame, window: str) -> set[float]:
         neighboring_outliers = set(
             pd.Index.union(
                 data.iloc[outlier_indexes - 1].index,
-                data.iloc[outlier_indexes + 1].index
+                data.iloc[outlier_indexes + 1].index,
             )
         )
 
