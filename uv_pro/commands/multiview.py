@@ -51,7 +51,7 @@ ARGS = [
         action='store_const',
         default='or',
         const='and',
-        help=HELP['and'],
+        help=HELP['and-filter'],
     ),
 ]
 
