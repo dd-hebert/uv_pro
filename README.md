@@ -25,7 +25,7 @@ With ``uv_pro`` installed, you can run the script directly from the command line
 uvp p path\to\your\data.KD
 ```
 
-**Tip:** You can use shorter paths by setting a [**root directory**](#file-paths--root-directory) or by simply opening a terminal session inside the same folder as your data files.
+**Tip:** You can use shorter paths by setting a [**root directory**](#file-paths--root-directory) or by simply opening a terminal session inside the same directory as your data files.
 
 Command Line Arguments
 ----------------------
