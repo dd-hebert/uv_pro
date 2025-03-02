@@ -12,8 +12,8 @@ from configparser import ConfigParser
 
 from uv_pro.utils._defaults import CONFIG_MAP
 
-name = 'uv_pro'
-CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', f'{name}')
+NAME = 'uv_pro'
+CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', f'{NAME}')
 CONFIG_FILENAME = 'settings.ini'
 CONFIG_PATH = os.path.join(CONFIG_DIR, CONFIG_FILENAME)
 DEFAULTS = {cfg['key']: cfg['default_str'] for (_, cfg) in CONFIG_MAP.items()}

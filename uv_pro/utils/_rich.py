@@ -140,8 +140,7 @@ class ProcessingOutput:
     def _get_subtitle(self, dataset) -> list[Text]:
         subtitle = [
             Text.assemble(
-                'Total Spectra: ',
-                (f'{len(dataset.raw_spectra.columns)}', STYLES['bold']),
+                'Total Spectra: ', (f'{len(dataset.raw_spectra.columns)}', STYLES['bold'])
             ),
             Text.assemble(
                 'Total time: ', (f'{dataset.spectra_times.max()} s', STYLES['bold'])
@@ -186,8 +185,7 @@ class ProcessingOutput:
 
             if dataset.slicing is None:
                 table.add_row(
-                    'Spectra remaining',
-                    bold_text(f'{len(dataset.processed_spectra.columns)}'),
+                    'Spectra remaining', bold_text(f'{len(dataset.processed_spectra.columns)}'),
                 )
 
             else:
@@ -312,7 +310,7 @@ class PeaksOutput:
         table = fancy_table(
             Column('λ', justify='center'),
             Column('abs', justify='center'),
-            width=30,
+            width=30
         )
 
         if self.has_epsilon:

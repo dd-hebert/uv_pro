@@ -21,17 +21,16 @@ from uv_pro.peaks import smooth_spectrum
 def plot_peakfinder(pf: PeakFinder, **fig_kw) -> None:
     """Interactive peak finder plot."""
     fig, ax = _create_fig(pf, **fig_kw)
-
     spectrum_scatter = _plot_spectrum_scatter(ax, pf)
     smoothed_plot = _plot_smoothed_spectrum(ax, pf)
     peak_scatter = _plot_peak_scatter(ax, pf)
     _label_peaks(ax, pf)
 
     time_slider = Slider(
-        ax=fig.add_axes([0.2, 0.03, 0.65, 0.03]),
-        label='Time (s)',
-        valmin=min(pf.dataset.raw_spectra.columns),
-        valmax=max(pf.dataset.raw_spectra.columns),
+        fig.add_axes([0.2, 0.03, 0.65, 0.03]),
+        'Time (s)',
+        min(pf.dataset.raw_spectra.columns),
+        max(pf.dataset.raw_spectra.columns),
         valinit=pf.time,
         valstep=pf.dataset.spectra_times,
         color='#0400FF',
@@ -40,7 +39,6 @@ def plot_peakfinder(pf: PeakFinder, **fig_kw) -> None:
 
     update_args = (pf, fig, ax, spectrum_scatter, smoothed_plot, peak_scatter)
     time_slider.on_changed(partial(_update_plot, *update_args))
-
     plt.show()
 
 
@@ -49,7 +47,6 @@ def _create_fig(pf: PeakFinder, **fig_kw):
     fig, ax = subplot
     fig.suptitle('Peak Finder', fontweight='bold')
     fig.subplots_adjust(bottom=0.2)
-
     ax.set(
         title=pf.dataset.name,
         xlabel='Wavelength (nm)',
@@ -104,7 +101,6 @@ def _plot_spectrum_scatter(ax: Axes, pf: PeakFinder):
     (plot,) = ax.plot(
         pf.spectrum.index, pf.spectrum, color='0.6', marker='o', linestyle='', zorder=0
     )
-
     return plot
 
 
@@ -113,15 +109,12 @@ def _plot_smoothed_spectrum(ax: Axes, pf: PeakFinder):
         smooth_spectrum(pf.spectrum, s_win=pf.s_win),
         index=pf.spectrum.index,
     )
-
     (plot,) = ax.plot(spectrum.index, spectrum, color='k', zorder=1)
-
     return plot
 
 
 def _plot_peak_scatter(ax: Axes, pf: PeakFinder):
     peaks = pf.peaks['info']['abs']
-
     (plot,) = ax.plot(
         peaks.index,
         peaks,
@@ -131,14 +124,12 @@ def _plot_peak_scatter(ax: Axes, pf: PeakFinder):
         linestyle='',
         zorder=2,
     )
-
     return plot
 
 
 def _label_peaks(ax: Axes, pf: PeakFinder) -> None:
     _clear_peak_labels(ax)
     peak_labels = []
-
     for peak in pf.peaks['peaks']:
         peak_labels.append(
             ax.annotate(

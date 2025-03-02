@@ -58,7 +58,10 @@ class FilePicker:
         return None
 
     def pick_file(
-        self, mode: str = 'single', min_files: int = 0, max_files: int = 100
+        self,
+        mode: str = 'single',
+        min_files: int = 0,
+        max_files: int = 100,
     ) -> list[str] | None:
         """
         Pick files interactively from the terminal.

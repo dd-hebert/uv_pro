@@ -130,7 +130,7 @@ def peaks(args: argparse.Namespace) -> None:
     _handle_path(args)
 
     pf = PeakFinder(
-        path=args.path,
+        args.path,
         method=args.method,
         num_peaks=args.num_peaks,
         conc=args.concentration,

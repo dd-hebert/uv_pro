@@ -93,6 +93,7 @@ class KDFile:
     def _read_binary(self) -> bytes:
         with open(self.path, 'rb') as kd_file:
             file_bytes = kd_file.read()
+
         return file_bytes
 
     def parse_kd(self) -> tuple[pd.DataFrame, pd.Series, int]:
@@ -129,6 +130,7 @@ class KDFile:
             KDFile.absorbance_data_header, self._parse_spectra
         ):
             return _spectra_dataframe(list_of_spectra, spectra_times)
+
         raise Exception('Error parsing file. No spectra found.')
 
     def _handle_spectratimes(self) -> pd.Series:
@@ -136,6 +138,7 @@ class KDFile:
             KDFile.spectrum_time_header, self._parse_spectratimes
         ):
             return pd.Series(spectra_times, name='Time (s)')
+
         raise Exception('Error parsing file. No spectra times found.')
 
     def _handle_cycletime(self) -> int | None:

@@ -63,7 +63,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
         kobs_ci = stats.t.interval(0.95, len(trace) - 3, loc=kobs, scale=kobs_err)
 
         curve = pd.Series(
-            data=exponential_func(trace.index, *fit_params),
+            exponential_func(trace.index, *fit_params),
             index=trace.index,
             name=trace.name,
         )
@@ -80,7 +80,10 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
         }, curve
 
     if fit := _fit_time_traces(
-        time_traces, curve_fit, fit_params_handler, post_fit_handler
+        time_traces,
+        curve_fit,
+        fit_params_handler,
+        post_fit_handler,
     ):
         return {'params': fit.params, 'curves': fit.fits}
 
@@ -117,7 +120,6 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
             abs(trace.iloc[2:] - abs_0 * (1 - cutoff)).idxmin(),
             abs(trace.iloc[2:] - abs_0 * (1 + cutoff)).idxmin(),
         )
-
         return trace[:cutoff_idx]
 
     def fit_params_handler(trace: pd.Series) -> dict:
@@ -132,7 +134,9 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
         ci = stats.t.interval(0.95, len(trace) - 2, loc=m, scale=m_err)
 
         line = pd.Series(
-            data=linear_func(trace.index, m, b), index=trace.index, name=trace.name
+            linear_func(trace.index, m, b),
+            index=trace.index,
+            name=trace.name,
         )
 
         return {
@@ -210,7 +214,6 @@ def _fit_time_traces(
             fit_params[column], fitted_data[column] = post_fit_handler(
                 trace, *fit_result
             )
-
         except Exception:
             continue
 

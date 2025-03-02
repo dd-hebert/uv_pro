@@ -287,9 +287,7 @@ def _handle_path(args: argparse.Namespace) -> None:
         args.path = os.path.join(args.root_dir, args.path)
 
     else:
-        raise FileNotFoundError(
-            f'No such file or directory could be found: "{args.path}"'
-        )
+        raise FileNotFoundError(f'No such file or directory could be found: "{args.path}"')
 
 
 def _handle_slicing(args: argparse.Namespace) -> dict | None:
@@ -356,7 +354,7 @@ def prompt_for_export(dataset) -> list[str]:
         init_rate_key = key
         options.append({'key': str(init_rate_key), 'name': 'Initial rates'})
 
-    if user_choices := user_choice(header=header, options=options):
+    if user_choices := user_choice(header, options):
         if '1' in user_choices:
             files_exported.append(export_csv(dataset, dataset.processed_spectra))
 
@@ -368,9 +366,15 @@ def prompt_for_export(dataset) -> list[str]:
         if str(fit_key) in user_choices:
             files_exported.extend(
                 [
-                    export_csv(dataset, dataset.fit['curves'], suffix='Fit curves'),
                     export_csv(
-                        dataset, dataset.fit['params'].transpose(), suffix='Fit params'
+                        dataset,
+                        dataset.fit['curves'],
+                        suffix='Fit curves'
+                    ),
+                    export_csv(
+                        dataset,
+                        dataset.fit['params'].transpose(),
+                        suffix='Fit params'
                     ),
                 ]
             )
@@ -379,7 +383,9 @@ def prompt_for_export(dataset) -> list[str]:
             files_exported.extend(
                 [
                     export_csv(
-                        dataset, dataset.init_rate['lines'], suffix='Init rate lines'
+                        dataset,
+                        dataset.init_rate['lines'],
+                        suffix='Init rate lines',
                     ),
                     export_csv(
                         dataset,
@@ -403,7 +409,6 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
                 print(
                     '', splash(text='Enter ctrl-c to quit', title='uv_pro Quick Figure')
                 )
-
                 files_exported.append(
                     getattr(QuickFig(dataset, args.colormap), 'exported_figure')
                 )

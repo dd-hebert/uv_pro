@@ -78,7 +78,6 @@ def plot_1x2(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     fig.suptitle(dataset.name, fontweight='bold')
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset, cmap)
-
     plt.show()
 
 
@@ -108,7 +107,6 @@ def plot_1x3(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     _raw_data_subplot(ax_raw_data, dataset)
     _processed_data_subplot(ax_processed_data, dataset, cmap)
     _time_traces_subplot(ax_time_traces, dataset)
-
     plt.show()
 
 
@@ -146,7 +144,6 @@ def plot_2x2(dataset: Dataset, cmap: str = 'default', **fig_kw) -> None:
     _processed_data_subplot(ax_processed_data, dataset, cmap)
     _time_traces_subplot(ax_time_traces, dataset)
     _outliers_subplot(ax_outliers, dataset)
-
     plt.show()
 
 
@@ -167,7 +164,6 @@ def _raw_data_subplot(ax: Axes, dataset: Dataset) -> None:
     ax.set_title('Raw Data', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(190, 1100)
     ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)')
-
     ax.plot(spectra)
 
 
@@ -191,7 +187,6 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset, cmap: str = 'default') -
     ax.set_title('Processed Data', size=10, weight='bold', fontstyle='oblique')
     ax.set_xlim(300, 1100)
     ax.set(xlabel='Wavelength (nm)', ylabel='Absorbance (AU)')
-
     ax.text(
         x=0.99,
         y=0.99,
@@ -202,7 +197,6 @@ def _processed_data_subplot(ax: Axes, dataset: Dataset, cmap: str = 'default') -
         color='gray',
         fontsize=8,
     )
-
     ax.plot(spectra)
 
 
@@ -269,7 +263,6 @@ def _outliers_subplot(ax: Axes, dataset: Dataset) -> None:
     ax.set(xlabel='Time (s)', ylabel='Intensity (arb. units)')
 
     _plot_baseline(ax, dataset)
-
     summed_time_traces = dataset.time_traces.sum(1)
 
     ax.scatter(
@@ -279,7 +272,6 @@ def _outliers_subplot(ax: Axes, dataset: Dataset) -> None:
         marker='x',
         zorder=2,
     )
-
     ax.plot(summed_time_traces, color='black', linestyle='solid', zorder=3)
 
 
@@ -290,7 +282,6 @@ def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
 
     ax.plot(upper_bound, color='skyblue', linestyle='solid', alpha=0.5)
     ax.plot(lower_bound, color='skyblue', linestyle='solid', alpha=0.5)
-
     ax.fill_between(
         x=upper_bound.index,
         y1=upper_bound,
@@ -298,9 +289,7 @@ def _plot_baseline(ax: Axes, dataset: Dataset) -> None:
         color='powderblue',
         alpha=0.5,
     )
-
     ax.plot(dataset.baseline, color='skyblue', linestyle='dashed', alpha=0.8, zorder=1)
-
     ax.text(
         x=0.99,
         y=0.99,
@@ -404,7 +393,6 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
                 r'$r^2 =$',
                 f'{dataset.init_rate["params"][wavelength]["r2"]:.3f}',
             ]
-
             _add_text(' '.join(text), row_number, text_color)
             row_number += 1
 
@@ -419,7 +407,6 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
                 r'$r^2 =$',
                 f'{dataset.fit["params"][wavelength]["r2"]:.3f}',
             ]
-
             _add_text(' '.join(text), row_number, text_color)
             row_number += 1
 

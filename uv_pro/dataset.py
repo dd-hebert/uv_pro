@@ -180,11 +180,12 @@ class Dataset:
         """
         if len(self.raw_spectra.columns) > 2:
             self.time_traces = self.get_time_traces(
-                window=self.time_trace_window, interval=self.time_trace_interval
+                window=self.time_trace_window,
+                interval=self.time_trace_interval,
             )
 
             self.outliers, self.baseline = find_outliers(
-                time_traces=self.time_traces,
+                self.time_traces,
                 threshold=self.outlier_threshold,
                 lsw=self.low_signal_window,
                 lam=self.baseline_smoothness,
@@ -193,9 +194,7 @@ class Dataset:
 
             self._check_trim_values()
             self.processed_spectra = self._process_spectra()
-            self.chosen_traces, self.processed_traces = self._process_chosen_traces(
-                self.wavelengths
-            )
+            self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
 
             if self.processed_traces is not None:
                 if self.fit_exp is True:
@@ -203,7 +202,8 @@ class Dataset:
 
                 if self.fit_init_rate is not None:
                     self.init_rate = initial_rates(
-                        self.processed_traces, cutoff=self.fit_init_rate
+                        self.processed_traces,
+                        cutoff=self.fit_init_rate,
                     )
 
             self.is_processed = True
@@ -287,7 +287,6 @@ class Dataset:
             for wavelength in set(wavelengths)
             if wavelength in self.raw_spectra.index
         ]
-
         return self.raw_spectra.loc[wavelengths].transpose() if wavelengths else None
 
     def clean_data(self, data: pd.DataFrame, axis: str) -> pd.DataFrame:

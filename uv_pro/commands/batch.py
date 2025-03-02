@@ -56,8 +56,8 @@ def batch(args: argparse.Namespace) -> None:
             try:
                 files_exported.append(
                     export_csv(
-                        dataset=dataset,
-                        data=dataset.get_chosen_traces(args.wavelengths),
+                        dataset,
+                        dataset.get_chosen_traces(args.wavelengths),
                         suffix='Traces',
                     )
                 )

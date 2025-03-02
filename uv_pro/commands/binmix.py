@@ -218,9 +218,8 @@ def prompt_for_export(
     options = [{'key': str(key), 'name': 'Fitting results'}]
     files_exported = []
 
-    dummy = namedtuple(
-        'Dummy_Dataset', ['path', 'name']
-    )  # Hacky way to get around having to use a real Dataset
+    # Hacky way to get around having to use a real Dataset
+    dummy = namedtuple('Dummy_Dataset', ['path', 'name'])
     ds = dummy(path=args.path, name=os.path.basename(args.path))
 
     spectra_key = None
@@ -230,7 +229,7 @@ def prompt_for_export(
         spectra_key = key
         options.append({'key': str(spectra_key), 'name': 'Best-fit spectra'})
 
-    if user_choices := user_choice(header=header, options=options):
+    if user_choices := user_choice(header, options):
         if '1' in user_choices:
             files_exported.append(export_csv(ds, results, suffix='Binmix Params'))
 

@@ -85,7 +85,7 @@ def _config_prompt(config: Config, header: str, func: callable) -> None:
         options.append({'key': str(key), 'name': f'{setting}: {value}'})
         settings_keys[str(key)] = setting
 
-    if user_choices := user_choice(header=header, options=options):
+    if user_choices := user_choice(header, options):
         for choice in user_choices:
             func(config, settings_keys[choice])
 

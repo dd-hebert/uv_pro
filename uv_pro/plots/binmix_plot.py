@@ -43,9 +43,9 @@ def plot_binarymixture(bm: BinaryMixture, **fig_kw) -> None:
 
     component_a_slider = Slider(
         fig.add_axes([0.2, 0.08, 0.65, 0.03]),
-        label='Component A',
-        valmin=0,
-        valmax=bm.coeff_a_max,
+        'Component A',
+        0,
+        bm.coeff_a_max,
         valinit=bm.coeff_a,
         valstep=0.01,
         color='#0032FF',
@@ -53,9 +53,9 @@ def plot_binarymixture(bm: BinaryMixture, **fig_kw) -> None:
 
     component_b_slider = Slider(
         fig.add_axes([0.2, 0.03, 0.65, 0.03]),
-        label='Component B',
-        valmin=0,
-        valmax=bm.coeff_b_max,
+        'Component B',
+        0,
+        bm.coeff_b_max,
         valinit=bm.coeff_b,
         valstep=0.01,
         color='#FF3200',
@@ -242,10 +242,9 @@ def _compute_mesh(bm: BinaryMixture) -> tuple[np.ndarray, np.ndarray, np.ndarray
     rng_b = np.linspace(
         0, bm.coeff_b_max, num=int(bm.coeff_b_max / 0.01), endpoint=True
     )
+
     a_vals, b_vals = np.meshgrid(rng_a, rng_b, indexing='ij')
-
     combinations = a_vals[:, :, np.newaxis] * comp_a + b_vals[:, :, np.newaxis] * comp_b
-
     squared_diffs = (spectrum - combinations) ** 2
 
     return a_vals, b_vals, np.mean(squared_diffs, axis=2)

@@ -53,15 +53,13 @@ def find_outliers(
     """
     outliers = []
     if lsw != 'none':
-        low_signal_outliers = _find_low_signal_outliers(data=time_traces, window=lsw)
+        low_signal_outliers = _find_low_signal_outliers(time_traces, lsw)
         time_traces = time_traces.drop(low_signal_outliers)
         outliers.extend(low_signal_outliers)
 
-    baseline = _compute_baseline(data=time_traces.sum(1), lam=lam, tol=tol)
+    baseline = _compute_baseline(time_traces.sum(1), lam, tol)
     baselined_traces = time_traces.sum(1) - baseline
-    baseline_outliers = _find_baseline_outliers(
-        data=baselined_traces, threshold=threshold
-    )
+    baseline_outliers = _find_baseline_outliers(baselined_traces, threshold)
 
     outliers.extend(baseline_outliers)
     return outliers, baseline

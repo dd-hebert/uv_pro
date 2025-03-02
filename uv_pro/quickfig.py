@@ -120,7 +120,6 @@ class QuickFig:
             match = re.search(pattern, x_bounds)
 
         x_bounds = [bound for bound in map(int, match.groups())]
-
         return tuple(x_bounds)
 
     def _get_colormap(self) -> str:
@@ -142,19 +141,21 @@ class QuickFig:
         fig, ax_processed_data = plt.subplots()
         _processed_data_subplot(ax_processed_data, self.dataset, cmap)
         ax_processed_data.set(title=None)
-
         return fig, ax_processed_data
 
     def _1x2_plot(self, cmap: str = 'default') -> tuple[Figure, tuple[Axes, Axes]]:
         """Create 1x2 plot with processed data and time traces."""
         fig, (ax_processed_data, ax_traces) = plt.subplots(
-            nrows=1, ncols=2, figsize=(10, 5), layout='constrained', sharey=True
+            nrows=1,
+            ncols=2,
+            figsize=(10, 5),
+            layout='constrained',
+            sharey=True,
         )
 
         _processed_data_subplot(ax_processed_data, self.dataset, cmap)
         _time_traces_subplot(ax_traces, self.dataset, show_slices=False)
         self._touchup_time_traces_plot(ax_traces)
-
         return fig, (ax_processed_data, ax_traces)
 
     def _touchup_processed_data_plot(self, ax: Axes, x_bounds: tuple[int, int]) -> None:
@@ -162,9 +163,10 @@ class QuickFig:
         ax.set_title('UV-vis Spectra', fontstyle='normal')
         ax.set_xbound(*x_bounds)
         Artist.remove(ax.texts[0])
-        delta_t = int(self.dataset.processed_spectra.columns[-1]) - int(
-            self.dataset.processed_spectra.columns[0]
-        )
+        t0 = int(self.dataset.processed_spectra.columns[0])
+        t1 = int(self.dataset.processed_spectra.columns[-1])
+        delta_t = t1 - t0
+
         ax.text(
             x=0.99,
             y=0.99,
@@ -185,9 +187,7 @@ class QuickFig:
             int(self.dataset.processed_spectra.columns[-1]),
         )
 
-    def _prompt_for_changes(
-        self, fig: Figure, title: str, x_bounds: tuple[int]
-    ) -> None:
+    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple[int]) -> None:
         """
         Prompt the user for plot changes or export.
 
@@ -208,7 +208,7 @@ class QuickFig:
             {'key': '4', 'name': 'Change colors'},
         ]
 
-        if user_choices := user_choice(header=header, options=options):
+        if user_choices := user_choice(header, options):
             if '1' in user_choices:
                 self.exported_figure = self.export(fig)
                 return

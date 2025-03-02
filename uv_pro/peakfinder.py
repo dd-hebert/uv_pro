@@ -111,7 +111,7 @@ class PeakFinder:
         """
         if self.method == 'localmax':
             peaks = find_peaks(
-                spectrum=self.spectrum,
+                self.spectrum,
                 num_peaks=self.num_peaks,
                 conc=self.conc,
                 p_win=self.p_win,
@@ -123,7 +123,7 @@ class PeakFinder:
 
         if self.method == 'deriv':
             peaks = find_peaks_dxdy(
-                spectrum=self.spectrum,
+                self.spectrum,
                 conc=self.conc,
                 p_win=self.p_win,
                 s_win=self.s_win,

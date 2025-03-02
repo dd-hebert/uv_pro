@@ -32,6 +32,7 @@ class BinaryMixture:
         mixture: pd.Series,
         component_a: pd.Series,
         component_b: pd.Series,
+        *,
         coeff_a: float = 0.5,
         coeff_b: float = 0.5,
         window: tuple[int, int] = (300, 1100),
@@ -107,5 +108,4 @@ class BinaryMixture:
             fit_vars,
             bounds=[(0, self.coeff_a_max), (0, self.coeff_b_max)],
         )
-
         return opt.x

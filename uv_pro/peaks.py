@@ -12,6 +12,7 @@ from scipy.signal import savgol_filter
 
 def find_peaks(
     spectrum: pd.DataFrame,
+    *,
     num_peaks: int = 0,
     conc: float | None = None,
     p_win: tuple[int, int] | None = None,
@@ -65,7 +66,9 @@ def find_peaks(
     max_prom = smoothed_spectrum.max()
     delta_prom = max_prom * 0.001
     peaks, _ = scipy_find_peaks(
-        x=smoothed_spectrum, distance=dist, prominence=(prom, max_prom)
+        smoothed_spectrum,
+        distance=dist,
+        prominence=(prom, max_prom),
     )
 
     if int(num_peaks) > 0:
@@ -79,7 +82,9 @@ def find_peaks(
                 break
 
             peaks, _ = scipy_find_peaks(
-                x=smoothed_spectrum, distance=dist, prominence=(prom, max_prom)
+                smoothed_spectrum,
+                distance=dist,
+                prominence=(prom, max_prom),
             )
 
         else:
@@ -125,7 +130,6 @@ def find_peaks_dxdy(
     spectrum, smoothed_spectrum = _preprocess_spectrum(spectrum, p_win, s_win)
     spectrum_deriv = np.gradient(smoothed_spectrum)
     peaks = _get_zero_crossings(spectrum_deriv) + 1
-
     return _process_peaks(spectrum, peaks, conc)
 
 
@@ -169,9 +173,11 @@ def find_peaks_hidden(
     spectrum, smoothed_spectrum = _preprocess_spectrum(spectrum, p_win, s_win)
     spectrum_deriv = np.gradient(np.gradient(smoothed_spectrum))
     peaks, _ = scipy_find_peaks(
-        x=spectrum_deriv * -1, threshold=0.0002, prominence=(0.001, 3), distance=10
+        spectrum_deriv * -1,
+        threshold=0.0002,
+        prominence=(0.001, 3),
+        distance=10,
     )
-
     return _process_peaks(spectrum, peaks, conc)
 
 
@@ -191,13 +197,9 @@ def smooth_spectrum(spectrum: pd.DataFrame, s_win: int = 15) -> np.ndarray:
     Returns
     -------
     np.ndarray
-        The smoothed
+        The smoothed spectrum.
     """
-    smoothed_spectrum = savgol_filter(
-        x=spectrum, window_length=s_win, polyorder=3, axis=0
-    )
-
-    return smoothed_spectrum.flatten()
+    return savgol_filter(spectrum, s_win, 3, axis=0).flatten()
 
 
 def _preprocess_spectrum(
@@ -207,9 +209,7 @@ def _preprocess_spectrum(
     if p_win:
         spectrum = spectrum.loc[min(p_win) : max(p_win)]
 
-    smoothed_spectrum = smooth_spectrum(spectrum, s_win)
-
-    return spectrum, smoothed_spectrum
+    return spectrum, smooth_spectrum(spectrum, s_win=s_win)
 
 
 def _process_peaks(
@@ -235,14 +235,12 @@ def _get_absorbance(spectrum: pd.DataFrame, peaks: list[int]) -> pd.DataFrame:
     absorbance = spectrum.loc[peaks]
     absorbance.rename(columns={absorbance.columns[0]: 'abs'}, inplace=True)
     absorbance.columns.name = ''
-
     return absorbance
 
 
 def _get_epsilon(absorbance: pd.DataFrame, conc: float) -> pd.DataFrame:
     epsilon = absorbance // conc
     epsilon.rename(columns={epsilon.columns[0]: 'epsilon'}, inplace=True)
-
     return epsilon
 
 
