@@ -13,7 +13,7 @@ from sphinx.ext.autodoc import cut_lines
 sys.path.insert(0, os.path.abspath(".."))
 
 project = 'uv_pro'
-copyright = '2023-2024, David Hebert'
+copyright = '2023-2025, David Hebert'
 author = 'David Hebert'
 release = '0.6.6'
 
