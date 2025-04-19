@@ -209,10 +209,10 @@ class Dataset:
             self.is_processed = True
 
     def _process_spectra(self) -> pd.DataFrame:
-        processed_spectra = self.clean_data(self.raw_spectra, axis='columns')
+        processed_spectra = self.clean_data(self.raw_spectra, 'columns')
 
         if self.trim is not None:
-            processed_spectra = self.trim_data(processed_spectra, axis='columns')
+            processed_spectra = self.trim_data(processed_spectra, 'columns')
 
         if self.slicing is not None:
             processed_spectra = slice_spectra(processed_spectra, self.slicing)
@@ -230,10 +230,10 @@ class Dataset:
         if chosen_traces is None:
             return None, None
 
-        processed_traces = self.clean_data(chosen_traces, axis='index')
+        processed_traces = self.clean_data(chosen_traces, 'index')
 
         if self.trim:
-            processed_traces = self.trim_data(processed_traces, axis='index')
+            processed_traces = self.trim_data(processed_traces, 'index')
 
         return chosen_traces, processed_traces
 
