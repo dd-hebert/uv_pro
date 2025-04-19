@@ -23,7 +23,7 @@ HELP = {
     'view': """Enable view-only mode (no data processing).""",
     'trim': """Remove spectra outside the given time range.
                Data before time = T1 and after time = T2 will be removed.
-               Use -1 for END to indicate the end of the data.""",
+               Use -1 for T2 to indicate the end of the data.""",
     'outlier-threshold': """Set the threshold (0-1) for outlier detection. Default: 0.1.
                             Values closer to 0 result in higher sensitivity (more outliers).
                             Values closer to 1 result in lower sensitivity (fewer outliers).""",
