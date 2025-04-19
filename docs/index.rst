@@ -17,6 +17,7 @@ uv_pro Documentation
    filepaths
    cli
    multiview
+   peak_finding
    modules
 
 Indices and tables
