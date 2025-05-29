@@ -4,68 +4,63 @@ Helper functions for interactive terminal prompts.
 @author: David Hebert
 """
 
+from collections.abc import Sequence
+from typing import Any
+
+import questionary
+from questionary import Style
 from rich import print
-from rich.console import Console
-from rich.text import Text
 
 
-def user_choice(header: str, options: list[dict]) -> list[str] | list:
+STYLE = Style(
+    [
+        ('qmark', 'fg:#ff00ff bold'),
+        ('question', 'bold'),
+        ('highlighted', 'fg:#af87ff bold'),
+        ('selected', 'fg:#875fd7 bg:ansiwhite bold'),
+        ('answer', 'fg:#d7afff'),
+        ('instruction', 'fg:#5f819d'),
+        ('pointer', 'fg:#ff00ff')
+    ]
+)
+
+def checkbox(message: str, choices: Sequence[str | dict[str, Any]], **kwargs) -> list:
     """
-    Prompt the user for input.
+    Prompt the user to select from a list of choices.
 
     Parameters
     ----------
-    header : str
-        The prompt header.
-    options : list[dict]
-        The input choices, a list of dicts. Example: [{'key': 'q', 'name': 'Quit'}]
-        An option's 'key' is the accepted input for that option.
+    message : str
+        The prompt message.
+    choices : Sequence[str | dict[str, Any]]
+        The choices, a list of strings.
 
     Returns
     -------
     list[str]
-        The user's input selections.
+        The user's selections.
     """
-    prompt = Text(f'\n{header}\n{"=" * len(header)}\n', style='prompt')
-    for opt in options:
-        choice = Text(f'({opt["key"]}) {opt["name"]}\n')
-        choice.stylize('prompt.choices', 1, 2)
-        prompt.append(choice)
+    question = questionary.checkbox(
+        message,
+        choices,
+        qmark='✓',
+        pointer='⮞',
+        style=STYLE,
+        **kwargs,
+    )
 
-    prompt.append('\nChoice: ', style='none')
-    _input = Console().input
-    valid_choices = [option['key'] for option in options]
-
-    try:
-        user_choices = [
-            key for key in _input(prompt).strip().split() if key in valid_choices
-        ]
-
-        while not user_choices:
-            print(
-                '\nInvalid selection. Enter one or more of the displayed options or ctrl-c to quit.'
-            )
-            user_choices = [
-                key for key in _input(prompt).strip().split() if key in valid_choices
-            ]
-
-        return user_choices
-
-    except (EOFError, KeyboardInterrupt):  # ctrl-c
-        return []
+    print()
+    return question.ask(kbi_msg='')
 
 
-def get_value(title: str, prompt: str, func: callable = None):
-    """Prompt the user for some value. Apply ``func`` to input if provided."""
-    print(f'\n{title}')
+def ask(prompt: str, **kwargs) -> str:
+    """Prompt the user for some input."""
+    question = questionary.text(
+        prompt,
+        qmark='❯',
+        style=STYLE,
+        **kwargs,
+    )
 
-    try:
-        value = input(prompt)
-        return func(value) if func else value
-
-    except (ValueError, NameError, SyntaxError):
-        print('Invalid entry.')
-        return
-
-    except (EOFError, KeyboardInterrupt):
-        return
+    print()
+    return question.ask(kbi_msg='')
