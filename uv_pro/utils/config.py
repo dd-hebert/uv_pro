@@ -9,6 +9,7 @@ can be found in the user's home directory.
 
 import os
 from configparser import ConfigParser
+from typing import Callable, Optional
 
 from uv_pro.utils._defaults import CONFIG_MAP
 
@@ -16,7 +17,7 @@ NAME = 'uv_pro'
 CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', f'{NAME}')
 CONFIG_FILENAME = 'settings.ini'
 CONFIG_PATH = os.path.join(CONFIG_DIR, CONFIG_FILENAME)
-DEFAULTS = {cfg['key']: cfg['default_str'] for (_, cfg) in CONFIG_MAP.items()}
+DEFAULTS = {option: info['default_str'] for option, info in CONFIG_MAP.items()}
 
 
 class Config(ConfigParser):
@@ -41,18 +42,25 @@ class Config(ConfigParser):
 
     def validate(self, verbose: bool = False) -> bool:
         """Validate config values. Return True if validated."""
-        valid = True
+        all_valid = True
 
-        for _, config_mapping in CONFIG_MAP.items():
-            if self.has_option('Settings', config_mapping['key']):
-                config_value = self.get('Settings', config_mapping['key'])
-                validation_func = config_mapping['validate_func']
+        for option, info in CONFIG_MAP.items():
+            if self.has_option('Settings', option):
+                value = self.get('Settings', option)
 
-                if not validation_func(config_value, verbose):
-                    self.remove_option('Settings', config_mapping['key'])
-                    valid = False
+                cleanup_func: Optional[Callable] = info.get('cleanup_func')
+                if cleanup_func:
+                    value = cleanup_func(value)
 
-        return valid
+                validation_func: Callable = info.get('validate_func')
+                if validation_func(value, verbose):
+                    self.set('Settings', option, value)
+
+            else:
+                self.set('Settings', option, info.get('default_str'))
+                all_valid = False
+
+        return all_valid
 
     def delete(self) -> Exception | None:
         """Delete the config file and directory."""
@@ -76,19 +84,19 @@ class Config(ConfigParser):
             A list of tuples with config parameter names (str) and formatted values (any).
         """
 
-        def get_val(section: str, key: str, type: callable, default_val=None, **kwargs):
+        def get_val(option: str, section: str, type: callable, default_val=None, **kwargs):
             try:
-                if value := self.get(section, key):
+                if value := self.get(section, option):
                     return type(value)
 
             except Exception as e:
                 print(
-                    f'Warning: Could not retrieve config value for [{section}] {key}: {e}'
+                    f'Warning: Could not retrieve config value for [{section}] {option}: {e}'
                 )
 
             return default_val
 
         return [
-            (arg_name, get_val(**config_mapping))
-            for arg_name, config_mapping in CONFIG_MAP.items()
+            (option, get_val(option, **info))
+            for option, info in CONFIG_MAP.items()
         ]

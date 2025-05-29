@@ -5,10 +5,11 @@ Functions for the ``config`` command.
 """
 
 import argparse
+from typing import Callable
 
 from uv_pro.commands import argument, command, mutually_exclusive_group
 from uv_pro.utils.config import Config
-from uv_pro.utils.prompts import get_value, user_choice
+from uv_pro.utils.prompts import ask, checkbox
 
 HELP = {
     'delete': 'Delete the config file.',
@@ -63,13 +64,13 @@ def config(args: argparse.Namespace) -> None:
     """
     if args.edit or args.reset:
         if args.edit:
-            header = 'Edit config settings'
+            message = 'Edit config settings'
             func = _edit_config
         if args.reset:
-            header = 'Reset config settings'
+            message = 'Reset config settings'
             func = _reset_config
 
-        _config_prompt(args.config, header, func)
+        _config_prompt(args.config, message, func)
 
     elif args.list:
         _print_config(args.config)
@@ -78,16 +79,17 @@ def config(args: argparse.Namespace) -> None:
         _delete_config(args.config)
 
 
-def _config_prompt(config: Config, header: str, func: callable) -> None:
-    options = []
-    settings_keys = {}
-    for key, (setting, value) in enumerate(config.items('Settings'), start=1):
-        options.append({'key': str(key), 'name': f'{setting}: {value}'})
-        settings_keys[str(key)] = setting
+def _config_prompt(config: Config, message: str, func: Callable) -> None:
+    settings = list(config.items('Settings'))
+    options = {f"{setting}: {value}": setting for setting, value in settings}
 
-    if user_choices := user_choice(header, options):
-        for choice in user_choices:
-            func(config, settings_keys[choice])
+    selected_options = checkbox(message, options)
+    if not selected_options:
+        return
+
+    for option in selected_options:
+        setting = options[option]
+        func(config, setting)
 
 
 def _delete_config(config: Config) -> None:
@@ -102,8 +104,9 @@ def _delete_config(config: Config) -> None:
 
 
 def _edit_config(config: Config, setting: str) -> None:
-    if value := get_value(title=setting, prompt='Enter a new value: '):
+    if value := ask(prompt=f'Enter new {setting}:'):
         config.set(section='Settings', option=setting, value=value)
+
         if config.validate():
             config._write()
             return
@@ -122,4 +125,3 @@ def _print_config(config: Config) -> None:
     print('===============')
     for setting, value in config.items('Settings'):
         print(f'{setting}: {value}')
-    print('')
