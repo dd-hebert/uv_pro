@@ -18,5 +18,5 @@ def tree(args: argparse.Namespace) -> None:
     *desc : Show the root directory file tree.
     *help : Show the root directory file tree.
     """
-    if args.root_dir:
-        FilePicker(args.root_dir, '.KD').tree()
+    if args.root_directory:
+        FilePicker(args.root_directory, '.KD').tree()
