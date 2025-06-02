@@ -247,16 +247,14 @@ Examples
 """
 
 import sys
-from random import choice
 
 from rich import print
 
 from uv_pro import __author__, __version__
 from uv_pro.commands import get_args
-from uv_pro.utils.config import Config
+from uv_pro.utils.config import CONFIG, PRIMARY_COLOR
 
 sys.tracebacklimit = 0
-
 
 class CLI:
     """
@@ -266,33 +264,24 @@ class CLI:
     ----------
     args : :class:`argparse.Namespace`
         Parsed command-line arguments.
-    cfg : :class:`~uv_pro.utils.config.Config`
-        The current CLI settings configuration.
     """
 
     def __init__(self):
         self.args = get_args()
-        self.args.config = Config()
+        self.args.config = CONFIG
         self.apply_config()
 
-        try:
+        if hasattr(self.args, 'func'):
             self.args.func(args=self.args)
 
-        except AttributeError:
-            print(self)
-
-    def __str__(self) -> str:
-        print(*self._splash(), sep='\n')
-        return ''
+        else:
+            print(self._splash())
 
     def apply_config(self):
         for arg_name, value in self.args.config.broadcast():
             setattr(self.args, arg_name, value)
 
-    def _splash(self) -> list[str]:
-        colors = ['red', 'blue', 'green', 'yellow', 'cyan', 'magenta']
-        random_color = choice(colors)
-
+    def _splash(self) -> str:
         splash = [
             '                                                      ',
             ' ███  ███ ███   ███         ███████   ██████  ██████  ',
@@ -303,11 +292,11 @@ class CLI:
             '                            ███                       ',
         ]
 
-        splash = [f'[{random_color}]{line}[/{random_color}]' for line in splash]
+        splash = [f'[{PRIMARY_COLOR}]{line}[/{PRIMARY_COLOR}]' for line in splash]
         splash.append(f'Version: {__version__}\nAuthor: {__author__}')
         splash.append('\nFor help with commands, type: uvp -h')
 
-        return splash
+        return '\n'.join(splash)
 
 
 def main() -> None:
