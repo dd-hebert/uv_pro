@@ -9,10 +9,10 @@ import argparse
 from rich import print
 
 from uv_pro.commands import argument, command
-from uv_pro.commands.process import _handle_path
 from uv_pro.peakfinder import PeakFinder
 from uv_pro.plots import plot_peakfinder
 from uv_pro.utils._rich import splash
+from uv_pro.utils.paths import handle_args_path
 
 HELP = {
     'path': """A path to a UV-vis data file (.KD format).""",
@@ -127,7 +127,7 @@ def peaks(args: argparse.Namespace) -> None:
         ),
     )
 
-    _handle_path(args)
+    handle_args_path(args)
 
     pf = PeakFinder(
         args.path,
