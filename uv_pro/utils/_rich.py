@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import os
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -13,14 +13,20 @@ from rich.panel import Panel
 from rich.table import Column, Table
 from rich.text import Text
 
+from uv_pro.utils.config import PRIMARY_COLOR
+
 if TYPE_CHECKING:
     from uv_pro.dataset import Dataset
     from uv_pro.peakfinder import PeakFinder
 
+COLORS = {
+    'primary': PRIMARY_COLOR,
+}
 
 STYLES = {
-    'bold': 'bold medium_purple1',
-    'highlight': 'grey0 on medium_purple3',
+    'main': COLORS['primary'],
+    'bold': f'bold {COLORS['primary']}',
+    'highlight': f'bold bright_white on {COLORS['primary']}',
 }
 
 
@@ -33,10 +39,10 @@ def truncate_title(title: str, max_length: int = 74) -> str:
 def splash(text: str, title: str, width: int = 80, **kwargs) -> Panel:
     """A pre-formatted ``Panel`` for splashes."""
     return Panel(
-        Text(text, style='bold grey100', justify='center'),
+        Text(text, style='bold bright_white', justify='center'),
         title=Text(title, style='table.title'),
         box=box.SIMPLE,
-        border_style='grey27',
+        border_style='bright_black',
         width=width,
         **kwargs,
     )
@@ -339,7 +345,7 @@ class BinmixOutput:
     ----------
     component_concs : list[float] | list[None]
         The concentrations of each component, if provided.
-    component_paths : list[str]
+    component_paths : list[Path]
         File paths to the component .csv files.
     results : :class:`pandas.DataFrame`
         The binmix fitting output.
@@ -359,7 +365,7 @@ class BinmixOutput:
             The binmix fitting output.
         """
         self.results = results
-        self.title = truncate_title(os.path.basename(args.path))
+        self.title = truncate_title(args.path.name)
         self.component_paths = [args.component_a, args.component_b]
         self.component_concs = [
             getattr(args, 'molarity_a', None),
@@ -385,8 +391,8 @@ class BinmixOutput:
             )
 
             row = Text.assemble(
-                Text(f'{os.path.dirname(path)}\\', style='medium_purple4'),
-                Text(f'{os.path.basename(path)}', style=STYLES['bold']),
+                Text(f'{path.parent}\\', style=STYLES['main']),
+                Text(f'{path.name}', style=STYLES['bold']),
             )
 
             table.add_row(row)
