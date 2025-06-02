@@ -5,7 +5,7 @@ Functions for the ``process`` command.
 """
 
 import argparse
-import os
+from pathlib import Path
 
 from rich import print
 from rich.columns import Columns
@@ -16,34 +16,40 @@ from uv_pro.io.export import export_csv
 from uv_pro.plots import CMAPS, plot_2x2, plot_spectra
 from uv_pro.quickfig import QuickFig
 from uv_pro.utils._rich import splash
-from uv_pro.utils.prompts import user_choice
+from uv_pro.utils.paths import handle_args_path
+from uv_pro.utils.prompts import checkbox
+
 
 HELP = {
     'path': """A path to a UV-vis data file (.KD format). Required unless using --list-colormaps.""",
     'view': """Enable view-only mode (no data processing).""",
-    'trim': """Remove spectra outside the given time range.
-               Data before time = T1 and after time = T2 will be removed.
-               Use -1 for T2 to indicate the end of the data.""",
-    'outlier-threshold': """Set the threshold (0-1) for outlier detection. Default: 0.1.
+    'trim': """Remove spectra outside the specified time range.
+               Spectra before T1 and after T2 will be removed.
+               Use -1 for T2 to include all spectra up to the final spectrum (e.g., --trim 10 -1).""",
+    'outlier-threshold': """Set the threshold (0-1) for outlier detection.
                             Values closer to 0 result in higher sensitivity (more outliers).
-                            Values closer to 1 result in lower sensitivity (fewer outliers).""",
+                            Values closer to 1 result in lower sensitivity (fewer outliers).
+                            Default: 0.1""",
     'slice': 'Set the number of slices to plot. Default: None (no slicing).',
     'variable-slice': """Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
                          Default: None (no slicing).""",
     'specific-slice': """Get spectra slices from specific times. Takes an arbitrary number of floats.""",
-    'baseline-smoothness': 'Set the smoothness of the baseline. Default: 10.',
-    'baseline-tolerance': 'Set the threshold (0-1) for outlier detection. Default: 0.1.',
-    'low-signal-window': """"narrow", "wide", or "none". Set the width of the low signal outlier detection window.
-                             Default: "none". If "none", low signal outlier detection is skipped.""",
-    'fit-exponential': 'Perform exponential fitting of specified time traces. Default: False.',
-    'initial-rates': """Perform linear regression of specified time traces for initial rates. Default False.
-                    If performing initial rates fitting, you can supply an optional float value for
-                    the change in absorbance cutoff. Default cutoff is 0.1 (10%% change in absorbance).""",
-    'time-trace-window': """Set the (min, max) wavelength (in nm) window for the time traces used in
-                            outlier detection""",
-    'time-trace-interval': """Set the interval (in nm) for time traces. An interval of 10 will create time
-                              traces from the window min to max every 10 nm. Smaller intervals may
-                              increase loading times.""",
+    'baseline-smoothness': 'Set the smoothness of the baseline. Default: 10',
+    'baseline-tolerance': 'Set the tolerance for the baseline fitting algorithm. Default: 0.1',
+    'low-signal-window': """Set the low-signal outlier detection window size: "narrow", "wide", or "none".
+                            Low-signal outliers can occur when the cuvette is removed, causing sharp drops
+                            in absorbance that affect data cleanup. If "none", low-signal outlier
+                            detection is disabled. Default: none""",
+    'fit-exponential': 'Perform exponential fitting of specified time traces.',
+    'initial-rates': """Perform linear fitting of specified time traces for initial rates.
+                        If performing initial rates fitting, you can supply an optional float value for
+                        the change in absorbance cutoff (e.g., -ir 0.15).
+                        Default cutoff is 0.1 (10%% change in absorbance).""",
+    'time-trace-window': """Set the wavelength window (in nm) for the time traces used in
+                            outlier detection. Default is 300 1060""",
+    'time-trace-interval': """Set the interval (in nm) between time traces. An interval of 10
+                              will create time traces from the window MIN to MAX every 10 nm.
+                              Smaller intervals may increase loading times.""",
     'time-traces': 'Specific wavelengths (in nm) to create time traces for.',
     'no-export': 'Skip the export data prompt at the end of the script.',
     'quick-fig': 'Use the quick-figure generator.',
@@ -57,6 +63,7 @@ ARGS = [
     argument(
         'path',
         action='store',
+        type=Path,
         nargs='?',
         default=None,
         help=HELP['path'],
@@ -178,9 +185,10 @@ ARGS = [
         '-c',
         '--colormap',
         action='store',
-        metavar='NAME',
+        type=lambda s: s.lower(),
         default='default',
-        choices=CMAPS,
+        choices=CMAPS.values(),
+        metavar='NAME',
         help=HELP['colormap'],
     ),
     argument(
@@ -244,7 +252,7 @@ def process(args: argparse.Namespace) -> None:
     if args.list_colormaps:
         return list_colormaps()
 
-    _handle_path(args)
+    handle_args_path(args)
 
     if args.view is True:
         dataset = Dataset(args.path, view_only=True)
@@ -269,27 +277,6 @@ def process(args: argparse.Namespace) -> None:
     _plot_and_export(args, dataset)
 
 
-def _handle_path(args: argparse.Namespace) -> None:
-    ext = os.path.splitext(args.path)[1]
-
-    if not ext:
-        args.path = args.path + '.KD'
-
-    current_dir = os.getcwd()
-    path_exists = os.path.exists(os.path.join(current_dir, args.path))
-
-    if path_exists:
-        args.path = os.path.join(current_dir, args.path)
-
-    elif args.root_dir is not None and os.path.exists(
-        os.path.join(args.root_dir, args.path)
-    ):
-        args.path = os.path.join(args.root_dir, args.path)
-
-    else:
-        raise FileNotFoundError(f'No such file or directory could be found: "{args.path}"')
-
-
 def _handle_slicing(args: argparse.Namespace) -> dict | None:
     if args.slice:
         return {'mode': 'equal', 'slices': args.slice}
@@ -310,8 +297,9 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
 def list_colormaps():
     link = 'https://matplotlib.org/stable/tutorials/colors/colormaps.html'
     print(
-        'Valid colormaps:\n',
-        Columns(CMAPS, column_first=True),
+        '\nValid Colormaps',
+        '\n===============',
+        Columns(CMAPS.values(), column_first=True),
         f'\nSee {link} for more info.',
     )
 
@@ -330,70 +318,60 @@ def prompt_for_export(dataset) -> list[str]:
     files_exported : list[str]
         The names of the exported files.
     """
-    key = 1
-    header = 'Export data?'
-    options = [{'key': str(key), 'name': 'Processed spectra'}]
+    message = 'Choose data to export'
+    options = ['Processed spectra']
     files_exported = []
 
-    traces_key = None
-    fit_key = None
-    init_rate_key = None
-
     if dataset.chosen_traces is not None:
-        key += 1
-        traces_key = key
-        options.append({'key': str(traces_key), 'name': 'Time traces'})
+        options.append('Time traces')
 
     if dataset.fit is not None:
-        key += 1
-        fit_key = key
-        options.append({'key': str(fit_key), 'name': 'Exponential fit'})
+        options.append('Exponential fit')
 
     if dataset.init_rate is not None:
-        key += 1
-        init_rate_key = key
-        options.append({'key': str(init_rate_key), 'name': 'Initial rates'})
+        options.append('Initial rates')
 
-    if user_choices := user_choice(header, options):
-        if '1' in user_choices:
-            files_exported.append(export_csv(dataset, dataset.processed_spectra))
+    user_selection = checkbox(message, options)
 
-        if str(traces_key) in user_choices:
-            files_exported.append(
-                export_csv(dataset, dataset.chosen_traces, suffix='Traces')
-            )
+    if 'Processed spectra' in user_selection:
+        files_exported.append(export_csv(dataset, dataset.processed_spectra))
 
-        if str(fit_key) in user_choices:
-            files_exported.extend(
-                [
-                    export_csv(
-                        dataset,
-                        dataset.fit['curves'],
-                        suffix='Fit curves'
-                    ),
-                    export_csv(
-                        dataset,
-                        dataset.fit['params'].transpose(),
-                        suffix='Fit params'
-                    ),
-                ]
-            )
+    if 'Time traces' in user_selection:
+        files_exported.append(
+            export_csv(dataset, dataset.chosen_traces, suffix='Traces')
+        )
 
-        if str(init_rate_key) in user_choices:
-            files_exported.extend(
-                [
-                    export_csv(
-                        dataset,
-                        dataset.init_rate['lines'],
-                        suffix='Init rate lines',
-                    ),
-                    export_csv(
-                        dataset,
-                        dataset.init_rate['params'].transpose(),
-                        suffix='Init rate params',
-                    ),
-                ]
-            )
+    if 'Exponential fit' in user_selection:
+        files_exported.extend(
+            [
+                export_csv(
+                    dataset,
+                    dataset.fit['curves'],
+                    suffix='Fit curves'
+                ),
+                export_csv(
+                    dataset,
+                    dataset.fit['params'].transpose(),
+                    suffix='Fit params'
+                ),
+            ]
+        )
+
+    if 'Initial rates' in user_selection:
+        files_exported.extend(
+            [
+                export_csv(
+                    dataset,
+                    dataset.init_rate['lines'],
+                    suffix='Init rate lines',
+                ),
+                export_csv(
+                    dataset,
+                    dataset.init_rate['params'].transpose(),
+                    suffix='Init rate params',
+                ),
+            ]
+        )
 
     return files_exported
 
@@ -425,7 +403,7 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
 
         if files_exported:
             print(
-                f'\nExport location: [repr.path]{os.path.dirname(args.path)}[/repr.path]'
+                f'\nExport location: [repr.path]{args.path.parent}[/repr.path]'
             )
             print('Files exported:')
             [
