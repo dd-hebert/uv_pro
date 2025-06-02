@@ -8,7 +8,7 @@ import argparse
 from typing import Callable
 
 from uv_pro.commands import argument, command, mutually_exclusive_group
-from uv_pro.utils.config import Config
+from uv_pro.utils.config import Config, DEFAULTS
 from uv_pro.utils.prompts import ask, checkbox
 
 HELP = {
@@ -104,19 +104,20 @@ def _delete_config(config: Config) -> None:
 
 
 def _edit_config(config: Config, setting: str) -> None:
-    if value := ask(prompt=f'Enter new {setting}:'):
-        config.set(section='Settings', option=setting, value=value)
+    while True:
+        value = ask(message=f'Enter new {setting}:')
+        if value is None:
+            return
 
-        if config.validate():
+        config.set('Settings', setting, value)
+
+        if config.validate_option(setting):
             config._write()
             return
 
-        else:
-            _edit_config(config, setting)
-
 
 def _reset_config(config: Config, setting: str) -> None:
-    config.remove_option('Settings', setting)
+    config.set('Settings', setting, DEFAULTS.get(setting))
     config._write()
 
 

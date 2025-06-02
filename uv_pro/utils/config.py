@@ -7,16 +7,16 @@ can be found in the user's home directory.
 @author: David Hebert
 """
 
-import os
+from pathlib import Path
 from configparser import ConfigParser
 from typing import Callable, Optional
 
 from uv_pro.utils._defaults import CONFIG_MAP
 
 NAME = 'uv_pro'
-CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', f'{NAME}')
+CONFIG_DIR = Path('~').expanduser() / '.config' / NAME
 CONFIG_FILENAME = 'settings.ini'
-CONFIG_PATH = os.path.join(CONFIG_DIR, CONFIG_FILENAME)
+CONFIG_PATH = CONFIG_DIR / CONFIG_FILENAME
 DEFAULTS = {option: info['default_str'] for option, info in CONFIG_MAP.items()}
 
 
@@ -26,8 +26,8 @@ class Config(ConfigParser):
     def __init__(self):
         super().__init__(defaults=DEFAULTS, default_section='Settings')
 
-        if not os.path.exists(CONFIG_PATH):
-            os.makedirs(CONFIG_DIR, exist_ok=True)
+        if not CONFIG_PATH.exists():
+            CONFIG_DIR.mkdir(exist_ok=True)
             self._write()
 
         else:
@@ -40,33 +40,34 @@ class Config(ConfigParser):
         with open(CONFIG_PATH, 'w') as f:
             self.write(f)
 
-    def validate(self, verbose: bool = False) -> bool:
-        """Validate config values. Return True if validated."""
-        all_valid = True
-
-        for option, info in CONFIG_MAP.items():
-            if self.has_option('Settings', option):
-                value = self.get('Settings', option)
-
-                cleanup_func: Optional[Callable] = info.get('cleanup_func')
+    def validate_option(self, option: str, verbose: bool = False) -> bool:
+        """Validate a config value. Return True if valid."""
+        option_info = CONFIG_MAP.get(option)
+        if self.has_option('Settings', option):
+            if value := self.get('Settings', option):
+                cleanup_func: Optional[Callable] = option_info.get('cleanup_func')
                 if cleanup_func:
                     value = cleanup_func(value)
 
-                validation_func: Callable = info.get('validate_func')
+                validation_func: Callable = option_info.get('validate_func')
                 if validation_func(value, verbose):
-                    self.set('Settings', option, value)
+                    self.set('Settings', option, str(value))
+                    return True
 
-            else:
-                self.set('Settings', option, info.get('default_str'))
-                all_valid = False
+        self.set('Settings', option, option_info.get('default_str'))
 
-        return all_valid
+        return False
+
+    def validate(self, verbose: bool = False) -> bool:
+        """Validate all config values. Return True if all valid."""
+        return all([self.validate_option(option, verbose) for option in CONFIG_MAP.keys()])
 
     def delete(self) -> Exception | None:
         """Delete the config file and directory."""
         try:
-            os.remove(os.path.join(Config.directory, Config.filename))
-            os.rmdir(Config.directory)
+            config_file = CONFIG_DIR / CONFIG_FILENAME
+            config_file.unlink()
+            CONFIG_DIR.rmdir()
             return
 
         except (OSError, FileNotFoundError) as e:
@@ -100,3 +101,6 @@ class Config(ConfigParser):
             (option, get_val(option, **info))
             for option, info in CONFIG_MAP.items()
         ]
+
+CONFIG = Config()
+PRIMARY_COLOR = CONFIG.get('Settings', 'primary_color', fallback='white')
