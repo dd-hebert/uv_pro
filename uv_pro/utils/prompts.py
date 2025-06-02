@@ -5,24 +5,32 @@ Helper functions for interactive terminal prompts.
 """
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Callable
 
 import questionary
-from questionary import Style
+from questionary import Style, Question
 from rich import print
 
+from uv_pro.utils.config import PRIMARY_COLOR
 
 STYLE = Style(
     [
-        ('qmark', 'fg:#ff00ff bold'),
+        ('qmark', f'fg:ansibright{PRIMARY_COLOR} bold'),
         ('question', 'bold'),
-        ('highlighted', 'fg:#af87ff bold'),
-        ('selected', 'fg:#875fd7 bg:ansiwhite bold'),
-        ('answer', 'fg:#d7afff'),
-        ('instruction', 'fg:#5f819d'),
-        ('pointer', 'fg:#ff00ff')
+        ('highlighted', f'fg:ansi{PRIMARY_COLOR} bold'),
+        ('selected', f'fg:ansibright{PRIMARY_COLOR} bg:ansiwhite bold'),
+        ('answer', 'fg:ansibrightblack'),
+        ('instruction', 'fg:ansiwhite'),
+        ('pointer', f'fg:ansibright{PRIMARY_COLOR}')
     ]
 )
+
+def _prompt(prompt_func: Question, message: str, **kwargs) -> Any:
+    """Generic prompt function."""
+    question: Question = prompt_func(message, style=STYLE, **kwargs)
+    print()
+    return question.ask(kbi_msg='')
+
 
 def checkbox(message: str, choices: Sequence[str | dict[str, Any]], **kwargs) -> list:
     """
@@ -40,27 +48,44 @@ def checkbox(message: str, choices: Sequence[str | dict[str, Any]], **kwargs) ->
     list[str]
         The user's selections.
     """
-    question = questionary.checkbox(
+    return _prompt(
+        questionary.checkbox,
         message,
-        choices,
+        choices=choices,
         qmark='✓',
         pointer='⮞',
-        style=STYLE,
-        **kwargs,
+        **kwargs
     )
 
-    print()
-    return question.ask(kbi_msg='')
 
-
-def ask(prompt: str, **kwargs) -> str:
+def ask(message: str, **kwargs) -> str:
     """Prompt the user for some input."""
-    question = questionary.text(
-        prompt,
+    return _prompt(
+        questionary.text,
+        message,
         qmark='❯',
-        style=STYLE,
-        **kwargs,
+        **kwargs
     )
 
-    print()
-    return question.ask(kbi_msg='')
+
+def autocomplete(message: str, choices: list[str], **kwargs) -> str:
+    """Prompt the user for choice with autocomplete."""
+    return _prompt(
+        questionary.autocomplete,
+        message,
+        choices=choices,
+        qmark='❯',
+        complete_style='MULTI_COLUMN',
+        **kwargs
+    )
+
+
+def select(message: str, choices: list[str], **kwargs):
+    """Prompt the user for a choice from a list."""
+    return _prompt(
+        questionary.select,
+        message,
+        choices=choices,
+        qmark='❯',
+        **kwargs
+    )
