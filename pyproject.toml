@@ -10,14 +10,14 @@ authors = [
 ]
 description = "Tools for processing Agilent 845x Chemstation UV-Vis data files."
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.7"
 classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Framework :: Matplotlib",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering :: Chemistry",
   "Topic :: Scientific/Engineering :: Visualization",
