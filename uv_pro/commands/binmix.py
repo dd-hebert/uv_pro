@@ -5,8 +5,8 @@ Functions for the ``binmix`` command.
 """
 
 import argparse
-import os
 from collections import namedtuple
+from pathlib import Path
 
 import pandas as pd
 from rich import print
@@ -16,7 +16,7 @@ from uv_pro.commands import argument, command, mutually_exclusive_group
 from uv_pro.io.export import export_csv
 from uv_pro.plots import plot_binarymixture
 from uv_pro.utils._rich import BinmixOutput, splash
-from uv_pro.utils.prompts import user_choice
+from uv_pro.utils.prompts import checkbox
 
 HELP = {
     'path': """Path to a UV-vis data file (.csv format) of binary mixture spectra.""",
@@ -38,18 +38,21 @@ ARGS = [
     argument(
         'path',
         action='store',
+        type=Path,
         default=None,
         help=HELP['path'],
     ),
     argument(
         'component_a',
         action='store',
+        type=Path,
         default=None,
         help=HELP['component_a'],
     ),
     argument(
         'component_b',
         action='store',
+        type=Path,
         default=None,
         help=HELP['component_b'],
     ),
@@ -220,7 +223,7 @@ def prompt_for_export(
 
     # Hacky way to get around having to use a real Dataset
     dummy = namedtuple('Dummy_Dataset', ['path', 'name'])
-    ds = dummy(path=args.path, name=os.path.basename(args.path))
+    ds = dummy(path=args.path, name=args.path.name)
 
     spectra_key = None
 
@@ -229,7 +232,7 @@ def prompt_for_export(
         spectra_key = key
         options.append({'key': str(spectra_key), 'name': 'Best-fit spectra'})
 
-    if user_choices := user_choice(header, options):
+    if user_choices := checkbox(header, options):
         if '1' in user_choices:
             files_exported.append(export_csv(ds, results, suffix='Binmix Params'))
 
@@ -238,7 +241,7 @@ def prompt_for_export(
             files_exported.append(export_csv(ds, out, suffix='Binmix Fit'))
 
     if files_exported:
-        print(f'\nExport location: {os.path.dirname(args.path)}')
+        print(f'\nExport location: {args.path.parent}')
         print('Files exported:')
         [print(f'\t{file}') for file in files_exported]
 
