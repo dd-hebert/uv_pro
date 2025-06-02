@@ -8,7 +8,7 @@ dataset.
 @author: David Hebert
 """
 
-import os
+from pathlib import Path
 import re
 
 import matplotlib.pyplot as plt
@@ -25,7 +25,7 @@ from uv_pro.plots.dataset_plots import (
     _processed_data_subplot,
     _time_traces_subplot,
 )
-from uv_pro.utils.prompts import user_choice
+from uv_pro.utils.prompts import ask, autocomplete, checkbox
 
 
 class QuickFig:
@@ -52,12 +52,12 @@ class QuickFig:
             The name of a Matplotlib built-in colormap, by default 'default'.
         """
         self.dataset = dataset
-        self.quick_figure(cmap=cmap)
+        self.quick_figure(title=dataset.name, cmap=cmap)
 
     def quick_figure(
         self,
         title: str | None = None,
-        x_bounds: tuple[int] | None = None,
+        x_bounds: tuple[int] | None = (300, 1100),
         cmap: str | None = 'default',
     ) -> None:
         """
@@ -73,8 +73,9 @@ class QuickFig:
         title : str or None, optional
             The figure title. Default is None.
         x_bounds : tuple[int, int] or None, optional
-            The processed data plot x-axis bounds. Default is None \
-            (bounds determined automatically).
+            The processed data plot x-axis bounds. Default is (300, 1100).
+        cmap : str or None, optional
+            Any valid matplotlib colormap. Default is 'default'.
         """
         try:
             if title is None:
@@ -84,7 +85,7 @@ class QuickFig:
             if cmap is None:
                 cmap = self._get_colormap()
 
-        except (EOFError, KeyboardInterrupt):
+        except KeyboardInterrupt:
             return
 
         if self.dataset.chosen_traces is None:
@@ -99,42 +100,61 @@ class QuickFig:
         print('Close plot window to continue...', end='\n')
         plt.show()
 
-        self._prompt_for_changes(fig, title, x_bounds)
+        self._prompt_for_changes(fig, title, x_bounds, cmap)
 
     def export(self, fig: Figure) -> str:
-        output_dir = os.path.dirname(self.dataset.path)
-        filename = os.path.splitext(self.dataset.name)[0]
+        output_dir = self.dataset.path.parent
+        filename = Path(self.dataset.name).stem
         return export_figure(fig, output_dir, filename)
 
     def _get_plot_title(self) -> str:
-        title = input('Enter a plot title: ')
+        title = ask('Enter plot title:')
+
+        if title is None:
+            raise KeyboardInterrupt
         return title
 
     def _get_plot_xbounds(self) -> tuple[int, int]:
-        pattern = re.compile('([0-9]+)[ ]+([0-9]+)')
-        x_bounds = input('Enter x-axis bounds [min max]: ').strip()
-        match = re.search(pattern, x_bounds)
+        pattern = re.compile(r'^\s*(\d+)\s+(\d+)\s*$')
+        while True:
+            x_bounds = ask('Enter x-axis bounds <MIN MAX>:')
 
-        while match is None:
-            x_bounds = input('Invalid input. Enter x-axis bounds [min max]: ').strip()
-            match = re.search(pattern, x_bounds)
+            if x_bounds is None:
+                raise KeyboardInterrupt
 
-        x_bounds = [bound for bound in map(int, match.groups())]
-        return tuple(x_bounds)
+            match = pattern.match(x_bounds)
+            if match:
+                return tuple(map(int, match.groups()))
+
+            print('Invalid input. Please enter two integers separated by space.')
 
     def _get_colormap(self) -> str:
-        cmap = input('Enter a colormap name: ')
+        import difflib
 
-        while cmap not in CMAPS:
-            if cmap in ['list', 'l']:
+        LIST_COMMANDS = {'list', 'l'}
+
+        while True:
+            # cmap = ask('Enter a colormap name:').lower()
+            cmap = autocomplete('Enter a colormap name:', choices=CMAPS.values()).lower()
+
+            if cmap is None:
+                raise KeyboardInterrupt
+
+            if cmap in LIST_COMMANDS:
                 print(Columns(CMAPS, column_first=True))
+                continue
 
-            else:
-                print('Invalid colormap. Type "list" for the list of valid colormaps.')
+            if cmap in CMAPS:
+                return CMAPS[cmap]
 
-            cmap = input('Enter a colormap name: ')
+            closest = difflib.get_close_matches(cmap, CMAPS)
 
-        return cmap
+            print(f'[repr.error]Invalid colormap:[/repr.error] "{cmap}"')
+
+            if closest:
+                print(f'\nDid you mean "{closest[0]}"?')
+
+            print('\nType "list" for the list of valid colormaps.')
 
     def _processed_data_plot(self, cmap: str = 'default') -> tuple[Figure, Axes]:
         """Create processed data plot."""
@@ -187,7 +207,7 @@ class QuickFig:
             int(self.dataset.processed_spectra.columns[-1]),
         )
 
-    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple[int]) -> None:
+    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple[int], cmap: str | None) -> None:
         """
         Prompt the user for plot changes or export.
 
@@ -200,23 +220,23 @@ class QuickFig:
         x_bounds : tuple[int]
             The x-axis bounds for the processed data plot.
         """
-        header = 'Make changes?'
+        message = 'Make changes'
         options = [
-            {'key': '1', 'name': 'Save plot'},
-            {'key': '2', 'name': 'Change title'},
-            {'key': '3', 'name': 'Change x-axis bounds'},
-            {'key': '4', 'name': 'Change colors'},
+            'Save plot',
+            'Change title',
+            'Change x-axis bounds',
+            'Change colors',
         ]
 
-        if user_choices := user_choice(header, options):
-            if '1' in user_choices:
+        if user_selection := checkbox(message, options):
+            if 'Save plot' in user_selection:
                 self.exported_figure = self.export(fig)
                 return
-            if '2' in user_choices:
+            if 'Change title' in user_selection:
                 title = None
-            if '3' in user_choices:
+            if 'Change x-axis bounds' in user_selection:
                 x_bounds = None
-            if '4' in user_choices:
+            if 'Change colors' in user_selection:
                 cmap = None
 
             self.quick_figure(title=title, x_bounds=x_bounds, cmap=cmap)
