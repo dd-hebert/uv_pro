@@ -190,9 +190,13 @@ View, edit, or reset user-configured settings with the ``config`` subcommand.
 **Usage:**
 ``uvp config <option>`` or ``uvp cfg <option>``
 
-Current user-configurable settings: 
-    ``root_directory`` - A base directory which contains UV-vis data files. Set a root directory to enable the use of shorter, relative file paths.
-    ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``WIDTH HEIGHT``
+Current user-configurable settings:
+
+- ``root_directory`` - A base directory which contains UV-vis data files. Set a root directory to enable the use of shorter, relative file paths.
+
+- ``plot_size`` - The size of the 2-by-2 plot shown after data processing. Two integers: ``WIDTH HEIGHT``
+
+- ``primary_color`` - The main color used in terminal output. Can be set to any of the 8 basic ANSI colors.
 
 #### ``--delete`` : flag, optional
 Delete the config file and directory. The config file is located in ``.config/uv_pro/`` inside the user's home directory.
