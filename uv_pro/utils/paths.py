@@ -6,25 +6,25 @@ Path handling helper functions.
 
 import argparse
 import os
+from pathlib import Path
 
-def cleanup_path(path: str) -> str:
-    path = path.strip()
-    path = os.path.expanduser(path)
-    path = os.path.expandvars(path)
+def cleanup_path(path: Path) -> Path:
+    path = Path(str(path).strip())
+    path = path.expanduser()
     return path
 
 
-def ensure_extension(path: str, ext: str) -> str:
-    if not os.path.splitext(path)[1]:
-        return path + ext
+def ensure_extension(path: Path, ext: str) -> str:
+    if not path.suffix:
+        return path.with_suffix(ext)
     return path
 
 
-def resolve_path(path: str, directories: list[str]) -> str:
+def resolve_path(path: Path, directories: list[str]) -> str:
     for d in directories:
-        candidate = os.path.join(d, path)
-        if os.path.exists(candidate):
-            return candidate
+        candidate = Path(d / path)
+        if candidate.exists():
+            return candidate.resolve()
     raise FileNotFoundError(f'No such file or directory could be found: "{path}"')
 
 
@@ -37,3 +37,19 @@ def handle_args_path(args: argparse.Namespace, default_ext: str = '.KD') -> None
         search_dirs.append(args.root_directory)
 
     args.path = resolve_path(args.path, search_dirs)
+
+
+def get_files_in_root_dir(root_dir: Path, ext: str = '.KD'):
+    paths = sorted({str(p.relative_to(root_dir)) for p in root_dir.rglob(f'*{ext}')}, key=str.lower)
+    return paths
+
+
+def get_unique_filename(output_dir: Path, base_filename: str, ext: str) -> str:
+    """If a file named base_filename exists, add a number after."""
+    n = 1
+    unique_filename = Path(base_filename).with_suffix(ext)
+    while output_dir.joinpath(unique_filename).exists():
+        unique_filename = Path(base_filename + f' ({n})').with_suffix(ext)
+        n += 1
+
+    return unique_filename
