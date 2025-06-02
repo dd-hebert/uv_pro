@@ -6,8 +6,9 @@ Contains functions for exporting UV-vis data to .csv format.
 @author: David Hebert
 """
 
-import os
+from pathlib import Path
 
+from uv_pro.utils.paths import get_unique_filename
 
 def export_csv(dataset, data, suffix: str | None = None) -> str:
     """
@@ -33,30 +34,19 @@ def export_csv(dataset, data, suffix: str | None = None) -> str:
     str
         The name of the exported .csv file.
     """
-    output_dir = os.path.dirname(dataset.path)
-    base_filename = os.path.splitext(dataset.name)[0]
+    output_dir: Path = dataset.path.parent
+    base_filename = Path(dataset.name).stem
 
     if suffix:
         base_filename += f' {suffix}'
 
-    filename = _get_unique_filename(output_dir, base_filename, 'csv')
-    data.to_csv(os.path.join(output_dir, filename), index=True)
+    filename = get_unique_filename(output_dir, base_filename, '.csv')
+    data.to_csv(output_dir.joinpath(filename), index=True)
     return filename
 
 
-def export_figure(fig, output_dir: str, filename: str) -> str:
+def export_figure(fig, output_dir: Path, filename: str) -> str:
     """Save a figure with `filename` as .png to the `output_dir`."""
-    filename = _get_unique_filename(output_dir, filename, 'png')
-    fig.savefig(fname=os.path.join(output_dir, filename), format='png', dpi=600)
+    filename = get_unique_filename(output_dir, filename, '.png')
+    fig.savefig(fname=output_dir.joinpath(filename), format='png', dpi=600)
     return filename
-
-
-def _get_unique_filename(output_dir: str, base_filename: str, ext: str) -> str:
-    """If a file named base_filename exists, add a number after."""
-    n = 1
-    unique_filename = f'{base_filename}.{ext}'
-    while os.path.exists(f'{os.path.join(output_dir, unique_filename)}'):
-        unique_filename = base_filename + f' ({n}).{ext}'
-        n += 1
-
-    return unique_filename
