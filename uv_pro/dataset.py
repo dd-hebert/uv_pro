@@ -7,7 +7,7 @@ UV-vis Chemstation software.
 @author: David Hebert
 """
 
-import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -87,7 +87,7 @@ class Dataset:
 
         Parameters
         ----------
-        path : str
+        path : Path
             A file path to a .KD file.
         trim : tuple[int, int] or None, optional
             Trim data outside a given time range: ``(trim_before, trim_after)``.
@@ -139,8 +139,8 @@ class Dataset:
             Indicate if data processing (cleaning and trimming) should be performed.
             Default is False (processing is performed).
         """
-        self.path = path
-        self.name = os.path.basename(self.path)
+        self.path = Path(path)
+        self.name = Path(self.path).name
         self.trim = trim
         self.slicing = slicing
         self.fit_exp = fit_exp
