@@ -193,7 +193,17 @@ def binmix(args: argparse.Namespace) -> None:
         print('', BinmixOutput(args, fit_df.T), sep='\n')
 
         if args.no_export is False:
-            prompt_for_export(args, fit_df, fit_specta)
+            files_exported = prompt_for_export(args, fit_df, fit_specta)
+
+            if files_exported:
+                print(
+                    f'\nExport location: [repr.path]{args.path.parent}[/repr.path]'
+                )
+                print('Files exported:')
+                [
+                    print(f'\t[repr.filename]{file}[/repr.filename]')
+                    for file in files_exported
+                ]
 
 
 def prompt_for_export(
@@ -218,35 +228,29 @@ def prompt_for_export(
     """
     key = 1
     header = 'Export results?'
-    options = [{'key': str(key), 'name': 'Fitting results'}]
+    options = ['Fitting results']
     files_exported = []
 
     # Hacky way to get around having to use a real Dataset
     dummy = namedtuple('Dummy_Dataset', ['path', 'name'])
     ds = dummy(path=args.path, name=args.path.name)
 
-    spectra_key = None
-
     if spectra:
-        key += 1
-        spectra_key = key
-        options.append({'key': str(spectra_key), 'name': 'Best-fit spectra'})
+        options.append('Best-fit spectra')
 
-    if user_choices := checkbox(header, options):
-        if '1' in user_choices:
-            files_exported.append(export_csv(ds, results, suffix='Binmix Params'))
+    user_choices = checkbox(header, options)
 
-        if str(spectra_key) in user_choices:
-            out = pd.DataFrame(spectra).T
-            files_exported.append(export_csv(ds, out, suffix='Binmix Fit'))
+    if user_choices is None:
+        return []
 
-    if files_exported:
-        print(f'\nExport location: {args.path.parent}')
-        print('Files exported:')
-        [print(f'\t{file}') for file in files_exported]
+    if 'Fitting results' in user_choices:
+        files_exported.append(export_csv(ds, results, suffix='Binmix Params'))
+
+    if 'Best-fit spectra' in user_choices:
+        out = pd.DataFrame(spectra).T
+        files_exported.append(export_csv(ds, out, suffix='Binmix Fit'))
 
     return files_exported
-
 
 # TODO
 # Add options for concentrations/equivalents
