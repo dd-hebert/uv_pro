@@ -333,6 +333,9 @@ def prompt_for_export(dataset) -> list[str]:
 
     user_selection = checkbox(message, options)
 
+    if user_selection is None:
+        return []
+
     if 'Processed spectra' in user_selection:
         files_exported.append(export_csv(dataset, dataset.processed_spectra))
 
