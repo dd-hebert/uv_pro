@@ -7,6 +7,7 @@ and experimental parameters.
 @author: David Hebert
 """
 
+from pathlib import Path
 import struct
 
 import pandas as pd
@@ -56,7 +57,7 @@ class KDFile:
     }
 
     def __init__(
-        self, path: str, spectrometer_range: tuple[int, int] = (190, 1100)
+        self, path: Path, spectrometer_range: tuple[int, int] = (190, 1100)
     ) -> None:
         """
         Initialize a KDFile object and parse a .KD file at ``path``.
