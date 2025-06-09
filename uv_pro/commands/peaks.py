@@ -12,7 +12,7 @@ from uv_pro.commands import argument, command
 from uv_pro.peakfinder import PeakFinder
 from uv_pro.plots import plot_peakfinder
 from uv_pro.utils._rich import splash
-from uv_pro.utils.paths import handle_args_path
+from uv_pro.utils.paths import cleanup_path, handle_args_path
 
 HELP = {
     'path': """A path to a UV-vis data file (.KD format).""",
@@ -32,6 +32,7 @@ ARGS = [
     argument(
         'path',
         action='store',
+        type=cleanup_path,
         default=None,
         help=HELP['path'],
     ),

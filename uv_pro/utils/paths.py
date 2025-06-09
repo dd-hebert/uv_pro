@@ -5,12 +5,10 @@ Path handling helper functions.
 """
 
 import argparse
-import os
 from pathlib import Path
 
-def cleanup_path(path: Path) -> Path:
-    path = Path(str(path).strip())
-    path = path.expanduser()
+def cleanup_path(path: str) -> Path:
+    path = Path(path.strip()).expanduser()
     return path
 
 
@@ -20,19 +18,24 @@ def ensure_extension(path: Path, ext: str) -> str:
     return path
 
 
-def resolve_path(path: Path, directories: list[str]) -> str:
-    for d in directories:
-        candidate = Path(d / path)
-        if candidate.exists():
+def resolve_path(path: Path, directories: list[Path], is_dir: bool = False) -> Path:
+    if path.is_absolute():
+        if (is_dir and path.is_dir()) or (not is_dir and path.is_file()):
+            return path.resolve()
+
+    for base in directories:
+        candidate = base / path
+        if (is_dir and candidate.is_dir()) or (not is_dir and candidate.is_file()):
             return candidate.resolve()
-    raise FileNotFoundError(f'No such file or directory could be found: "{path}"')
+
+    kind = "directory" if is_dir else "file"
+    raise FileNotFoundError(f'No such {kind} found: "{path}"')
 
 
 def handle_args_path(args: argparse.Namespace, default_ext: str = '.KD') -> None:
-    args.path = cleanup_path(args.path)
     args.path = ensure_extension(args.path, default_ext)
 
-    search_dirs = [os.getcwd()]
+    search_dirs = [Path.cwd()]
     if args.root_directory is not None:
         search_dirs.append(args.root_directory)
 

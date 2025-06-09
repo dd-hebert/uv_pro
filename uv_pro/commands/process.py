@@ -16,7 +16,7 @@ from uv_pro.io.export import export_csv
 from uv_pro.plots import CMAPS, plot_2x2, plot_spectra
 from uv_pro.quickfig import QuickFig
 from uv_pro.utils._rich import splash
-from uv_pro.utils.paths import handle_args_path
+from uv_pro.utils.paths import cleanup_path, handle_args_path
 from uv_pro.utils.prompts import checkbox
 
 
@@ -63,7 +63,7 @@ ARGS = [
     argument(
         'path',
         action='store',
-        type=Path,
+        type=cleanup_path,
         nargs='?',
         default=None,
         help=HELP['path'],
