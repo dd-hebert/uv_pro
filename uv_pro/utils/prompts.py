@@ -4,8 +4,9 @@ Helper functions for interactive terminal prompts.
 @author: David Hebert
 """
 
-from collections.abc import Sequence
-from typing import Any, Callable
+from collections.abc import Sequence, Callable
+from pathlib import Path
+from typing import Any, Union, Optional
 
 import questionary
 from questionary import Style, Question
@@ -19,8 +20,8 @@ STYLE = Style(
         ('question', 'bold'),
         ('highlighted', f'fg:ansi{PRIMARY_COLOR} bold'),
         ('selected', f'fg:ansibright{PRIMARY_COLOR} bg:ansiwhite bold'),
-        ('answer', 'fg:ansibrightblack'),
-        ('instruction', 'fg:ansiwhite'),
+        ('answer', f'fg:ansi{PRIMARY_COLOR}'),
+        ('instruction', 'fg:ansibrightblack'),
         ('pointer', f'fg:ansibright{PRIMARY_COLOR}')
     ]
 )
@@ -80,7 +81,7 @@ def autocomplete(message: str, choices: list[str], **kwargs) -> str:
     )
 
 
-def select(message: str, choices: list[str], **kwargs):
+def select(message: str, choices: list[str], **kwargs) -> str:
     """Prompt the user for a choice from a list."""
     return _prompt(
         questionary.select,
