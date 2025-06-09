@@ -126,7 +126,7 @@ class ProcessingOutput:
         renderables = ['', self.processing_panel(dataset)]
         log = []
 
-        if dataset.processed_traces is not None:
+        if getattr(dataset, 'processed_traces', None) is not None:
             renderables.extend(['', self.traces_panel(dataset.processed_traces)])
 
         if dataset.fit is not None:
