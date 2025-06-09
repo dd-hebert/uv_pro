@@ -126,6 +126,9 @@ class ProcessingOutput:
         renderables = ['', self.processing_panel(dataset)]
         log = []
 
+        if dataset.processed_traces is not None:
+            renderables.extend(['', self.traces_panel(dataset.processed_traces)])
+
         if dataset.fit is not None:
             renderables.extend(['', self.fit_panel(dataset.fit)])
 
@@ -217,6 +220,26 @@ class ProcessingOutput:
             subtitle=Text('\t').join(subtitle),
         )
 
+    def traces_panel(self, traces: pd.DataFrame) -> Panel:
+        table = fancy_table(
+            Column('λ (nm)', justify='center', ratio=1),
+            Column('abs_0 (a.u.)', justify='center', ratio=2),
+            Column('abs_f (a.u.)', justify='center', ratio=2),
+            Column('Δabs (a.u.)', justify='center', ratio=2),
+        )
+
+        for wavelength in traces.columns:
+            abs_0 = traces[wavelength].iloc[0]
+            abs_f = traces[wavelength].iloc[-1]
+            table.add_row(
+                str(wavelength),
+                '{: .3f}'.format(abs_0),
+                '{: .3f}'.format(abs_f),
+                '{: .3f}'.format(abs_f - abs_0),
+            )
+
+        return table_panel(table, 'Time Traces')
+
     def fit_panel(self, fit: dict) -> Panel:
         """Create a nicely formatted rich ``Panel`` for fitting data."""
         table = fancy_table(
@@ -224,7 +247,7 @@ class ProcessingOutput:
             Column('kobs (s⁻¹)', justify='center', ratio=3),
             Column('abs_0 (a.u.)', justify='center', ratio=2),
             Column('abs_f (a.u.)', justify='center', ratio=2),
-            Column('r²', justify='center', ratio=2),
+            Column('R²', justify='center', ratio=2),
         )
 
         for wavelength in fit['params'].columns:
@@ -251,7 +274,7 @@ class ProcessingOutput:
             Column('rate (a.u./s)', justify='center', ratio=3),
             Column('Δabs (%)', justify='center', ratio=2),
             Column('Δt (s)', justify='center', ratio=2),
-            Column('r²', justify='center', ratio=2),
+            Column('R²', justify='center', ratio=2),
         )
 
         for wavelength in init_rate['params'].columns:
