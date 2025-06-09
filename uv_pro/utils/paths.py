@@ -42,6 +42,14 @@ def handle_args_path(args: argparse.Namespace, default_ext: str = '.KD') -> None
     args.path = resolve_path(args.path, search_dirs)
 
 
+def handle_args_dir(args: argparse.Namespace) -> None:
+    search_dirs = [Path.cwd()]
+    if args.root_directory is not None:
+        search_dirs.append(args.root_directory)
+
+    args.directory = resolve_path(args.directory, search_dirs, is_dir=True)
+
+
 def get_files_in_root_dir(root_dir: Path, ext: str = '.KD'):
     paths = sorted({str(p.relative_to(root_dir)) for p in root_dir.rglob(f'*{ext}')}, key=str.lower)
     return paths

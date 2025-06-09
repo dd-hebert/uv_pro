@@ -90,3 +90,57 @@ def select(message: str, choices: list[str], **kwargs) -> str:
         qmark='❯',
         **kwargs
     )
+
+
+def confirm(message: str, default: bool = True, **kwargs):
+    return _prompt(
+        questionary.confirm,
+        message,
+        default=default,
+        **kwargs
+    )
+
+
+def pick_files(
+    search_dir: str | Path,
+    pattern: str = '*',
+    ext: str = '',
+    show_relative_path: bool = True
+) -> list[str] | None:
+    """Prompt user to select multiple files from the terminal, with optional recursive search."""
+    search_dir = Path(search_dir)
+
+    def display_path(p: Path) -> str:
+        return str(p.relative_to(search_dir)) if show_relative_path else str(p.resolve())
+
+    def get_file_list(recursive: bool = False) -> list[Path]:
+        globber = search_dir.rglob if recursive else search_dir.glob
+        return list(globber(f"{pattern}{ext}"))
+
+    file_list = get_file_list()
+
+    if not file_list:
+        if confirm(f'No {ext} files found. Perform recursive search?', default=False):
+            file_list = get_file_list(recursive=True)
+            if not file_list:
+                print(f'No {ext} files found. Exiting...')
+                return
+        else:
+            return
+
+    selected_files = checkbox(
+        'Select files:',
+        choices=[display_path(p) for p in file_list],
+        use_search_filter=True,
+        use_jk_keys=False,
+    )
+
+    if not selected_files:
+        return
+
+    result_paths = [
+        Path(search_dir / f).resolve() if show_relative_path else Path(f).resolve()
+        for f in selected_files
+    ]
+
+    return [str(p) for p in result_paths]
