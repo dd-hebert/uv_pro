@@ -30,7 +30,7 @@ from concurrent.futures import ThreadPoolExecutor
 from uv_pro.commands import argument, command
 
 HELP = {
-    'filters': 'An arbitrary number of search filters.',
+    'filters': 'An arbitrary number of filters.',
     'and-filter': '``and`` filter mode.',
     'or-filter': '``or`` filter mode.',
 }
@@ -63,7 +63,7 @@ def multiview(args: argparse.Namespace) -> None:
 
     Parameters
     ----------
-    search_filters : list[str]
+    filters : list[str]
         A list of search filter strings.
     mode : str, optional
         The filter mode, can be 'and' or 'or'. The default is 'or'.
@@ -75,16 +75,16 @@ def multiview(args: argparse.Namespace) -> None:
         and open them view-only mode.
     *help : Open multiple UV-vis data files in view-only mode.
     """
-    _run_uvp_parallel(filter_files(args.search_filters, mode=args.filter_mode))
+    _run_uvp_parallel(filter_files(args.filters, mode=args.filter_mode))
 
 
-def filter_files(search_filters: list[str], mode: str = 'or') -> set[str]:
+def filter_files(filters: list[str], mode: str = 'or') -> set[str]:
     """
     Filter a list of files into a set.
 
     Parameters
     ----------
-    search_filters : list[str]
+    filters : list[str]
         A list of search filter strings. Default is '*'.
     mode : str, optional
         The filter mode, can be 'and' or 'or'. The default is 'or'.
@@ -94,7 +94,7 @@ def filter_files(search_filters: list[str], mode: str = 'or') -> set[str]:
     files : set[str]
         The filtered files.
     """
-    search_patterns = [f'*{pattern}*.KD' for pattern in search_filters]
+    search_patterns = [f'*{pattern}*.KD' for pattern in filters]
 
     if mode == 'and':
         files = set(glob.glob(search_patterns[0]))

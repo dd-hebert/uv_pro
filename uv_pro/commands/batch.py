@@ -6,13 +6,15 @@ Functions for the ``batch`` command.
 
 import argparse
 
+from rich import print
+
 from uv_pro.commands import argument, command
 from uv_pro.commands.multiview import filter_files
 from uv_pro.dataset import Dataset
 from uv_pro.io.export import export_csv
 
 HELP = {
-    'search_filters': 'An arbitrary number of search filters',
+    'filters': 'An arbitrary number of filters',
     'wavelengths': 'The time trace wavelengths (in nm) to batch export.',
 }
 ARGS = [
@@ -26,12 +28,12 @@ ARGS = [
     ),
     argument(
         '-f',
-        '--search_filters',
+        '--filters',
         action='store',
         nargs='*',
         default='*',
         metavar='',
-        help=HELP['search_filters'],
+        help=HELP['filters'],
     ),
 ]
 
@@ -40,14 +42,14 @@ ARGS = [
 def batch(args: argparse.Namespace) -> None:
     """
     Search for .KD files in the current working directory (with optional \
-    search filters) and batch export time traces.
+    filters) and batch export time traces.
 
     Parser Info
     -----------
     *desc : Batch export time traces from .KD files in the current working directory.
     *help : Batch export time traces from .KD files.
     """
-    if files := filter_files(args.search_filters):
+    if files := filter_files(args.filters):
         files_exported = []
 
         for file in files:
@@ -71,8 +73,9 @@ def batch(args: argparse.Namespace) -> None:
                 print(''.join(msg))
                 continue
 
-        print('Files exported:')
         if files_exported:
-            print('\n'.join(['\t' + file for file in files_exported]))
-        else:
-            print('\tNone')
+            print('Files exported:')
+            [
+                print(f'\t[repr.filename]{file}[/repr.filename]')
+                for file in files_exported
+            ]
