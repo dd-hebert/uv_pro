@@ -4,10 +4,11 @@ Helper functions for config file validation.
 @author: David Hebert
 """
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 from rich import print
+
 
 def _error_msg(error_msg: str, verbose_msg: str, verbose: bool = False) -> bool:
     print(error_msg)
@@ -22,8 +23,7 @@ def validate_root_dir(root_dir: str, verbose: bool = False) -> bool:
         return True
 
     error_msg = (
-        '[repr.error]Config error:[/repr.error] '
-        f'Path "{root_dir}" does not exist.'
+        f'[repr.error]Config error:[/repr.error] Path "{root_dir}" does not exist.'
     )
 
     verbose_msg = 'Clearing root directory...'
@@ -38,8 +38,7 @@ def validate_plot_size(plot_size: str, verbose: bool = False) -> bool:
         return True
 
     error_msg = (
-        '[repr.error]Config error:[/repr.error] '
-        f'Plot size {plot_size} is invalid.'
+        f'[repr.error]Config error:[/repr.error] Plot size {plot_size} is invalid.'
     )
 
     verbose_msg = 'Resetting to plot size to default...'
@@ -49,7 +48,16 @@ def validate_plot_size(plot_size: str, verbose: bool = False) -> bool:
 
 def validate_primary_color(color: str, verbose: bool = False) -> bool:
     """Validate plot_size config setting. Return True if valid."""
-    valid_colors = {'red', 'yellow', 'green', 'cyan', 'blue', 'magenta', 'black', 'white'}
+    valid_colors = {
+        'red',
+        'yellow',
+        'green',
+        'cyan',
+        'blue',
+        'magenta',
+        'black',
+        'white',
+    }
     if color in valid_colors:
         return True
 

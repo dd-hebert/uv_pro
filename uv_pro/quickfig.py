@@ -8,8 +8,8 @@ dataset.
 @author: David Hebert
 """
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.artist import Artist
@@ -135,7 +135,9 @@ class QuickFig:
 
         while True:
             # cmap = ask('Enter a colormap name:').lower()
-            cmap = autocomplete('Enter a colormap name:', choices=CMAPS.values()).lower()
+            cmap = autocomplete(
+                'Enter a colormap name:', choices=CMAPS.values()
+            ).lower()
 
             if cmap is None:
                 raise KeyboardInterrupt
@@ -207,7 +209,9 @@ class QuickFig:
             int(self.dataset.processed_spectra.columns[-1]),
         )
 
-    def _prompt_for_changes(self, fig: Figure, title: str, x_bounds: tuple[int], cmap: str | None) -> None:
+    def _prompt_for_changes(
+        self, fig: Figure, title: str, x_bounds: tuple[int], cmap: str | None
+    ) -> None:
         """
         Prompt the user for plot changes or export.
 

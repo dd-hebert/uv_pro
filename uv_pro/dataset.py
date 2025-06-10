@@ -12,10 +12,10 @@ from pathlib import Path
 import pandas as pd
 
 from uv_pro.fitting import fit_exponential, initial_rates
+from uv_pro.io.export import export_csv
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
 from uv_pro.slicing import slice_spectra
-from uv_pro.io.export import export_csv
 from uv_pro.utils._rich import ProcessingOutput
 
 
@@ -195,7 +195,9 @@ class Dataset:
 
             self._check_trim_values()
             self.processed_spectra = self._process_spectra()
-            self.chosen_traces, self.processed_traces = self._process_chosen_traces(self.wavelengths)
+            self.chosen_traces, self.processed_traces = self._process_chosen_traces(
+                self.wavelengths
+            )
 
             if self.processed_traces is not None:
                 if self.fit_exp is True:

@@ -13,7 +13,10 @@ from uv_pro.utils.prompts import select
 
 
 def get_files_in_root_dir(root_dir: Path, ext: str = 'KD'):
-    paths = sorted({str(p.relative_to(root_dir)) for p in root_dir.rglob(f'*.{ext}')}, key=str.lower)
+    paths = sorted(
+        {str(p.relative_to(root_dir)) for p in root_dir.rglob(f'*.{ext}')},
+        key=str.lower,
+    )
     return paths
 
 
@@ -31,7 +34,7 @@ def browse(args: argparse.Namespace) -> None:
             'Select a file:',
             choices=get_files_in_root_dir(Path(args.root_directory)),
             use_search_filter=True,
-            use_jk_keys=False
+            use_jk_keys=False,
         )
 
         if file is not None:

@@ -4,12 +4,12 @@ Helper functions for interactive terminal prompts.
 @author: David Hebert
 """
 
-from collections.abc import Sequence, Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Union, Optional
+from typing import Any, Optional, Union
 
 import questionary
-from questionary import Style, Question
+from questionary import Question, Style
 from rich import print
 
 from uv_pro.utils.config import PRIMARY_COLOR
@@ -22,9 +22,10 @@ STYLE = Style(
         ('selected', f'fg:ansibright{PRIMARY_COLOR} bg:ansiwhite bold'),
         ('answer', f'fg:ansi{PRIMARY_COLOR}'),
         ('instruction', 'fg:ansibrightblack'),
-        ('pointer', f'fg:ansibright{PRIMARY_COLOR}')
+        ('pointer', f'fg:ansibright{PRIMARY_COLOR}'),
     ]
 )
+
 
 def _prompt(prompt_func: Question, message: str, **kwargs) -> Any:
     """Generic prompt function."""
@@ -50,23 +51,13 @@ def checkbox(message: str, choices: Sequence[str | dict[str, Any]], **kwargs) ->
         The user's selections.
     """
     return _prompt(
-        questionary.checkbox,
-        message,
-        choices=choices,
-        qmark='✓',
-        pointer='⮞',
-        **kwargs
+        questionary.checkbox, message, choices=choices, qmark='✓', pointer='⮞', **kwargs
     )
 
 
 def ask(message: str, **kwargs) -> str:
     """Prompt the user for some input."""
-    return _prompt(
-        questionary.text,
-        message,
-        qmark='❯',
-        **kwargs
-    )
+    return _prompt(questionary.text, message, qmark='❯', **kwargs)
 
 
 def autocomplete(message: str, choices: list[str], **kwargs) -> str:
@@ -77,16 +68,10 @@ def autocomplete(message: str, choices: list[str], **kwargs) -> str:
         choices=choices,
         qmark='❯',
         complete_style='MULTI_COLUMN',
-        **kwargs
+        **kwargs,
     )
 
 
 def select(message: str, choices: list[str], **kwargs) -> str:
     """Prompt the user for a choice from a list."""
-    return _prompt(
-        questionary.select,
-        message,
-        choices=choices,
-        qmark='❯',
-        **kwargs
-    )
+    return _prompt(questionary.select, message, choices=choices, qmark='❯', **kwargs)

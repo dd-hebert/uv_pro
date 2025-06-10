@@ -7,8 +7,8 @@ can be found in the user's home directory.
 @author: David Hebert
 """
 
-from pathlib import Path
 from configparser import ConfigParser
+from pathlib import Path
 from typing import Callable, Optional
 
 from uv_pro.utils._defaults import CONFIG_MAP
@@ -60,7 +60,9 @@ class Config(ConfigParser):
 
     def validate(self, verbose: bool = False) -> bool:
         """Validate all config values. Return True if all valid."""
-        return all([self.validate_option(option, verbose) for option in CONFIG_MAP.keys()])
+        return all(
+            [self.validate_option(option, verbose) for option in CONFIG_MAP.keys()]
+        )
 
     def delete(self) -> Exception | None:
         """Delete the config file and directory."""
@@ -85,7 +87,9 @@ class Config(ConfigParser):
             A list of tuples with config parameter names (str) and formatted values (any).
         """
 
-        def get_val(option: str, section: str, type: callable, default_val=None, **kwargs):
+        def get_val(
+            option: str, section: str, type: callable, default_val=None, **kwargs
+        ):
             try:
                 if value := self.get(section, option):
                     return type(value)
@@ -98,9 +102,9 @@ class Config(ConfigParser):
             return default_val
 
         return [
-            (option, get_val(option, **info))
-            for option, info in CONFIG_MAP.items()
+            (option, get_val(option, **info)) for option, info in CONFIG_MAP.items()
         ]
+
 
 CONFIG = Config()
 PRIMARY_COLOR = CONFIG.get('Settings', 'primary_color', fallback='white')

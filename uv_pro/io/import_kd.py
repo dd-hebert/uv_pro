@@ -7,8 +7,8 @@ and experimental parameters.
 @author: David Hebert
 """
 
-from pathlib import Path
 import struct
+from pathlib import Path
 
 import pandas as pd
 

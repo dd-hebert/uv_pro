@@ -197,9 +197,7 @@ def binmix(args: argparse.Namespace) -> None:
             files_exported = prompt_for_export(args, fit_df, fit_specta)
 
             if files_exported:
-                print(
-                    f'\nExport location: [repr.path]{args.path.parent}[/repr.path]'
-                )
+                print(f'\nExport location: [repr.path]{args.path.parent}[/repr.path]')
                 print('Files exported:')
                 [
                     print(f'\t[repr.filename]{file}[/repr.filename]')
@@ -244,13 +242,20 @@ def prompt_for_export(
         return []
 
     if 'Fitting results' in user_choices:
-        files_exported.append(export_csv(results, args.path.parent, args.path.stem, suffix='binmix_params'))
+        files_exported.append(
+            export_csv(
+                results, args.path.parent, args.path.stem, suffix='binmix_params'
+            )
+        )
 
     if 'Best-fit spectra' in user_choices:
         out = pd.DataFrame(spectra).T
-        files_exported.append(export_csv(out, args.path.parent, args.path.stem, suffix='binmix_fit'))
+        files_exported.append(
+            export_csv(out, args.path.parent, args.path.stem, suffix='binmix_fit')
+        )
 
     return files_exported
+
 
 # TODO
 # Add options for concentrations/equivalents

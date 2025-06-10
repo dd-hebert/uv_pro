@@ -6,8 +6,12 @@ Config mapping and default values for uv_pro.
 
 from pathlib import Path
 
+from uv_pro.utils._validate import (
+    validate_plot_size,
+    validate_primary_color,
+    validate_root_dir,
+)
 from uv_pro.utils.paths import cleanup_path
-from uv_pro.utils._validate import validate_plot_size, validate_primary_color, validate_root_dir
 
 CONFIG_MAP = {
     'root_directory': {

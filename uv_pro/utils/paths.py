@@ -7,6 +7,7 @@ Path handling helper functions.
 import argparse
 from pathlib import Path
 
+
 def cleanup_path(path: str) -> Path:
     path = Path(path.strip()).expanduser()
     return path
@@ -28,7 +29,7 @@ def resolve_path(path: Path, directories: list[Path], is_dir: bool = False) -> P
         if (is_dir and candidate.is_dir()) or (not is_dir and candidate.is_file()):
             return candidate.resolve()
 
-    kind = "directory" if is_dir else "file"
+    kind = 'directory' if is_dir else 'file'
     raise FileNotFoundError(f'No such {kind} found: "{path}"')
 
 
@@ -43,7 +44,9 @@ def handle_args_path(args: argparse.Namespace, default_ext: str = '.KD') -> None
 
 
 def get_files_in_root_dir(root_dir: Path, ext: str = '.KD'):
-    paths = sorted({str(p.relative_to(root_dir)) for p in root_dir.rglob(f'*{ext}')}, key=str.lower)
+    paths = sorted(
+        {str(p.relative_to(root_dir)) for p in root_dir.rglob(f'*{ext}')}, key=str.lower
+    )
     return paths
 
 

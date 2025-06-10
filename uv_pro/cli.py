@@ -256,6 +256,7 @@ from uv_pro.utils.config import CONFIG, PRIMARY_COLOR
 
 sys.tracebacklimit = 0
 
+
 class CLI:
     """
     Command line interface class.

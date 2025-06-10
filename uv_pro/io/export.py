@@ -10,7 +10,10 @@ from pathlib import Path
 
 from uv_pro.utils.paths import get_unique_filename
 
-def export_csv(data, output_dir: str | Path, base_filename: str, suffix: str | None = None) -> str:
+
+def export_csv(
+    data, output_dir: str | Path, base_filename: str, suffix: str | None = None
+) -> str:
     """
     Export data to .csv.
 

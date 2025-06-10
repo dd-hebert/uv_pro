@@ -18,7 +18,6 @@ from uv_pro.utils._rich import splash
 from uv_pro.utils.paths import cleanup_path, handle_args_path
 from uv_pro.utils.prompts import checkbox
 
-
 HELP = {
     'path': """A path to a UV-vis data file (.KD format). Required unless using --list-colormaps.""",
     'view': """Enable view-only mode (no data processing).""",
@@ -346,13 +345,9 @@ def prompt_for_export(dataset) -> list[str]:
     if 'Exponential fit' in user_selection:
         files_exported.extend(
             [
+                dataset.export_csv(dataset.fit['curves'], suffix='fit_curves'),
                 dataset.export_csv(
-                    dataset.fit['curves'],
-                    suffix='fit_curves'
-                ),
-                dataset.export_csv(
-                    dataset.fit['params'].transpose(),
-                    suffix='fit_params'
+                    dataset.fit['params'].transpose(), suffix='fit_params'
                 ),
             ]
         )
@@ -400,9 +395,7 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
             files_exported.extend(prompt_for_export(dataset))
 
         if files_exported:
-            print(
-                f'\nExport location: [repr.path]{args.path.parent}[/repr.path]'
-            )
+            print(f'\nExport location: [repr.path]{args.path.parent}[/repr.path]')
             print('Files exported:')
             [
                 print(f'\t[repr.filename]{file}[/repr.filename]')

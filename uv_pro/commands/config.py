@@ -8,7 +8,7 @@ import argparse
 from typing import Callable
 
 from uv_pro.commands import argument, command, mutually_exclusive_group
-from uv_pro.utils.config import Config, DEFAULTS
+from uv_pro.utils.config import DEFAULTS, Config
 from uv_pro.utils.prompts import ask, checkbox
 
 HELP = {
@@ -81,7 +81,7 @@ def config(args: argparse.Namespace) -> None:
 
 def _config_prompt(config: Config, message: str, func: Callable) -> None:
     settings = list(config.items('Settings'))
-    options = {f"{setting}: {value}": setting for setting, value in settings}
+    options = {f'{setting}: {value}': setting for setting, value in settings}
 
     selected_options = checkbox(message, options)
     if not selected_options:

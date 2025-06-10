@@ -144,6 +144,6 @@ def _get_help(docstring: str | None) -> str | None:
 
 def _get_aliases(docstring: str | None) -> list[str]:
     if aliases := _parse_docstring(r'\*aliases :\s*(.*)', docstring):
-            return aliases.split(', ')
+        return aliases.split(', ')
 
     return []
