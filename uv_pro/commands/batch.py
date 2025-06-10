@@ -11,7 +11,6 @@ from rich import print
 from uv_pro.commands import argument, command
 from uv_pro.commands.multiview import filter_files
 from uv_pro.dataset import Dataset
-from uv_pro.io.export import export_csv
 
 HELP = {
     'filters': 'An arbitrary number of filters',
@@ -57,10 +56,9 @@ def batch(args: argparse.Namespace) -> None:
 
             try:
                 files_exported.append(
-                    export_csv(
-                        dataset,
+                    dataset.export_csv(
                         dataset.get_chosen_traces(args.wavelengths),
-                        suffix='Traces',
+                        suffix='traces',
                     )
                 )
 

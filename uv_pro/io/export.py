@@ -10,7 +10,7 @@ from pathlib import Path
 
 from uv_pro.utils.paths import get_unique_filename
 
-def export_csv(dataset, data, suffix: str | None = None) -> str:
+def export_csv(data, output_dir: str | Path, base_filename: str, suffix: str | None = None) -> str:
     """
     Export data to .csv.
 
@@ -34,11 +34,8 @@ def export_csv(dataset, data, suffix: str | None = None) -> str:
     str
         The name of the exported .csv file.
     """
-    output_dir: Path = dataset.path.parent
-    base_filename = Path(dataset.name).stem
-
     if suffix:
-        base_filename += f' {suffix}'
+        base_filename += f'_{suffix}'
 
     filename = get_unique_filename(output_dir, base_filename, '.csv')
     data.to_csv(output_dir.joinpath(filename), index=True)

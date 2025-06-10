@@ -12,7 +12,6 @@ from rich.columns import Columns
 
 from uv_pro.commands import argument, command, mutually_exclusive_group
 from uv_pro.dataset import Dataset
-from uv_pro.io.export import export_csv
 from uv_pro.plots import CMAPS, plot_2x2, plot_spectra
 from uv_pro.quickfig import QuickFig
 from uv_pro.utils._rich import splash
@@ -337,25 +336,23 @@ def prompt_for_export(dataset) -> list[str]:
         return []
 
     if 'Processed spectra' in user_selection:
-        files_exported.append(export_csv(dataset, dataset.processed_spectra))
+        files_exported.append(dataset.export_csv(dataset.processed_spectra))
 
     if 'Time traces' in user_selection:
         files_exported.append(
-            export_csv(dataset, dataset.chosen_traces, suffix='Traces')
+            dataset.export_csv(dataset.chosen_traces, suffix='traces')
         )
 
     if 'Exponential fit' in user_selection:
         files_exported.extend(
             [
-                export_csv(
-                    dataset,
+                dataset.export_csv(
                     dataset.fit['curves'],
-                    suffix='Fit curves'
+                    suffix='fit_curves'
                 ),
-                export_csv(
-                    dataset,
+                dataset.export_csv(
                     dataset.fit['params'].transpose(),
-                    suffix='Fit params'
+                    suffix='fit_params'
                 ),
             ]
         )
@@ -363,15 +360,13 @@ def prompt_for_export(dataset) -> list[str]:
     if 'Initial rates' in user_selection:
         files_exported.extend(
             [
-                export_csv(
-                    dataset,
+                dataset.export_csv(
                     dataset.init_rate['lines'],
-                    suffix='Init rate lines',
+                    suffix='init_rate_lines',
                 ),
-                export_csv(
-                    dataset,
+                dataset.export_csv(
                     dataset.init_rate['params'].transpose(),
-                    suffix='Init rate params',
+                    suffix='init_rate_params',
                 ),
             ]
         )

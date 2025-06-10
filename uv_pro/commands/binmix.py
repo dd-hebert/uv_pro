@@ -16,6 +16,7 @@ from uv_pro.commands import argument, command, mutually_exclusive_group
 from uv_pro.io.export import export_csv
 from uv_pro.plots import plot_binarymixture
 from uv_pro.utils._rich import BinmixOutput, splash
+from uv_pro.utils.paths import cleanup_path
 from uv_pro.utils.prompts import checkbox
 
 HELP = {
@@ -38,21 +39,21 @@ ARGS = [
     argument(
         'path',
         action='store',
-        type=Path,
+        type=cleanup_path,
         default=None,
         help=HELP['path'],
     ),
     argument(
         'component_a',
         action='store',
-        type=Path,
+        type=cleanup_path,
         default=None,
         help=HELP['component_a'],
     ),
     argument(
         'component_b',
         action='store',
-        type=Path,
+        type=cleanup_path,
         default=None,
         help=HELP['component_b'],
     ),
@@ -226,14 +227,13 @@ def prompt_for_export(
     files_exported : list[str]
         The names of the exported files.
     """
-    key = 1
     header = 'Export results?'
     options = ['Fitting results']
     files_exported = []
 
     # Hacky way to get around having to use a real Dataset
-    dummy = namedtuple('Dummy_Dataset', ['path', 'name'])
-    ds = dummy(path=args.path, name=args.path.name)
+    # dummy = namedtuple('Dummy_Dataset', ['path', 'name'])
+    # ds = dummy(path=args.path, name=args.path.name)
 
     if spectra:
         options.append('Best-fit spectra')
@@ -244,11 +244,11 @@ def prompt_for_export(
         return []
 
     if 'Fitting results' in user_choices:
-        files_exported.append(export_csv(ds, results, suffix='Binmix Params'))
+        files_exported.append(export_csv(results, args.path.parent, args.path.stem, suffix='binmix_params'))
 
     if 'Best-fit spectra' in user_choices:
         out = pd.DataFrame(spectra).T
-        files_exported.append(export_csv(ds, out, suffix='Binmix Fit'))
+        files_exported.append(export_csv(out, args.path.parent, args.path.stem, suffix='binmix_fit'))
 
     return files_exported
 
