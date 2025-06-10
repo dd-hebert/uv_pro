@@ -1,3 +1,9 @@
+"""
+Constants for `uv_pro`.
+
+@author: David Hebert
+"""
+
 import matplotlib.pyplot as plt
 
 CMAPS = {

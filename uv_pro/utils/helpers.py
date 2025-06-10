@@ -1,3 +1,9 @@
+"""
+Miscellaneous helper functions.
+
+@author: David Hebert
+"""
+
 from rich import print
 from rich.columns import Columns
 
