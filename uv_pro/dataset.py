@@ -15,6 +15,7 @@ from uv_pro.fitting import fit_exponential, initial_rates
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
 from uv_pro.slicing import slice_spectra
+from uv_pro.io.export import export_csv
 from uv_pro.utils._rich import ProcessingOutput
 
 
@@ -337,3 +338,6 @@ class Dataset:
 
         except TypeError:
             pass
+
+    def export_csv(self, data: pd.DataFrame, suffix: str | None = None) -> None:
+        return export_csv(data, self.path.parent, Path(self.name).stem, suffix=suffix)
