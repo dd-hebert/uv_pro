@@ -4,10 +4,14 @@ Helper functions for config file validation.
 @author: David Hebert
 """
 
+import argparse
+import difflib
 import re
 from pathlib import Path
 
 from rich import print
+
+from uv_pro.const import CMAPS
 
 
 def _error_msg(error_msg: str, verbose_msg: str, verbose: bool = False) -> bool:
@@ -69,3 +73,16 @@ def validate_primary_color(color: str, verbose: bool = False) -> bool:
     verbose_msg = 'Resetting to primary color to default...'
 
     return _error_msg(error_msg, verbose_msg, verbose)
+
+
+def validate_colormap(name: str) -> str:
+    if name in CMAPS.keys():
+        return name
+
+    suggestion = difflib.get_close_matches(name, CMAPS.keys(), n=1)
+    message = f'Invalid colormap name: "{name}".'
+    if suggestion:
+        message += f' Did you mean "{suggestion[0]}"?'
+    else:
+        message += ' Run with `--list-colormaps` to list all available options.'
+    raise argparse.ArgumentTypeError(message)

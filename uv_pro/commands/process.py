@@ -5,21 +5,20 @@ Functions for the ``process`` command.
 """
 
 import argparse
-from pathlib import Path
 
 from rich import print
-from rich.columns import Columns
 
 from uv_pro.commands import argument, command, mutually_exclusive_group
 from uv_pro.dataset import Dataset
-from uv_pro.plots import CMAPS, plot_2x2, plot_spectra
+from uv_pro.plots import plot_2x2, plot_spectra
 from uv_pro.quickfig import QuickFig
 from uv_pro.utils._rich import splash
+from uv_pro.utils._validate import validate_colormap
 from uv_pro.utils.paths import cleanup_path, handle_args_path
 from uv_pro.utils.prompts import checkbox
 
 HELP = {
-    'path': """A path to a UV-vis data file (.KD format). Required unless using --list-colormaps.""",
+    'path': """A path to a UV-vis data file (.KD format).""",
     'view': """Enable view-only mode (no data processing).""",
     'trim': """Remove spectra outside the specified time range.
                Spectra before T1 and after T2 will be removed.
@@ -55,7 +54,6 @@ HELP = {
                    Matplotlib colormap name. For a full description of colormaps see:
                    https://matplotlib.org/stable/tutorials/colors/colormaps.html.
                    Default is 'default'.""",
-    'list-colormaps': 'List available colormaps and exit (path not required).',
 }
 ARGS = [
     argument(
@@ -183,17 +181,10 @@ ARGS = [
         '-c',
         '--colormap',
         action='store',
-        type=lambda s: s.lower(),
+        type=validate_colormap,
         default='default',
-        choices=CMAPS.values(),
         metavar='NAME',
         help=HELP['colormap'],
-    ),
-    argument(
-        '--list-colormaps',
-        action='store_true',
-        default=False,
-        help=HELP['list-colormaps'],
     ),
 ]
 MUTEX_ARGS = [
@@ -247,9 +238,6 @@ def process(args: argparse.Namespace) -> None:
         plot the result, and export data (optional).
     *help : Process .KD UV-vis data files.
     """
-    if args.list_colormaps:
-        return list_colormaps()
-
     handle_args_path(args)
 
     if args.view is True:
@@ -290,16 +278,6 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
         return {'mode': 'specific', 'times': args.specific_slice}
 
     return None
-
-
-def list_colormaps():
-    link = 'https://matplotlib.org/stable/tutorials/colors/colormaps.html'
-    print(
-        '\nValid Colormaps',
-        '\n===============',
-        Columns(CMAPS.values(), column_first=True),
-        f'\nSee {link} for more info.',
-    )
 
 
 def prompt_for_export(dataset) -> list[str]:

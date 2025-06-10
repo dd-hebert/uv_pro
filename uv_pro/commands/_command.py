@@ -8,7 +8,22 @@ Provides a decorator for adding commands and arguments to the CLI.
 import argparse
 import re
 
+from uv_pro.utils.helpers import list_colormaps
+
+
+class ListColormapsAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        list_colormaps()
+        parser.exit()
+
+
 main_parser = argparse.ArgumentParser(description='Process UV-vis Data Files')
+main_parser.add_argument(
+    '--list-colormaps',
+    nargs=0,
+    action=ListColormapsAction,
+    help='List available colormaps.',
+)
 subparsers = main_parser.add_subparsers(help='Commands')
 
 
@@ -122,7 +137,9 @@ def _add_args(args: list[dict], parser_or_group: argparse._ActionsContainer) -> 
 def _add_mutex_args(arg_groups: list[dict], parser: argparse.ArgumentParser) -> None:
     for group in arg_groups:
         required = group.get('required', False)
-        mutually_exclusive_group = parser.add_mutually_exclusive_group(required=required)
+        mutually_exclusive_group = parser.add_mutually_exclusive_group(
+            required=required
+        )
         _add_args(group['args'], mutually_exclusive_group)
 
 
