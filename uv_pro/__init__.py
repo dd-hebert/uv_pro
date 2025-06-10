@@ -22,4 +22,4 @@ github: https://github.com/dd-hebert/uv_pro
 """
 
 __author__ = 'David Hebert'
-__version__ = '0.7.0'
+__version__ = '0.7.1'
