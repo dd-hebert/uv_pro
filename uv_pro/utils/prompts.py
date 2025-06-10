@@ -4,9 +4,8 @@ Helper functions for interactive terminal prompts.
 @author: David Hebert
 """
 
-from collections.abc import Callable, Sequence
-from pathlib import Path
-from typing import Any, Optional, Union
+from collections.abc import Sequence
+from typing import Any
 
 import questionary
 from questionary import Question, Style

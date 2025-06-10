@@ -18,10 +18,10 @@ from matplotlib.figure import Figure
 from rich import print
 from rich.columns import Columns
 
+from uv_pro.const import CMAPS
 from uv_pro.dataset import Dataset
 from uv_pro.io.export import export_figure
 from uv_pro.plots.dataset_plots import (
-    CMAPS,
     _processed_data_subplot,
     _time_traces_subplot,
 )

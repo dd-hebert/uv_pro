@@ -1,6 +1,5 @@
 from .binmix_plot import plot_binarymixture  # noqa: F401
 from .dataset_plots import (  # noqa: F401
-    CMAPS,
     plot_1x2,
     plot_1x3,
     plot_2x2,

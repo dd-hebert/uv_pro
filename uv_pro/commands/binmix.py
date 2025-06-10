@@ -5,8 +5,6 @@ Functions for the ``binmix`` command.
 """
 
 import argparse
-from collections import namedtuple
-from pathlib import Path
 
 import pandas as pd
 from rich import print

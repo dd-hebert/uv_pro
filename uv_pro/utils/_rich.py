@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 from functools import partial
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
