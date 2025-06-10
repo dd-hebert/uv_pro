@@ -61,7 +61,7 @@ class Dataset:
 
     def __init__(
         self,
-        path: str,
+        path: str | Path,
         *,
         trim: tuple[int, int] | None = None,
         slicing: dict | None = None,
@@ -87,7 +87,7 @@ class Dataset:
 
         Parameters
         ----------
-        path : Path
+        path : str | Path
             A file path to a .KD file.
         trim : tuple[int, int] or None, optional
             Trim data outside a given time range: ``(trim_before, trim_after)``.
