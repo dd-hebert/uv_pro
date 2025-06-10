@@ -42,8 +42,8 @@ Process UV-vis data with the ``process`` subcommand.
 **Usage:**
 ``uvp process <path> <options>``, ``uvp proc <path> <options>``, or ``uvp p <path> <options>``
 
-#### ``path`` : string, required (unless using ``list-colormaps``)
-The path to a .KD file. You have three options for specifying the path: you can use a **path relative to the current working directory**, an **absolute path**, or a **path relative to the root directory** (if one has been set). A path is not required if using `--list-colormaps``.
+#### ``path`` : string, required
+The path to a .KD file. You have three options for specifying the path: you can use a **path relative to the current working directory**, an **absolute path**, or a **path relative to the root directory** (if one has been set).
 
 #### ``-bs``, ``-–baseline-smoothness`` : float, optional
 Set the smoothness of the baseline (for outlier detection). Higher values give smoother baselines. Try values between 0.001 and 10000. The default is 10. See [pybaselines.whittaker.asls()](https://pybaselines.readthedocs.io/en/latest/algorithms/whittaker.html#asls-asymmetric-least-squares) for more information.
@@ -56,9 +56,6 @@ Set the colormap for the processed spectra plot. Accepts any built-in Matplotlib
 
 #### ``-fx``, ``--fit-exponential`` : flag, optional
 Perform an exponential fitting of time traces. You must specify the wavelengths to fit with the ``-tt`` argument. 
-
-#### ``--list-colormaps`` : flag, optional
-List available colormaps and exit (path not required).
 
 #### ``-lw``, ``-–low-signal-window`` : narrow, wide, or none, optional
 Set the width of the low signal outlier detection window. Set to ``wide`` if low signals are interfering with the baseline. The default is ``narrow``. If set to ``none``, low signal outlier detection is skipped. This is useful when processing spectra with very low absorbance across a majority of measured wavelengths.
@@ -221,6 +218,9 @@ Interactively pick a .KD file from the terminal. The file is opened in *view-onl
 
 #### ``tree`` : subcommand
 Print the root directory file tree to the console. Usage: ``uvp tree``.
+
+#### ``--list-colormaps`` : flag, optional
+List available colormaps. Usage: ``uvp --list-colormaps``.
 
 Examples
 --------
