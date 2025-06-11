@@ -60,7 +60,6 @@ def validate_primary_color(color: str, verbose: bool = False) -> bool:
         'blue',
         'magenta',
         'black',
-        'white',
     }
     if color in valid_colors:
         return True
