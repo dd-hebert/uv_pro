@@ -287,7 +287,7 @@ class Dataset:
         """
         wavelengths = [
             wavelength
-            for wavelength in set(wavelengths)
+            for wavelength in sorted(set(wavelengths))
             if wavelength in self.raw_spectra.index
         ]
         return self.raw_spectra.loc[wavelengths].transpose() if wavelengths else None
