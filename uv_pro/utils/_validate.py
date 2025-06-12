@@ -61,7 +61,7 @@ def validate_primary_color(color: str, verbose: bool = False) -> bool:
         'magenta',
         'black',
     }
-    if color in valid_colors:
+    if color.lower() in valid_colors:
         return True
 
     error_msg = (
@@ -75,13 +75,13 @@ def validate_primary_color(color: str, verbose: bool = False) -> bool:
 
 
 def validate_colormap(name: str) -> str:
-    if name in CMAPS.keys():
-        return name
+    if name.casefold() in CMAPS.keys():
+        return CMAPS[name.casefold()]
 
-    suggestion = difflib.get_close_matches(name, CMAPS.keys(), n=1)
+    suggestion = difflib.get_close_matches(name.casefold(), CMAPS.keys(), n=1)
     message = f'Invalid colormap name: "{name}".'
     if suggestion:
-        message += f' Did you mean "{suggestion[0]}"?'
+        message += f' Did you mean "{CMAPS[suggestion[0]]}"?'
     else:
         message += ' Run with `--list-colormaps` to list all available options.'
     raise argparse.ArgumentTypeError(message)
