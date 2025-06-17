@@ -31,6 +31,27 @@ def fit_time_traces(
     fit_strategy: str = 'individual',
     fit_cutoff: float = 0.1,
 ) -> FitResult:
+    """
+    Fit a model to time traces.
+
+    Parameters
+    ----------
+    time_traces : pd.DataFrame
+        The time traces to fit the model to.
+    fit_model : str
+        The model to use for fitting, either 'initial-rates' or 'exponential'.
+    fit_strategy : str, optional
+        The fitting strategy, either 'individual' or 'global. Default 'individual'
+    fit_cutoff : float, optional
+        The % change in absorbance cutoff for initial rates fitting. \
+        Has no effect if `fit_model` is 'exponential'.
+        Default 0.1 (10% change in absorbance).
+
+    Returns
+    -------
+    FitResult
+        _description_
+    """
     if fit_model == 'initial-rates':
         return initial_rates(time_traces, fit_cutoff)
     if fit_model == 'exponential':
@@ -45,7 +66,7 @@ def rsquared(data: pd.Series, fit: pd.Series) -> float:
     return r2
 
 
-def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
+def fit_exponential(time_traces: pd.DataFrame) -> FitResult | None:
     """
     Fit exponential function to time traces.
 
@@ -90,12 +111,12 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
 
         return {
             'abs_0': abs_0,
-            'abs_0 err': abs_0_err,
+            'abs_0 err': abs_0_err,  # one standard deviation error
             'abs_f': abs_f,
-            'abs_f err': abs_f_err,
+            'abs_f err': abs_f_err,  # one standard deviation error
             'kobs': kobs,
-            'kobs err': kobs_err,
-            'kobs ci': (kobs_ci[1] - kobs_ci[0]) * 0.5,
+            'kobs err': kobs_err,  # one standard deviation error
+            'kobs ci': (kobs_ci[1] - kobs_ci[0]) * 0.5,  # half width 95% conf. interval
             'r2': rsquared(trace, curve),
         }, curve
 
@@ -112,7 +133,7 @@ def fit_exponential(time_traces: pd.DataFrame) -> dict | None:
     return FitResult('exponential', *result)
 
 
-def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None:
+def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> FitResult | None:
     """
     Perform a linear regression on time traces to determine initial rates.
 
@@ -163,8 +184,8 @@ def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> dict | None
 
         return {
             'slope': m,
-            'slope err': m_err,
-            'slope ci': (ci[1] - ci[0]) * 0.5,
+            'slope err': m_err,  # standard error
+            'slope ci': (ci[1] - ci[0]) * 0.5,  # half width 95% conf. interval
             'intercept': b,
             'abs_0': abs_0,
             'abs_f': abs_f,
