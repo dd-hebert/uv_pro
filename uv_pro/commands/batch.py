@@ -8,7 +8,7 @@ import argparse
 
 from rich import print
 
-from uv_pro.commands import argument, command
+from uv_pro.commands import Argument, command
 from uv_pro.commands.multiview import filter_files
 from uv_pro.dataset import Dataset
 
@@ -17,7 +17,7 @@ HELP = {
     'wavelengths': 'The time trace wavelengths (in nm) to batch export.',
 }
 ARGS = [
-    argument(
+    Argument(
         'wavelengths',
         action='store',
         nargs='+',
@@ -25,7 +25,7 @@ ARGS = [
         default=None,
         help=HELP['wavelengths'],
     ),
-    argument(
+    Argument(
         '-f',
         '--filters',
         action='store',

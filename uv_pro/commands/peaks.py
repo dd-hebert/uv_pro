@@ -8,7 +8,7 @@ import argparse
 
 from rich import print
 
-from uv_pro.commands import argument, command
+from uv_pro.commands import Argument, command
 from uv_pro.peakfinder import PeakFinder
 from uv_pro.plots import plot_peakfinder
 from uv_pro.utils._rich import splash
@@ -29,14 +29,14 @@ HELP = {
                 See :func:`scipy.signal.savgol_filter`.""",
 }
 ARGS = [
-    argument(
+    Argument(
         'path',
         action='store',
         type=cleanup_path,
         default=None,
         help=HELP['path'],
     ),
-    argument(
+    Argument(
         '-conc',
         '--concentration',
         action='store',
@@ -45,7 +45,7 @@ ARGS = [
         metavar='',
         help=HELP['conc'],
     ),
-    argument(
+    Argument(
         '-dist',
         '--distance',
         action='store',
@@ -54,7 +54,7 @@ ARGS = [
         metavar='',
         help=HELP['dist'],
     ),
-    argument(
+    Argument(
         '--max_iter',
         action='store',
         type=int,
@@ -62,7 +62,7 @@ ARGS = [
         metavar='',
         help=HELP['max_iter'],
     ),
-    argument(
+    Argument(
         '--method',
         action='store',
         type=str,
@@ -71,7 +71,7 @@ ARGS = [
         metavar='',
         help=HELP['method'],
     ),
-    argument(
+    Argument(
         '-num',
         '--num_peaks',
         action='store',
@@ -80,7 +80,7 @@ ARGS = [
         metavar='',
         help=HELP['num_peaks'],
     ),
-    argument(
+    Argument(
         '-prom',
         '--prominance',
         action='store',
@@ -89,7 +89,7 @@ ARGS = [
         metavar='',
         help=HELP['prom'],
     ),
-    argument(
+    Argument(
         '-pwin',
         '--peak_window',
         action='store',
@@ -99,7 +99,7 @@ ARGS = [
         metavar='',
         help=HELP['p_win'],
     ),
-    argument(
+    Argument(
         '-swin',
         '--smooth_window',
         action='store',

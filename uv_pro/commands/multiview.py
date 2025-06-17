@@ -27,7 +27,7 @@ import glob
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
-from uv_pro.commands import argument, command
+from uv_pro.commands import Argument, command
 
 HELP = {
     'filters': 'An arbitrary number of filters.',
@@ -35,7 +35,7 @@ HELP = {
     'or-filter': '``or`` filter mode.',
 }
 ARGS = [
-    argument(
+    Argument(
         '-f',
         '--filters',
         action='store',
@@ -44,7 +44,7 @@ ARGS = [
         metavar='',
         help=HELP['filters'],
     ),
-    argument(
+    Argument(
         '-a',
         '--and-filter',
         dest='filter_mode',

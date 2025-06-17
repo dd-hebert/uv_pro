@@ -10,7 +10,7 @@ import pandas as pd
 from rich import print
 
 from uv_pro.binarymixture import BinaryMixture
-from uv_pro.commands import argument, command, mutually_exclusive_group
+from uv_pro.commands import Argument, MutuallyExclusiveGroup, command
 from uv_pro.io.export import export_csv
 from uv_pro.plots import plot_binarymixture
 from uv_pro.utils._rich import BinmixOutput, splash
@@ -34,28 +34,28 @@ HELP = {
     'no_export': """Skip the export results prompt at the end of the script.""",
 }
 ARGS = [
-    argument(
+    Argument(
         'path',
         action='store',
         type=cleanup_path,
         default=None,
         help=HELP['path'],
     ),
-    argument(
+    Argument(
         'component_a',
         action='store',
         type=cleanup_path,
         default=None,
         help=HELP['component_a'],
     ),
-    argument(
+    Argument(
         'component_b',
         action='store',
         type=cleanup_path,
         default=None,
         help=HELP['component_b'],
     ),
-    argument(
+    Argument(
         '-a',
         '--molarity_a',
         action='store',
@@ -64,7 +64,7 @@ ARGS = [
         metavar='',
         help=HELP['molarity_a'],
     ),
-    argument(
+    Argument(
         '-b',
         '--molarity_b',
         action='store',
@@ -73,7 +73,7 @@ ARGS = [
         metavar='',
         help=HELP['molarity_b'],
     ),
-    argument(
+    Argument(
         '-win',
         '--window',
         action='store',
@@ -83,24 +83,22 @@ ARGS = [
         metavar=('MIN', 'MAX'),
         help=HELP['window'],
     ),
-    argument(
+    Argument(
         '-i',
         '--interactive',
         action='store_true',
         default=False,
         help=HELP['interactive'],
     ),
-    argument(
+    Argument(
         '-ne',
         '--no_export',
         action='store_true',
         default=False,
         help=HELP['no_export'],
     ),
-]
-MUTEX_ARGS = [
-    mutually_exclusive_group(
-        argument(
+    MutuallyExclusiveGroup(
+        Argument(
             '-cols',
             '--columns',
             action='store',
@@ -109,7 +107,7 @@ MUTEX_ARGS = [
             metavar='LABEL',
             help=HELP['columns'],
         ),
-        argument(
+        Argument(
             '-icols',
             '--index_columns',
             action='store',
@@ -119,11 +117,11 @@ MUTEX_ARGS = [
             metavar='IDX',
             help=HELP['index_columns'],
         ),
-    )
+    ),
 ]
 
 
-@command(args=ARGS, mutually_exclusive_args=MUTEX_ARGS)
+@command(args=ARGS)
 def binmix(args: argparse.Namespace) -> None:
     """
     Parser Info

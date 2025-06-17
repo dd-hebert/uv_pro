@@ -7,7 +7,7 @@ Functions for the ``config`` command.
 import argparse
 from typing import Callable
 
-from uv_pro.commands import argument, command, mutually_exclusive_group
+from uv_pro.commands import Argument, MutuallyExclusiveGroup, command
 from uv_pro.utils.config import DEFAULTS, Config
 from uv_pro.utils.prompts import ask, checkbox
 
@@ -17,29 +17,29 @@ HELP = {
     'list': 'Print the current config settings to the console.',
     'reset': 'Reset config settings back to their default value.',
 }
-MUTEX_ARGS = [
-    mutually_exclusive_group(
-        argument(
+ARGS = [
+    MutuallyExclusiveGroup(
+        Argument(
             '--delete',
             action='store_true',
             default=False,
             help=HELP['delete'],
         ),
-        argument(
+        Argument(
             '-e',
             '--edit',
             action='store_true',
             default=False,
             help=HELP['edit'],
         ),
-        argument(
+        Argument(
             '-l',
             '--list',
             action='store_true',
             default=False,
             help=HELP['list'],
         ),
-        argument(
+        Argument(
             '-r',
             '--reset',
             action='store_true',
@@ -50,7 +50,7 @@ MUTEX_ARGS = [
 ]
 
 
-@command(mutually_exclusive_args=MUTEX_ARGS, aliases=['cfg'])
+@command(args=ARGS, aliases=['cfg'])
 def config(args: argparse.Namespace) -> None:
     """
     View and modify config settings.
