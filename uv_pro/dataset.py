@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from uv_pro.fitting import fit_exponential, initial_rates
+from uv_pro.fitting import fit_time_traces
 from uv_pro.io.export import export_csv
 from uv_pro.io.import_kd import KDFile
 from uv_pro.outliers import find_outliers
@@ -66,8 +66,9 @@ class Dataset:
         *,
         trim: tuple[int, int] | None = None,
         slicing: dict | None = None,
-        fit_exp: bool = False,
-        fit_init_rate: float | None = None,
+        fit: str | None = None,
+        fit_strategy: str = 'individual',
+        fit_cutoff: float = 0.1,
         outlier_threshold: float = 0.1,
         baseline_smoothness: float = 10.0,
         baseline_tolerance: float = 0.1,
@@ -99,12 +100,15 @@ class Dataset:
             For equal slicing: ``{'mode': 'equal', 'slices': int}``.
             For variable slicing: ``{'mode': 'variable', 'coeff': float, 'expo': float}``.
             For specific slicing: ``{'mode': 'specific', 'times': list[float]}``.
-        fit_exp : bool, optional
-            Perform exponential fitting on the time traces specified with ``wavelengths``.
-        fit_init_rate : float or None, optional
-            Perform initial rates linear regression fitting on the time traces specified \
-            with ``wavelengths``. The float value provided indicates the cutoff for \
-            the % change in absorbance of the time trace. The default is 0.05 (5% change).
+        fit : str, "exponential" or "initial-rates" or None, optional
+            Fitting type to perform on time traces specified with ``wavelengths``.
+            Either "exponential" or "initial-rates". Default is None.
+        fit_strategy : str, "inidividual" or "global"
+            Perform individual or global fitting on time traces.
+        fit_cutoff : float, optional
+            Indicates the cutoff for the % change in absorbance of the time trace.
+            Only applies to "initial-rates" fitting, has no effect if fit type is \
+            "exponential". The default is 0.1 (10% change).
         outlier_threshold : float, optional
             A value between 0 and 1 indicating the threshold by which spectra
             are considered outliers. Values closer to 0 produce more outliers,
@@ -144,8 +148,9 @@ class Dataset:
         self.name = Path(self.path).name
         self.trim = trim
         self.slicing = slicing
-        self.fit_exp = fit_exp
-        self.fit_init_rate = fit_init_rate
+        self.fit = fit
+        self.fit_strategy = fit_strategy
+        self.fit_cutoff = fit_cutoff
         self.time_trace_window = time_trace_window
         self.time_trace_interval = time_trace_interval
         self.wavelengths = wavelengths
@@ -153,8 +158,10 @@ class Dataset:
         self.low_signal_window = low_signal_window
         self.baseline_smoothness = baseline_smoothness
         self.baseline_tolerance = baseline_tolerance
-        self.fit = None
-        self.init_rate = None
+
+        self.chosen_traces = None
+        self.processed_traces = None
+        self.fit_result = None
         self.is_processed = False
 
         self._import_data()
@@ -199,15 +206,10 @@ class Dataset:
                 self.wavelengths
             )
 
-            if self.processed_traces is not None:
-                if self.fit_exp is True:
-                    self.fit = fit_exponential(self.processed_traces)
-
-                if self.fit_init_rate is not None:
-                    self.init_rate = initial_rates(
-                        self.processed_traces,
-                        cutoff=self.fit_init_rate,
-                    )
+            if self.processed_traces is not None and self.fit is not None:
+                self.fit_result = fit_time_traces(
+                    self.processed_traces, self.fit, self.fit_strategy, self.fit_cutoff
+                )
 
             self.is_processed = True
 

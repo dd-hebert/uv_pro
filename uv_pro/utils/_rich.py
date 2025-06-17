@@ -125,16 +125,16 @@ class ProcessingOutput:
         renderables = ['', self.processing_panel(dataset)]
         log = []
 
-        if getattr(dataset, 'processed_traces', None) is not None:
+        if dataset.processed_traces is not None:
             renderables.extend(['', self.traces_panel(dataset.processed_traces)])
 
-        if dataset.fit is not None:
-            renderables.extend(['', self.fit_panel(dataset.fit)])
+        if dataset.fit_result is not None and dataset.fit == 'exponential':
+            renderables.extend(['', self.fit_panel(dataset.fit_result)])
 
             log.extend(self._unable_to_fit(dataset))
 
-        if dataset.init_rate is not None:
-            renderables.extend(['', self.init_rate_panel(dataset.init_rate)])
+        if dataset.fit_result is not None and dataset.fit == 'initial-rates':
+            renderables.extend(['', self.init_rate_panel(dataset.fit_result)])
 
         if log:
             renderables.extend(log)
@@ -241,7 +241,7 @@ class ProcessingOutput:
 
         return table_panel(table, 'Time Traces')
 
-    def fit_panel(self, fit: dict) -> Panel:
+    def fit_panel(self, fit_result) -> Panel:
         """Create a nicely formatted rich ``Panel`` for fitting data."""
         table = fancy_table(
             Column('λ (nm)', justify='center', ratio=1),
@@ -251,8 +251,8 @@ class ProcessingOutput:
             Column('R²', justify='center', ratio=2),
         )
 
-        for wavelength in fit['params'].columns:
-            vals = fit['params'][wavelength]
+        for wavelength in fit_result.params.columns:
+            vals = fit_result.params[wavelength]
             r2_color = 'red' if vals.loc['r2'] < 0.85 else 'none'
             table.add_row(
                 str(wavelength),
@@ -268,7 +268,7 @@ class ProcessingOutput:
             table, title='Exponential Fit Results', subtitle=f'Fit function: {equation}'
         )
 
-    def init_rate_panel(self, init_rate: dict) -> Panel:
+    def init_rate_panel(self, fit_result) -> Panel:
         """Create a nicely formatted rich ``Panel`` for initial rates data."""
         table = fancy_table(
             Column('λ (nm)', justify='center', ratio=1),
@@ -278,8 +278,8 @@ class ProcessingOutput:
             Column('R²', justify='center', ratio=2),
         )
 
-        for wavelength in init_rate['params'].columns:
-            vals = init_rate['params'][wavelength]
+        for wavelength in fit_result.params.columns:
+            vals = fit_result.params[wavelength]
             r2_color = 'red' if vals.loc['r2'] < 0.85 else 'none'
             table.add_row(
                 str(wavelength),
@@ -293,7 +293,7 @@ class ProcessingOutput:
 
     def _unable_to_fit(self, dataset: Dataset) -> list[Text] | list:
         chosen_wavelengths = set(dataset.chosen_traces.columns)
-        fit_wavelengths = set(dataset.fit['curves'].columns)
+        fit_wavelengths = set(dataset.fit_result.fitted_data.columns)
 
         unable_to_fit = [
             Text(f'Unable to fit exponential to {wavelength} nm.', style='red')

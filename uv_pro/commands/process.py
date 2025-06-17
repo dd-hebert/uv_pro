@@ -39,11 +39,11 @@ HELP = {
                          Default: None (no slicing).""",
     'specific-slice': """Get spectra slices from specific times. Takes an arbitrary number of floats (time values).
                          Example: --specific-slice 10 20 50 250""",
-    'fit-exponential': 'Perform exponential fitting on specified wavelengths.',
-    'initial-rates': """Perform linear fitting on specified wavelengths for initial rates.
-                        If performing initial rates fitting, you can supply an optional float value for
-                        the change in absorbance cutoff (e.g., -ir 0.15).
-                        Default cutoff is 0.1 (10%% change in absorbance).""",
+    'fit': """Fitting type to perform on specified time traces.
+              Either "exponential" or "initial-rates". Default is None.""",
+    'fit-strategy': 'Perform individual or global fitting on time traces.',
+    'fit-cutoff': """Indicates the cutoff for the %% change in absorbance of the time trace.
+                     Only applies to "initial-rates" fitting. The default is 0.1 (10%% change).""",
     'baseline-smoothness': 'Set the smoothness of the baseline. Default: 10',
     'baseline-tolerance': 'Set the tolerance for the baseline fitting algorithm. Default: 0.1',
     'low-signal-window': """Set the low-signal outlier detection window size: "narrow", "wide", or "none".
@@ -56,8 +56,8 @@ HELP = {
                               will get time traces from the window MIN to MAX every 10 nm.
                               Smaller intervals may increase loading times.""",
     'Slicing/Sampling': 'Options to reduce many spectra to a selection of slices.',
-    'Kinetics & Fitting': """Perform fitting on time traces for kinetics analysis.'
-                             You must specify the wavelengths to fit with `-tt`.""",
+    'Kinetics & Fitting': """Perform fitting on time traces for kinetics analysis.
+                             You must specify the time traces (wavelengths) to fit with `-tt`.""",
     'Outlier Detection (advanced)': """Advanced settings for tuning outlier detection.
                                        These settings rarely need to be changed.""",
 }
@@ -166,22 +166,29 @@ ARGS = [
     ),
     ArgGroup(
         Argument(
-            '-fx',
-            '--fit-exponential',
-            action='store_true',
-            default=False,
-            help=HELP['fit-exponential'],
+            '-f',
+            '--fit',
+            action='store',
+            choices=['exponential', 'initial-rates'],
+            default=None,
+            help=HELP['fit'],
         ),
         Argument(
-            '-ir',
-            '--initial-rates',
+            '--cutoff',
             action='store',
+            dest='fit_cutoff',
             type=float,
-            nargs='?',
-            const='0.1',
-            default=None,
-            metavar='CUTOFF',
-            help=HELP['initial-rates'],
+            default=0.1,
+            metavar='',
+            help=HELP['fit-cutoff'],
+        ),
+        Argument(
+            '--global',
+            action='store_const',
+            dest='fit_strategy',
+            const='global',
+            default='individual',
+            help=HELP['fit-strategy'],
         ),
         title='Kinetics & Fitting',
         description=HELP['Kinetics & Fitting'],
@@ -264,8 +271,9 @@ def process(args: argparse.Namespace) -> None:
             args.path,
             trim=args.trim,
             slicing=_handle_slicing(args),
-            fit_exp=args.fit_exponential,
-            fit_init_rate=args.initial_rates,
+            fit=args.fit,
+            fit_strategy=args.fit_strategy,
+            fit_cutoff=args.fit_cutoff,
             outlier_threshold=args.outlier_threshold,
             baseline_smoothness=args.baseline_smoothness,
             baseline_tolerance=args.baseline_tolerance,
@@ -320,10 +328,10 @@ def prompt_for_export(dataset) -> list[str]:
     if dataset.processed_traces is not None:
         options.append('Time traces (processed)')
 
-    if dataset.fit is not None:
+    if dataset.fit == 'exponential' and dataset.fit_result is not None:
         options.append('Exponential fit')
 
-    if dataset.init_rate is not None:
+    if dataset.fit == 'initial-rates' and dataset.fit_result is not None:
         options.append('Initial rates')
 
     user_selection = checkbox(message, options)
@@ -347,9 +355,9 @@ def prompt_for_export(dataset) -> list[str]:
     if 'Exponential fit' in user_selection:
         files_exported.extend(
             [
-                dataset.export_csv(dataset.fit['curves'], suffix='fit_curves'),
+                dataset.export_csv(dataset.fit_result.fitted_data, suffix='fit_curves'),
                 dataset.export_csv(
-                    dataset.fit['params'].transpose(), suffix='fit_params'
+                    dataset.fit_result.params.transpose(), suffix='fit_params'
                 ),
             ]
         )
@@ -358,11 +366,11 @@ def prompt_for_export(dataset) -> list[str]:
         files_exported.extend(
             [
                 dataset.export_csv(
-                    dataset.init_rate['lines'],
+                    dataset.fit_result.fitted_data,
                     suffix='init_rate_lines',
                 ),
                 dataset.export_csv(
-                    dataset.init_rate['params'].transpose(),
+                    dataset.fit_result.params.transpose(),
                     suffix='init_rate_params',
                 ),
             ]

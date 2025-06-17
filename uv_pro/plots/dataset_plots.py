@@ -226,17 +226,16 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset, show_slices: bool = True) -
         time_traces = dataset.chosen_traces
         ax.set_xlim(0, time_traces.index[-1])
 
-        if dataset.fit or dataset.init_rate:
+        if dataset.fit_result is not None:
+            if dataset.fit == 'exponential':
+                fit_plot_func = _plot_fit_curves
+            if dataset.fit == 'initial-rates':
+                fit_plot_func = _plot_init_rate_lines
+
             color = 'k'
             linestyle = ':'
             alpha = 0.8
-
-            for func in [_plot_init_rate_lines, _plot_fit_curves]:
-                try:
-                    func(ax, dataset)
-
-                except TypeError:
-                    continue
+            fit_plot_func(ax, dataset)
 
         _time_trace_plot_text(ax, dataset)
 
@@ -308,10 +307,10 @@ def _plot_slices_lines(ax: Axes, dataset: Dataset) -> None:
 
 
 def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
-    for wavelength in dataset.fit['curves'].columns:
+    for wavelength in dataset.fit_result.fitted_data.columns:
         linecolor = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
         ax.plot(
-            dataset.fit['curves'][wavelength],
+            dataset.fit_result.fitted_data[wavelength],
             label=wavelength,
             color=linecolor,
             alpha=0.6,
@@ -327,10 +326,10 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
 
 
 def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
-    for wavelength in dataset.init_rate['lines'].columns:
+    for wavelength in dataset.fit_result.fitted_data.columns:
         linecolor = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
         ax.plot(
-            dataset.init_rate['lines'][wavelength],
+            dataset.fit_result.fitted_data[wavelength],
             label=wavelength,
             color=linecolor,
             alpha=0.6,
@@ -340,11 +339,12 @@ def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
 
     if dataset.trim:
         x_padding = (
-            dataset.init_rate['lines'].index[-1] - dataset.init_rate['lines'].index[0]
+            dataset.fit_result.fitted_data.index[-1]
+            - dataset.fit_result.fitted_data.index[0]
         ) * 10
-        left_bound = max(dataset.init_rate['lines'].index[0] - x_padding, 0)
+        left_bound = max(dataset.fit_result.fitted_data.index[0] - x_padding, 0)
         right_bound = min(
-            dataset.init_rate['lines'].index[-1] + x_padding,
+            dataset.fit_result.fitted_data.index[-1] + x_padding,
             dataset.chosen_traces.index[-1],
         )
         ax.set_xlim(left=left_bound, right=right_bound)
@@ -381,35 +381,28 @@ def _time_trace_plot_text(ax: Axes, dataset: Dataset) -> None:
         )
 
     row_number = 0
-    if dataset.init_rate:
-        for wavelength in dataset.init_rate['lines'].columns:
-            text_color = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
-            text = [
-                f'{wavelength}',
-                'rate =',
-                f'{dataset.init_rate["params"][wavelength]["slope"]:.2e}',
-                f'± {dataset.init_rate["params"][wavelength]["slope err"]:.2e}',
-                r'$r^2 =$',
-                f'{dataset.init_rate["params"][wavelength]["r2"]:.3f}',
-            ]
-            _add_text(' '.join(text), row_number, text_color)
-            row_number += 1
+    if dataset.fit_result is not None:
+        param_map = {
+            'initial-rates': ('slope', 'slope err', 'rate'),
+            'exponential': ('kobs', 'kobs err', r'$k_{obs}$'),
+        }
 
-    if dataset.fit:
-        for wavelength in dataset.fit['curves'].columns:
-            text_color = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
-            text = [
-                f'{wavelength}',
-                r'$k_{obs} =$',
-                f'{dataset.fit["params"][wavelength]["kobs"]:.2e}',
-                f'± {dataset.fit["params"][wavelength]["kobs err"]:.2e}',
-                r'$r^2 =$',
-                f'{dataset.fit["params"][wavelength]["r2"]:.3f}',
-            ]
-            _add_text(' '.join(text), row_number, text_color)
-            row_number += 1
+        if dataset.fit in param_map:
+            val, err, label = param_map[dataset.fit]
+            for wavelength in dataset.fit_result.fitted_data.columns:
+                text_color = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
+                text = [
+                    f'{wavelength}',
+                    f'{label} =',
+                    f'{dataset.fit_result.params[wavelength][val]:.2e}',
+                    f'± {dataset.fit_result.params[wavelength][err]:.2e}',
+                    r'$r^2 =$',
+                    f'{dataset.fit_result.params[wavelength]["r2"]:.3f}',
+                ]
+                _add_text(' '.join(text), row_number, text_color)
+                row_number += 1
 
-    if not dataset.fit and not dataset.init_rate:
+    else:
         for i, wavelength in enumerate(dataset.chosen_traces.columns):
             _add_text(f'{wavelength} nm', row_number, f'C{i}')
             row_number += 1
