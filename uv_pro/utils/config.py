@@ -27,7 +27,7 @@ class Config(ConfigParser):
         super().__init__(defaults=DEFAULTS, default_section='Settings')
 
         if not CONFIG_PATH.exists():
-            CONFIG_DIR.mkdir(exist_ok=True)
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
             self._write()
 
         else:
