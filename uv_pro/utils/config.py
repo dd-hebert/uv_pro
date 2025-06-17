@@ -14,7 +14,7 @@ from typing import Callable, Optional
 from uv_pro.utils._defaults import CONFIG_MAP
 
 NAME = 'uv_pro'
-CONFIG_DIR = Path('~').expanduser() / '.config' / NAME
+CONFIG_DIR = Path.home() / '.config' / NAME
 CONFIG_FILENAME = 'settings.ini'
 CONFIG_PATH = CONFIG_DIR / CONFIG_FILENAME
 DEFAULTS = {option: info['default_str'] for option, info in CONFIG_MAP.items()}
