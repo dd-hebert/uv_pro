@@ -16,6 +16,7 @@ from uv_pro.utils.config import PRIMARY_COLOR
 
 if TYPE_CHECKING:
     from uv_pro.dataset import Dataset
+    from uv_pro.fitting import FitResult
     from uv_pro.peakfinder import PeakFinder
 
 COLORS = {
@@ -128,13 +129,9 @@ class ProcessingOutput:
         if dataset.processed_traces is not None:
             renderables.extend(['', self.traces_panel(dataset.processed_traces)])
 
-        if dataset.fit_result is not None and dataset.fit == 'exponential':
+        if dataset.fit_result is not None:
             renderables.extend(['', self.fit_panel(dataset.fit_result)])
-
             log.extend(self._unable_to_fit(dataset))
-
-        if dataset.fit_result is not None and dataset.fit == 'initial-rates':
-            renderables.extend(['', self.init_rate_panel(dataset.fit_result)])
 
         if log:
             renderables.extend(log)
@@ -241,62 +238,61 @@ class ProcessingOutput:
 
         return table_panel(table, 'Time Traces')
 
-    def fit_panel(self, fit_result) -> Panel:
+    def fit_panel(self, fit_result: FitResult) -> Panel:
         """Create a nicely formatted rich ``Panel`` for fitting data."""
+        if fit_result.model == 'initial-rates':
+            title = 'Initial Rates'
+            labels = ['rate (a.u./s)', 'Δabs (%)', 'Δt (s)']
+            keys_and_formats = [
+                (['slope', 'slope ci'], '{: .2e} ± {:.2e}'),
+                (['delta_abs_%'], '{:.2f}'),
+                (['delta_t'], '{:.1f}'),
+            ]
+            subtitle = None
+
+        elif fit_result.model == 'exponential':
+            title = 'Exponential Fit'
+            labels = ['kobs (s⁻¹)', 'abs_0 (a.u.)', 'abs_f (a.u.)']
+            keys_and_formats = [
+                (['kobs', 'kobs ci'], '{: .2e} ± {:.2e}'),
+                (['abs_0'], '{: .3f}'),
+                (['abs_f'], '{: .3f}'),
+            ]
+            subtitle = 'Fit function: f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
+
+        else:
+            raise ValueError(f'Unknown fit type: {fit_result.model}')
+
+        ratios = [3, 2, 2]
         table = fancy_table(
             Column('λ (nm)', justify='center', ratio=1),
-            Column('kobs (s⁻¹)', justify='center', ratio=3),
-            Column('abs_0 (a.u.)', justify='center', ratio=2),
-            Column('abs_f (a.u.)', justify='center', ratio=2),
+            *[
+                Column(label, justify='center', ratio=r)
+                for label, r in zip(labels, ratios)
+            ],
             Column('R²', justify='center', ratio=2),
         )
 
         for wavelength in fit_result.params.columns:
             vals = fit_result.params[wavelength]
+            row = [str(wavelength)]
+
+            for keys, fmt in keys_and_formats:
+                row.append(fmt.format(*[vals[k] for k in keys]))
+
             r2_color = 'red' if vals.loc['r2'] < 0.85 else 'none'
-            table.add_row(
-                str(wavelength),
-                '{: .2e} ± {:.2e}'.format(vals.loc['kobs'], vals.loc['kobs ci']),
-                '{: .3f}'.format(vals['abs_0']),
-                '{: .3f}'.format(vals['abs_f']),
-                Text('{:.4f}'.format(vals['r2']), style=r2_color),
-            )
+            row.append(Text('{:.4f}'.format(vals['r2']), style=r2_color))
 
-        equation = 'f(t) = abs_f + (abs_0 - abs_f) * exp(-kobs * t)'
+            table.add_row(*row)
 
-        return table_panel(
-            table, title='Exponential Fit Results', subtitle=f'Fit function: {equation}'
-        )
-
-    def init_rate_panel(self, fit_result) -> Panel:
-        """Create a nicely formatted rich ``Panel`` for initial rates data."""
-        table = fancy_table(
-            Column('λ (nm)', justify='center', ratio=1),
-            Column('rate (a.u./s)', justify='center', ratio=3),
-            Column('Δabs (%)', justify='center', ratio=2),
-            Column('Δt (s)', justify='center', ratio=2),
-            Column('R²', justify='center', ratio=2),
-        )
-
-        for wavelength in fit_result.params.columns:
-            vals = fit_result.params[wavelength]
-            r2_color = 'red' if vals.loc['r2'] < 0.85 else 'none'
-            table.add_row(
-                str(wavelength),
-                '{: .2e} ± {:.2e}'.format(vals.loc['slope'], vals.loc['slope ci']),
-                '{:.2%}'.format(vals['delta_abs_%']),
-                '{:.1f}'.format(vals['delta_t']),
-                Text('{:.4f}'.format(vals['r2']), style=r2_color),
-            )
-
-        return table_panel(table, title='Initial Rates Results')
+        return table_panel(table, title=f'{title} Results', subtitle=subtitle)
 
     def _unable_to_fit(self, dataset: Dataset) -> list[Text] | list:
         chosen_wavelengths = set(dataset.chosen_traces.columns)
         fit_wavelengths = set(dataset.fit_result.fitted_data.columns)
 
         unable_to_fit = [
-            Text(f'Unable to fit exponential to {wavelength} nm.', style='red')
+            Text(f'Unable to fit exponential to {wavelength} nm.', style='yellow')
             for wavelength in chosen_wavelengths.difference(fit_wavelengths)
         ]
 

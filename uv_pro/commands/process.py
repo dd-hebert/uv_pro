@@ -20,7 +20,7 @@ from uv_pro.utils.prompts import checkbox
 HELP = {
     'path': """A path to a UV-vis data file (.KD format).""",
     'view': """Enable view-only mode (no data processing).""",
-    'no-export': 'Skip the export data prompt at the end of the script.',
+    'no-export': 'Skip the "export data" prompt at the end of the script.',
     'time-traces': 'Specific wavelengths (in nm) to get time traces for.',
     'trim': """Remove spectra outside the specified time range.
                Spectra before START and after END will be removed.
@@ -38,11 +38,11 @@ HELP = {
     'variable-slice': """Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
                          Default: None (no slicing).""",
     'specific-slice': """Get spectra slices from specific times. Takes an arbitrary number of floats (time values).
-                         Example: --specific-slice 10 20 50 250""",
+                         Example: -ssl 10 20 50 250""",
     'fit': """Fitting type to perform on specified time traces.
               Either "exponential" or "initial-rates". Default is None.""",
-    'fit-strategy': 'Perform individual or global fitting on time traces.',
-    'fit-cutoff': """Indicates the cutoff for the %% change in absorbance of the time trace.
+    'fit-strategy': 'Perform global fitting on time traces. Default fit strategy is "individual".',
+    'fit-cutoff': """Specify the cutoff for the %% change in absorbance of the time trace.
                      Only applies to "initial-rates" fitting. The default is 0.1 (10%% change).""",
     'baseline-smoothness': 'Set the smoothness of the baseline. Default: 10',
     'baseline-tolerance': 'Set the tolerance for the baseline fitting algorithm. Default: 0.1',
@@ -55,7 +55,7 @@ HELP = {
     'time-trace-interval': """Set the interval (in nm) between time traces. An interval of 10
                               will get time traces from the window MIN to MAX every 10 nm.
                               Smaller intervals may increase loading times.""",
-    'Slicing/Sampling': 'Options to reduce many spectra to a selection of slices.',
+    'Slicing/Sampling': 'Options to reduce many spectra to a selection of slices/samplescd.',
     'Kinetics & Fitting': """Perform fitting on time traces for kinetics analysis.
                              You must specify the time traces (wavelengths) to fit with `-tt`.""",
     'Outlier Detection (advanced)': """Advanced settings for tuning outlier detection.
@@ -315,68 +315,44 @@ def prompt_for_export(dataset) -> list[str]:
 
     Returns
     -------
-    files_exported : list[str]
+    list[str]
         The names of the exported files.
     """
-    message = 'Choose data to export'
-    options = ['Processed spectra']
-    files_exported = []
+    export_map = {
+        'Processed spectra': [(dataset.processed_spectra, None)],
+        'Time traces (raw)': [(dataset.chosen_traces, 'traces_raw')],
+        'Time traces (processed)': [(dataset.processed_traces, 'traces_processed')],
+        'Exponential fit': [
+            (dataset.fit_result.fitted_data, 'exp-fit_curves'),
+            (dataset.fit_result.params.transpose(), 'exp-fit_params'),
+        ],
+        'Initial rates': [
+            (dataset.fit_result.fitted_data, 'init-rate_fit'),
+            (dataset.fit_result.params.transpose(), 'init-rate_params'),
+        ],
+    }
 
+    options = ['Processed spectra']
     if dataset.chosen_traces is not None:
         options.append('Time traces (raw)')
 
     if dataset.processed_traces is not None:
         options.append('Time traces (processed)')
 
-    if dataset.fit == 'exponential' and dataset.fit_result is not None:
-        options.append('Exponential fit')
+    if dataset.fit_result is not None:
+        if dataset.fit_result.model == 'exponential':
+            options.append('Exponential fit')
+        elif dataset.fit_result.model == 'initial-rates':
+            options.append('Initial rates')
 
-    if dataset.fit == 'initial-rates' and dataset.fit_result is not None:
-        options.append('Initial rates')
-
-    user_selection = checkbox(message, options)
+    user_selection = checkbox('Choose data to export', options)
 
     if user_selection is None:
         return []
 
-    if 'Processed spectra' in user_selection:
-        files_exported.append(dataset.export_csv(dataset.processed_spectra))
-
-    if 'Time traces (raw)' in user_selection:
-        files_exported.append(
-            dataset.export_csv(dataset.chosen_traces, suffix='traces_raw')
-        )
-
-    if 'Time traces (processed)' in user_selection:
-        files_exported.append(
-            dataset.export_csv(dataset.processed_traces, suffix='traces_processed')
-        )
-
-    if 'Exponential fit' in user_selection:
-        files_exported.extend(
-            [
-                dataset.export_csv(dataset.fit_result.fitted_data, suffix='fit_curves'),
-                dataset.export_csv(
-                    dataset.fit_result.params.transpose(), suffix='fit_params'
-                ),
-            ]
-        )
-
-    if 'Initial rates' in user_selection:
-        files_exported.extend(
-            [
-                dataset.export_csv(
-                    dataset.fit_result.fitted_data,
-                    suffix='init_rate_lines',
-                ),
-                dataset.export_csv(
-                    dataset.fit_result.params.transpose(),
-                    suffix='init_rate_params',
-                ),
-            ]
-        )
-
-    return files_exported
+    return [
+        dataset.export_csv(*file) for opt in user_selection for file in export_map[opt]
+    ]
 
 
 def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
@@ -386,20 +362,14 @@ def _plot_and_export(args: argparse.Namespace, dataset: Dataset) -> None:
         files_exported = []
 
         if args.quick_fig is True:
-            try:
-                print(
-                    '', splash(text='Enter ctrl-c to quit', title='uv_pro Quick Figure')
-                )
-                files_exported.append(
-                    getattr(QuickFig(dataset, args.colormap), 'exported_figure')
-                )
+            print('', splash(text='Enter ctrl-c to quit', title='uv_pro Quick Figure'))
 
-            except AttributeError:
-                pass
+            if quick_fig := QuickFig(dataset, args.colormap).exported_figure:
+                files_exported.append(quick_fig)
 
         else:
             print('Close plot window to continue...')
-            plot_2x2(dataset, figsize=args.plot_size, cmap=args.colormap)
+            plot_2x2(dataset, args.colormap, figsize=args.plot_size)
 
         if args.no_export is False:
             files_exported.extend(prompt_for_export(dataset))

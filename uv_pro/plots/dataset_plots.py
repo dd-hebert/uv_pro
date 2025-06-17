@@ -227,15 +227,10 @@ def _time_traces_subplot(ax: Axes, dataset: Dataset, show_slices: bool = True) -
         ax.set_xlim(0, time_traces.index[-1])
 
         if dataset.fit_result is not None:
-            if dataset.fit == 'exponential':
-                fit_plot_func = _plot_fit_curves
-            if dataset.fit == 'initial-rates':
-                fit_plot_func = _plot_init_rate_lines
-
             color = 'k'
             linestyle = ':'
             alpha = 0.8
-            fit_plot_func(ax, dataset)
+            _plot_fit_curves(ax, dataset)
 
         _time_trace_plot_text(ax, dataset)
 
@@ -322,31 +317,6 @@ def _plot_fit_curves(ax: Axes, dataset: Dataset) -> None:
         x_padding = (dataset.trim[1] - dataset.trim[0]) * 0.2
         left_bound = max(dataset.trim[0] - x_padding, 0)
         right_bound = min(dataset.trim[1] + x_padding, dataset.chosen_traces.index[-1])
-        ax.set_xlim(left=left_bound, right=right_bound)
-
-
-def _plot_init_rate_lines(ax: Axes, dataset: Dataset):
-    for wavelength in dataset.fit_result.fitted_data.columns:
-        linecolor = f'C{dataset.chosen_traces.columns.get_loc(wavelength)}'
-        ax.plot(
-            dataset.fit_result.fitted_data[wavelength],
-            label=wavelength,
-            color=linecolor,
-            alpha=0.6,
-            linewidth=3,
-            zorder=2,
-        )
-
-    if dataset.trim:
-        x_padding = (
-            dataset.fit_result.fitted_data.index[-1]
-            - dataset.fit_result.fitted_data.index[0]
-        ) * 10
-        left_bound = max(dataset.fit_result.fitted_data.index[0] - x_padding, 0)
-        right_bound = min(
-            dataset.fit_result.fitted_data.index[-1] + x_padding,
-            dataset.chosen_traces.index[-1],
-        )
         ax.set_xlim(left=left_bound, right=right_bound)
 
 

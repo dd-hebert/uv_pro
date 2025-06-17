@@ -52,6 +52,7 @@ class QuickFig:
             The name of a Matplotlib built-in colormap, by default 'default'.
         """
         self.dataset = dataset
+        self.exported_figure = None
         self.quick_figure(title=dataset.name, cmap=cmap)
 
     def quick_figure(
