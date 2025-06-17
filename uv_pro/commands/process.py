@@ -55,6 +55,11 @@ HELP = {
     'time-trace-interval': """Set the interval (in nm) between time traces. An interval of 10
                               will get time traces from the window MIN to MAX every 10 nm.
                               Smaller intervals may increase loading times.""",
+    'Slicing/Sampling': 'Options to reduce many spectra to a selection of slices.',
+    'Kinetics & Fitting': """Perform fitting on time traces for kinetics analysis.'
+                             You must specify the wavelengths to fit with `-tt`.""",
+    'Outlier Detection (advanced)': """Advanced settings for tuning outlier detection.
+                                       These settings rarely need to be changed.""",
 }
 ARGS = [
     Argument(
@@ -157,7 +162,7 @@ ARGS = [
             ),
         ),
         title='Slicing/Sampling',
-        description='Options to reduce many spectra to a selection of slices.',
+        description=HELP['Slicing/Sampling'],
     ),
     ArgGroup(
         Argument(
@@ -179,7 +184,7 @@ ARGS = [
             help=HELP['initial-rates'],
         ),
         title='Kinetics & Fitting',
-        description='Perform fitting on time traces for kinetics analysis. You must specify the wavelengths to fit with `-tt` or `-w`.',
+        description=HELP['Kinetics & Fitting'],
     ),
     ArgGroup(
         Argument(
@@ -228,7 +233,7 @@ ARGS = [
             help=HELP['time-trace-interval'],
         ),
         title='Outlier Detection (advanced)',
-        description='Advanced settings for tuning outlier detection. These settings rarely need to be changed.',
+        description=HELP['Outlier Detection (advanced)'],
     ),
 ]
 
