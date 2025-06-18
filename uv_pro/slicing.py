@@ -17,7 +17,7 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
     of 10 will produce 10 equally-spaced slices). Variable slicing requires two \
     floats, a coefficient and an exponent. For variable slicing, the step size \
     between slices is calculated by the equation step_size = coeff * x^expo + 1. \
-    Specific slicing requires a list of float (time) values.
+    Manual slicing requires a list of float (time) values.
 
     Note
     ----
@@ -33,7 +33,7 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
         For equal slicing: ``{'mode': 'equal', 'slices': int}``
         For variable (unequally-spaced) slicing: ``{'mode': 'variable', \
         'coeff': float, 'expo': float}``
-        For specific slicing: ``{'mode': 'specific', 'times': list[float]}``.
+        For manual slicing: ``{'mode': 'manual', 'times': list[float]}``.
 
     Returns
     -------
@@ -46,8 +46,8 @@ def slice_spectra(spectra: DataFrame, slicing: dict) -> DataFrame:
     if slicing['mode'] == 'variable':
         return variable_slicing(spectra, slicing['coeff'], slicing['expo'])
 
-    if slicing['mode'] == 'specific':
-        return specific_slicing(spectra, slicing['times'])
+    if slicing['mode'] == 'manual':
+        return manual_slicing(spectra, slicing['times'])
 
     raise ValueError(f'Invalid slicing mode: `{slicing.get("mode", None)}`.')
 
@@ -80,7 +80,7 @@ def equal_slicing(spectra: DataFrame, num_slices: int) -> DataFrame:
     ]
 
 
-def specific_slicing(spectra: DataFrame, times: list[int]) -> DataFrame:
+def manual_slicing(spectra: DataFrame, times: list[int]) -> DataFrame:
     """Get the slices closest to the given ``times`` from ``spectra``."""
     closest_times = sorted(
         set([min(spectra.columns, key=lambda t: abs(t - time)) for time in times])

@@ -63,12 +63,12 @@ Options to reduce many spectra to a selection of slices/samples.
     will be kept. This option allows you to reduce the number of spectra
     by selecting evenly spaced slices from the dataset.
     Default value: None (all spectra are plotted or exported)
--ssl, --specific-slice : arbitrary number of floats, optional
-    Select slices at specific times. The values should be provided
+-sm, --slice-manual : arbitrary number of floats, optional
+    Manually specify times to take slices. The values should be provided
     as an arbitrary number of floats representing the time of each slice.
-    This option allows you to select slices from specific positions in the dataset.
+    This option allows you to select spectra from specific positions in the dataset.
     Default value: None (all spectra are plotted or exported).
--vsl, --variable-slice : float float, optional
+-sv, --slice-variable : float float, optional
     Slice the data into non-equally spaced slices. You need to provide two
     values: a coefficient and an exponent. The data slicing will be determined
     by the equation: ``y = coefficient * x^exponent + 1``, where ``y`` is the

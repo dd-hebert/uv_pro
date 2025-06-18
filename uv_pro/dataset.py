@@ -99,7 +99,7 @@ class Dataset:
             equally- or unequally-spaced (variable) intervals, or at specific times.
             For equal slicing: ``{'mode': 'equal', 'slices': int}``.
             For variable slicing: ``{'mode': 'variable', 'coeff': float, 'expo': float}``.
-            For specific slicing: ``{'mode': 'specific', 'times': list[float]}``.
+            For manual slicing: ``{'mode': 'manual', 'times': list[float]}``.
         fit : str, "exponential" or "initial-rates" or None, optional
             Fitting type to perform on time traces specified with ``wavelengths``.
             Either "exponential" or "initial-rates". Default is None.

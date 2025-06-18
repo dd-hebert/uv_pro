@@ -34,11 +34,11 @@ HELP = {
                    Matplotlib colormap name. For a full description of colormaps see:
                    https://matplotlib.org/stable/tutorials/colors/colormaps.html.
                    Default is 'default'.""",
-    'slice': 'Set the number of equally-spaced slices to plot. Default: None (no slicing).',
-    'variable-slice': """Use non-equal spacing when slicing data. Takes 2 args: coefficient & exponent.
-                         Default: None (no slicing).""",
-    'specific-slice': """Get spectra slices from specific times. Takes an arbitrary number of floats (time values).
-                         Example: -ssl 10 20 50 250""",
+    'slice': 'Reduce the data down to a number of uniformly-spaced slices. Default: None (no slicing).',
+    'slice-variable': """Reduce the data down to a number of nonuniformly-spaced slices.
+                         Takes 2 args: coefficient & exponent. Default: None (no slicing).""",
+    'slice-manual': """Manually specify times to slice at. Takes an arbitrary number of floats (time values).
+                       Example: -ssl 10 20 50 250""",
     'fit': """Fitting type to perform on specified time traces.
               Either "exponential" or "initial-rates". Default is None.""",
     'fit-strategy': 'Perform global fitting on time traces. Default fit strategy is "individual".',
@@ -55,7 +55,7 @@ HELP = {
     'time-trace-interval': """Set the interval (in nm) between time traces. An interval of 10
                               will get time traces from the window MIN to MAX every 10 nm.
                               Smaller intervals may increase loading times.""",
-    'Slicing/Sampling': 'Options to reduce many spectra to a selection of slices/samplescd.',
+    'Slicing/Sampling': 'Options to reduce many spectra to a selection of slices/samples.',
     'Kinetics & Fitting': """Perform fitting on time traces for kinetics analysis.
                              You must specify the time traces (wavelengths) to fit with `-tt`.""",
     'Outlier Detection (advanced)': """Advanced settings for tuning outlier detection.
@@ -141,24 +141,24 @@ ARGS = [
                 help=HELP['slice'],
             ),
             Argument(
-                '-vsl',
-                '--variable-slice',
+                '-sv',
+                '--slice-variable',
                 action='store',
                 type=float,
                 nargs=2,
                 default=None,
                 metavar=('COEFF', 'EXPO'),
-                help=HELP['variable-slice'],
+                help=HELP['slice-variable'],
             ),
             Argument(
-                '-ssl',
-                '--specific-slice',
+                '-sm',
+                '--slice-manual',
                 action='store',
                 nargs='+',
                 type=float,
                 default=None,
                 metavar='TIME',
-                help=HELP['specific-slice'],
+                help=HELP['slice-manual'],
             ),
         ),
         title='Slicing/Sampling',
@@ -291,15 +291,15 @@ def _handle_slicing(args: argparse.Namespace) -> dict | None:
     if args.slice:
         return {'mode': 'equal', 'slices': args.slice}
 
-    elif args.variable_slice:
+    elif args.slice_variable:
         return {
             'mode': 'variable',
-            'coeff': args.variable_slice[0],
-            'expo': args.variable_slice[1],
+            'coeff': args.slice_variable[0],
+            'expo': args.slice_variable[1],
         }
 
-    elif args.specific_slice:
-        return {'mode': 'specific', 'times': args.specific_slice}
+    elif args.slice_manual:
+        return {'mode': 'manual', 'times': args.slice_manual}
 
     return None
 
