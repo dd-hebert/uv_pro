@@ -1,3 +1,9 @@
+"""
+Helper classes for rendering output with ``rich``.
+
+@author: David Hebert
+"""
+
 from __future__ import annotations
 
 import argparse
