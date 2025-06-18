@@ -6,6 +6,8 @@ Contains functions for detecting outliers from UV-vis time traces.
 @author: David Hebert
 """
 
+from typing import Literal
+
 import pandas as pd
 from pybaselines.whittaker import asls
 
@@ -14,7 +16,7 @@ def find_outliers(
     time_traces: pd.DataFrame,
     *,
     threshold: float = 0.1,
-    lsw: str = 'none',
+    lsw: Literal['none', 'narrow', 'wide'] = 'none',
     lam: float = 10.0,
     tol: float = 0.1,
 ) -> list:
