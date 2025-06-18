@@ -6,7 +6,7 @@ Contains data fitting functions.
 
 import warnings
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -27,8 +27,8 @@ class FitResult:
 
 def fit_time_traces(
     time_traces: pd.DataFrame,
-    fit_model: str,
-    fit_strategy: str = 'individual',
+    fit_model: Literal['initial-rates', 'exponential'],
+    fit_strategy: Literal['individual', 'global'] = 'individual',
     fit_cutoff: float = 0.1,
 ) -> FitResult:
     """
