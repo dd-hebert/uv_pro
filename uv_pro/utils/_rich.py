@@ -252,7 +252,7 @@ class ProcessingOutput:
             keys_and_formats = [
                 (['slope', 'slope ci'], '{: .2e} ± {:.2e}'),
                 (['delta_abs_%'], '{:.2f}'),
-                (['delta_t'], '{:.1f}'),
+                (['delta_t'], '{: .1f}'),
             ]
             subtitle = None
 
