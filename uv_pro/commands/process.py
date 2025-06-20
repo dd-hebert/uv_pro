@@ -41,7 +41,7 @@ HELP = {
                        Example: -ssl 10 20 50 250""",
     'fit': """Fitting type to perform on specified time traces.
               Either "exponential" or "initial-rates". Default is None.""",
-    'fit-strategy': 'Perform global fitting on time traces. Default fit strategy is "individual".',
+    'global-fit': 'Perform global fitting on time traces. Default fit strategy is False (individual fit).',
     'fit-cutoff': """Specify the cutoff for the %% change in absorbance of the time trace.
                      Only applies to "initial-rates" fitting. The default is 0.1 (10%% change).""",
     'baseline-smoothness': 'Set the smoothness of the baseline. Default: 10',
@@ -184,11 +184,10 @@ ARGS = [
         ),
         Argument(
             '--global',
-            action='store_const',
-            dest='fit_strategy',
-            const='global',
-            default='individual',
-            help=HELP['fit-strategy'],
+            action='store_true',
+            dest='global_fit',
+            default=False,
+            help=HELP['global-fit'],
         ),
         title='Kinetics & Fitting',
         description=HELP['Kinetics & Fitting'],
@@ -272,7 +271,7 @@ def process(args: argparse.Namespace) -> None:
             trim=args.trim,
             slicing=_handle_slicing(args),
             fit=args.fit,
-            fit_strategy=args.fit_strategy,
+            global_fit=args.global_fit,
             fit_cutoff=args.fit_cutoff,
             outlier_threshold=args.outlier_threshold,
             baseline_smoothness=args.baseline_smoothness,

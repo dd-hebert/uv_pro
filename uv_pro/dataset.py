@@ -50,10 +50,8 @@ class Dataset:
     processed_traces : :class:`pandas.DataFrame`
         The processed chosen traces with :attr:`outliers` removed and
         trimming applied.
-    fit : dict
-        The exponential fitting curves and parameters.
-    init_rate : dict
-        The initial rates fitting lines and parameters.
+    fit_result : :class:`~uv_pro.fitting.FitResult`
+        The parameters and data of the kinetics fit.
     is_processed : bool
         Indicates if the data has been processed. Data is processed only if the \
         :class:`Dataset` was initialized with ``view_only=False`` \
@@ -67,7 +65,7 @@ class Dataset:
         trim: tuple[int, int] | None = None,
         slicing: dict | None = None,
         fit: str | None = None,
-        fit_strategy: str = 'individual',
+        global_fit: bool = False,
         fit_cutoff: float = 0.1,
         outlier_threshold: float = 0.1,
         baseline_smoothness: float = 10.0,
@@ -103,8 +101,8 @@ class Dataset:
         fit : str, "exponential" or "initial-rates" or None, optional
             Fitting type to perform on time traces specified with ``wavelengths``.
             Either "exponential" or "initial-rates". Default is None.
-        fit_strategy : str, "inidividual" or "global"
-            Perform individual or global fitting on time traces.
+        global_fit : bool, optional
+            Perform individual or global fitting on time traces. Default False (individual fit).
         fit_cutoff : float, optional
             Indicates the cutoff for the % change in absorbance of the time trace.
             Only applies to "initial-rates" fitting, has no effect if fit type is \
@@ -149,7 +147,7 @@ class Dataset:
         self.trim = trim
         self.slicing = slicing
         self.fit = fit
-        self.fit_strategy = fit_strategy
+        self.global_fit = global_fit
         self.fit_cutoff = fit_cutoff
         self.time_trace_window = time_trace_window
         self.time_trace_interval = time_trace_interval
@@ -208,7 +206,7 @@ class Dataset:
 
             if self.processed_traces is not None and self.fit is not None:
                 self.fit_result = fit_time_traces(
-                    self.processed_traces, self.fit, self.fit_strategy, self.fit_cutoff
+                    self.processed_traces, self.fit, self.global_fit, self.fit_cutoff
                 )
 
             self.is_processed = True

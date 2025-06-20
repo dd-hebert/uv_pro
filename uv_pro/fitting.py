@@ -4,15 +4,18 @@ Contains data fitting functions.
 @author: David Hebert
 """
 
+from __future__ import annotations
 import warnings
 from dataclasses import dataclass
-from typing import Callable, Literal, Optional
+from typing import Callable, Literal, Optional, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
 from rich import print
-from scipy.optimize import curve_fit
+
+if TYPE_CHECKING:
+    from lmfit import Parameters
 
 warnings.filterwarnings('ignore', message='overflow encountered in exp')
 
@@ -20,7 +23,7 @@ warnings.filterwarnings('ignore', message='overflow encountered in exp')
 @dataclass
 class FitResult:
     model: str
-    # strategy: str
+    global_fit: bool
     params: pd.DataFrame
     fitted_data: pd.DataFrame
 
@@ -28,7 +31,7 @@ class FitResult:
 def fit_time_traces(
     time_traces: pd.DataFrame,
     fit_model: Literal['initial-rates', 'exponential'],
-    fit_strategy: Literal['individual', 'global'] = 'individual',
+    global_fit: bool = False,
     fit_cutoff: float = 0.1,
 ) -> FitResult:
     """
@@ -40,8 +43,8 @@ def fit_time_traces(
         The time traces to fit the model to.
     fit_model : str
         The model to use for fitting, either 'initial-rates' or 'exponential'.
-    fit_strategy : str, optional
-        The fitting strategy, either 'individual' or 'global. Default 'individual'
+    fit_global : bool, optional
+        Perform individual or global fitting. Default False (individual fit).
     fit_cutoff : float, optional
         The % change in absorbance cutoff for initial rates fitting. \
         Has no effect if `fit_model` is 'exponential'.
@@ -50,13 +53,13 @@ def fit_time_traces(
     Returns
     -------
     FitResult
-        _description_
+        The parameters and data of the fit.
     """
-    if fit_model == 'initial-rates':
-        return initial_rates(time_traces, fit_cutoff)
-    if fit_model == 'exponential':
-        return fit_exponential(time_traces)
 
+    if fit_model == 'initial-rates':
+        return InitialRates(time_traces, fit_cutoff, global_fit=global_fit).fit()
+    if fit_model == 'exponential':
+        return ExponentialFit(time_traces, global_fit=global_fit).fit()
 
 def rsquared(data: pd.Series, fit: pd.Series) -> float:
     """Calculate r-squared."""
@@ -66,203 +69,216 @@ def rsquared(data: pd.Series, fit: pd.Series) -> float:
     return r2
 
 
-def fit_exponential(time_traces: pd.DataFrame) -> FitResult | None:
+class ExponentialFit:
     """
-    Fit exponential function to time traces.
-
-    Parameters
-    ----------
-    time_traces : :class:`pandas.DataFrame`
-        The time traces to fit.
-
-    Returns
-    -------
-    fit : dict or None
-        The fitting parameters for the given time traces.
+    Exponential fitting model for time traces.
     """
+    def __init__(self, traces: pd.DataFrame, global_fit: bool = False) -> None:
+        self.traces = traces
+        self.global_fit = global_fit
 
-    def exponential_func(t: float, abs_0: float, abs_f: float, kobs: float) -> float:
+    def model(self, t: np.ndarray, abs_0: float, abs_f: float, kobs: float) -> np.ndarray:
+        """Exponential fit model: y = abs_f + (abs_0 - abs_f) * exp(-kobs * t)"""
         return abs_f + (abs_0 - abs_f) * np.exp(-kobs * t)
 
-    def fit_params_handler(trace) -> dict:
-        """Prepare parameters for the fitting function."""
-        p0 = [trace.iloc[0], trace.iloc[-1], 0.02]
-        curve_fit_params = {
-            'f': exponential_func,
-            'xdata': trace.index,
-            'ydata': trace,
-            'p0': p0,
-            'bounds': ([-4, -4, -1], [4, 4, np.inf]),
-        }
+    def _setup_params(self) -> Parameters:
+        from lmfit import Parameters
+        params = Parameters()
 
-        return curve_fit_params
+        if self.global_fit:
+            params.add('kobs', value=0.02, min=0)
 
-    def post_fit_handler(trace, fit_params, fit_cov) -> tuple[dict, pd.Series]:
-        """Handle result output and formatting."""
-        abs_0, abs_f, kobs = fit_params
-        abs_0_err, abs_f_err, kobs_err = np.sqrt(np.diag(fit_cov))
-        kobs_ci = stats.t.interval(0.95, len(trace) - 3, loc=kobs, scale=kobs_err)
+        for i, (_, trace) in enumerate(self.traces.items()):
+            key = f'_{i}'
+            params.add(f'abs_0{key}', value=trace.iloc[0], min=-4, max=4)
+            params.add(f'abs_f{key}', value=trace.iloc[-1], min=-4, max=4)
+            if not self.global_fit:
+                params.add(f'kobs{key}', value=0.02, min=0)
 
-        curve = pd.Series(
-            exponential_func(trace.index, *fit_params),
-            index=trace.index,
-            name=trace.name,
-        )
+        return params
 
-        return {
-            'abs_0': abs_0,
-            'abs_0 err': abs_0_err,  # one standard deviation error
-            'abs_f': abs_f,
-            'abs_f err': abs_f_err,  # one standard deviation error
-            'kobs': kobs,
-            'kobs err': kobs_err,  # one standard deviation error
-            'kobs ci': (kobs_ci[1] - kobs_ci[0]) * 0.5,  # half width 95% conf. interval
-            'r2': rsquared(trace, curve),
-        }, curve
+    def fit(self) -> FitResult | None:
+        """Fit an exponential model to time traces for kobs calculations."""
+        from lmfit import Minimizer
 
-    result = _fit_model_to_traces(
-        time_traces,
-        curve_fit,
-        fit_params_handler,
-        post_fit_handler,
-    )
+        result = Minimizer(self.residual, self._setup_params()).minimize()
+        return FitResult('exponential', self.global_fit, *self._format_result(result.params))
 
-    if result is None:
-        return None
+    def residual(self, params: Parameters) -> np.ndarray:
+        resids = []
+        for i, (_, trace) in enumerate(self.traces.items()):
+            key = f'_{i}'
+            abs_0 = params[f'abs_0{key}']
+            abs_f = params[f'abs_f{key}']
+            kobs = params['kobs'] if self.global_fit else params[f'kobs{key}']
+            model = self.model(trace.index, abs_0, abs_f, kobs)
+            resids.append(model - trace)
+        return np.concatenate(resids)
 
-    return FitResult('exponential', *result)
+    def _format_result(self, params: Parameters) -> tuple[pd.DataFrame, pd.DataFrame]:
+        fit_params = {}
+        fitted_data = {}
 
+        for i, (col, trace) in enumerate(self.traces.items()):
+            key = f'_{i}'
+            abs_0 = params[f'abs_0{key}'].value
+            abs_f = params[f'abs_f{key}'].value
+            kobs = params['kobs'].value if self.global_fit else params[f'kobs{key}'].value
 
-def initial_rates(time_traces: pd.DataFrame, cutoff: float = 0.1) -> FitResult | None:
-    """
-    Perform a linear regression on time traces to determine initial rates.
+            abs_0_err = params[f'abs_0{key}'].stderr
+            abs_f_err = params[f'abs_f{key}'].stderr
+            kobs_err = params['kobs'].stderr if self.global_fit else params[f'kobs{key}'].stderr
 
-    Parameters
-    ----------
-    time_traces : :class:`pandas.DataFrame`
-        The time traces to fit.
-    cutoff : float, optional
-        The cutoff value for the change in absorbance. A cutoff of 0.1 would
-        limit the initial rate fitting to the first 10% change in absorbance
-        of the time traces.
+            # Compute 95% CI half-width for kobs
+            n = len(trace)
+            if kobs_err and np.isfinite(kobs_err) and n > 3:
+                ci = stats.t.interval(0.95, df=n - 3, loc=kobs, scale=kobs_err)
+                kobs_ci = (ci[1] - ci[0]) / 2
+            else:
+                kobs_ci = np.nan
 
-    Returns
-    -------
-    fit : dict or None
-        The fitting parameters for the given time traces.
-    """
-
-    def linear_func(x, slope, intercept) -> float:
-        return slope * x + intercept
-
-    def cutoff_handler(trace) -> pd.Series:
-        abs_0 = trace.iloc[0]
-
-        # Handle both growing and decaying traces
-        cutoff_idx = max(
-            abs(trace.iloc[2:] - abs_0 * (1 - cutoff)).idxmin(),
-            abs(trace.iloc[2:] - abs_0 * (1 + cutoff)).idxmin(),
-        )
-        return trace[:cutoff_idx]
-
-    def fit_params_handler(trace: pd.Series) -> dict:
-        """Prepare parameters for the fitting function."""
-        return {'x': trace.index, 'y': trace.values}
-
-    def post_fit_handler(trace, *fit_params) -> tuple[dict, pd.Series]:
-        """Handle result output and formatting."""
-        abs_0 = trace.iloc[0]
-        abs_f = trace.iloc[-1]
-        m, b, _, _, m_err = fit_params
-        ci = stats.t.interval(0.95, len(trace) - 2, loc=m, scale=m_err)
-
-        line = pd.Series(
-            linear_func(trace.index, m, b),
-            index=trace.index,
-            name=trace.name,
-        )
-
-        return {
-            'slope': m,
-            'slope err': m_err,  # standard error
-            'slope ci': (ci[1] - ci[0]) * 0.5,  # half width 95% conf. interval
-            'intercept': b,
-            'abs_0': abs_0,
-            'abs_f': abs_f,
-            'delta_abs_%': (abs_f - abs_0) / abs_0,
-            'delta_t': trace.index[-1] - trace.index[0],
-            'r2': rsquared(trace, line),
-        }, line
-
-    result = _fit_model_to_traces(
-        time_traces,
-        stats.linregress,
-        fit_params_handler,
-        post_fit_handler,
-        trace_prehandler=cutoff_handler,
-    )
-
-    if result is None:
-        return None
-
-    return FitResult('initial-rates', *result)
-
-
-def _fit_model_to_traces(
-    time_traces: pd.DataFrame,
-    fit_func: Callable,
-    fit_params_handler: Callable,
-    post_fit_handler: Callable,
-    trace_prehandler: Optional[Callable] = None,
-    min_data_points: int = 3,
-) -> tuple[pd.DataFrame, pd.DataFrame] | None:
-    """
-    General fitting function for time traces.
-
-    Parameters
-    ----------
-    time_traces : pd.DataFrame
-        The time traces to fit.
-    fit_func : Callable
-        The function to use for fitting.
-    fit_params_handler : Callable
-        A function which returns keyword arguments to pass to ``fit_func``.
-    post_fit_handler : Callable
-        A function which a tuple of fitting parameters and the fits.
-    trace_prehandler : Callable, optional
-        A function which applies any necessary preprocessing to a time trace
-        (a :class:`pandas.Series`). By default None.
-    min_data_points : int, optional
-        The minimum number of data points needed to perform fitting.
-
-    Returns
-    -------
-    namedtuple | None
-        A namedtuple with attributes ``params`` and ``fits`` of the fitting
-        parameters and the fits.
-    """
-    if len(time_traces.index) <= min_data_points:
-        print('[repr.error]Fitting skipped. Not enough data points...[/repr.error]\n')
-        return None
-
-    fit_params = {}
-    fitted_data = {}
-
-    for column in sorted(time_traces.columns):
-        if trace_prehandler:
-            trace = trace_prehandler(time_traces[column])
-        else:
-            trace = time_traces[column]
-
-        try:
-            fit_result = fit_func(**fit_params_handler(trace))
-            fit_params[column], fitted_data[column] = post_fit_handler(
-                trace, *fit_result
+            fit_curve = pd.Series(
+                self.model(trace.index.values, abs_0, abs_f, kobs),
+                index=trace.index,
+                name=trace.name,
             )
-        except Exception:
-            continue
 
-    if fit_params and fitted_data:
+            fit_params[col] = {
+                "abs_0": abs_0,
+                "abs_0 err": abs_0_err,
+                "abs_f": abs_f,
+                "abs_f err": abs_f_err,
+                "kobs": kobs,
+                "kobs err": kobs_err,
+                "kobs ci": kobs_ci,
+                "r2": rsquared(trace, fit_curve),
+            }
+            fitted_data[col] = fit_curve
+
         return pd.DataFrame(fit_params), pd.DataFrame(fitted_data)
 
-    return None
+
+class InitialRates:
+    """
+    Initial rates linear fitting model for time traces.
+    """
+    def __init__(self, traces: pd.DataFrame, cutoff: float = 0.1, global_fit: bool = False) -> None:
+        self.traces = self.truncate_traces(traces, cutoff)
+        self.global_fit = global_fit
+
+    def model(self, t: np.ndarray, slope: float, intercept: float) -> np.ndarray:
+        """Linear fit model: y = m * t + b"""
+        return slope * t + intercept
+
+    def _setup_params(self) -> Parameters:
+        """Initialize the parameters for the fitting model."""
+        from lmfit import Parameters
+        params = Parameters()
+
+        if self.global_fit:
+            params.add('slope', value=0.01)
+
+        for i, trace in enumerate(self.traces):
+            key = f'_{i}'
+            params.add(f'intercept{key}', value=trace.iloc[0])
+            if not self.global_fit:
+                params.add(f'slope{key}', value=0.01)
+
+        return params
+
+    def fit(self) -> FitResult | None:
+        """Fit a linear model to time traces for initial rates calculations."""
+        from lmfit import Minimizer
+
+        result = Minimizer(self.residual, self._setup_params()).minimize()
+        return FitResult('initial-rates', self.global_fit, *self._format_result(result.params))
+
+    def truncate_traces(self, traces: pd.DataFrame, cutoff: float) -> list[pd.Series]:
+        """
+        Truncate traces to where the change in absorbance equals the cutoff.
+
+        Parameters
+        ----------
+        traces : pd.DataFrame
+            The time traces to fit.
+        cutoff : float
+            The fractional change in absorbance cutoff (e.g., 0.1 -> 10%).
+
+        Returns
+        -------
+        truncated_traces : list[pd.Series]
+            The truncated traces
+        """
+        mask = pd.DataFrame(index=traces.index, columns=traces.columns, dtype=bool)
+
+        for col, trace in traces.items():
+            start_val: float = trace.iloc[0]
+            threshold = abs(start_val) * cutoff
+            diff = (trace - start_val).abs()
+            mask[col] = diff >= threshold
+
+        cutoff_indices = {
+            col: (mask[col].idxmax() if mask[col].any() else traces.index[-1])
+            for col in traces.columns
+        }
+
+        truncated_traces = []
+        for col, trace in traces.items():
+            cutoff = cutoff_indices[col]
+            end_idx = trace.index.get_loc(cutoff)
+            truncated_traces.append(traces[col].iloc[:end_idx + 1])
+
+        return truncated_traces
+
+    def residual(self, params: Parameters) -> np.ndarray:
+        resids = []
+        for i, trace in enumerate(self.traces):
+            key = f'_{i}'
+            slope = params['slope'] if self.global_fit else params[f'slope{key}']
+            intercept = params[f'intercept{key}']
+            model = self.model(trace.index, slope, intercept)
+            resids.append(model - trace)
+        return np.concatenate(resids)
+
+    def _format_result(self, params: Parameters) -> tuple[pd.DataFrame, pd.DataFrame]:
+        fit_params = {}
+        fitted_data = {}
+
+        for i, trace in enumerate(self.traces):
+            key = f'_{i}'
+            abs_0 = trace.iloc[0]
+            abs_f = trace.iloc[-1]
+            slope = params['slope'].value if self.global_fit else params[f'slope{key}'].value
+            intercept = params[f'intercept{key}'].value
+
+            slope_err = params['slope'].stderr if self.global_fit else params[f'slope{key}'].stderr
+            intercept_err = params[f'intercept{key}'].stderr
+
+            # Compute 95% CI half-width for rate
+            n = len(trace)
+            if slope_err and np.isfinite(slope_err) and n > 3:
+                ci = stats.t.interval(0.95, df=n - 2, loc=slope, scale=slope_err)
+                slope_ci = (ci[1] - ci[0]) / 2
+            else:
+                slope_ci = np.nan
+
+            fit_line = pd.Series(
+                self.model(trace.index, slope, intercept),
+                index=trace.index,
+                name=trace.name,
+            )
+
+            fit_params[trace.name] = {
+                'slope': slope,
+                'slope err': slope_err,
+                'slope ci': slope_ci,
+                'intercept': intercept,
+                'abs_0': abs_0,
+                'abs_f': abs_f,
+                'delta_abs_%': abs((abs_f - abs_0) / abs_0) * 100,
+                'delta_t': trace.index[-1] - trace.index[0],
+                'r2': rsquared(trace, fit_line),
+            }
+            fitted_data[trace.name] = fit_line
+
+        return pd.DataFrame(fit_params), pd.DataFrame(fitted_data)
