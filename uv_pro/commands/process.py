@@ -317,32 +317,35 @@ def prompt_for_export(dataset) -> list[str]:
     list[str]
         The names of the exported files.
     """
-    export_map = {
-        'Processed spectra': [(dataset.processed_spectra, None)],
-        'Time traces (raw)': [(dataset.chosen_traces, 'traces_raw')],
-        'Time traces (processed)': [(dataset.processed_traces, 'traces_processed')],
-        'Exponential fit': [
-            (dataset.fit_result.fitted_data, 'exp-fit_curves'),
-            (dataset.fit_result.params.transpose(), 'exp-fit_params'),
-        ],
-        'Initial rates': [
-            (dataset.fit_result.fitted_data, 'init-rate_fit'),
-            (dataset.fit_result.params.transpose(), 'init-rate_params'),
-        ],
-    }
-
     options = ['Processed spectra']
+    export_map = {'Processed spectra': [(dataset.processed_spectra, None)]}
+
     if dataset.chosen_traces is not None:
-        options.append('Time traces (raw)')
+        key = 'Time traces (raw)'
+        options.append(key)
+        export_map[key] = [(dataset.chosen_traces, 'traces_raw')]
 
     if dataset.processed_traces is not None:
-        options.append('Time traces (processed)')
+        key = 'Time traces (processed)'
+        options.append(key)
+        export_map[key] = [(dataset.processed_traces, 'traces_processed')]
 
     if dataset.fit_result is not None:
         if dataset.fit_result.model == 'exponential':
-            options.append('Exponential fit')
+            key = 'Exponential fit'
+            options.append(key)
+            export_map[key] = [
+                (dataset.fit_result.fitted_data, 'exp-fit_curves'),
+                (dataset.fit_result.params.transpose(), 'exp-fit_params'),
+            ]
+
         elif dataset.fit_result.model == 'initial-rates':
-            options.append('Initial rates')
+            key = 'Initial rates'
+            options.append(key)
+            export_map[key] = [
+                (dataset.fit_result.fitted_data, 'init-rate_fit'),
+                (dataset.fit_result.params.transpose(), 'init-rate_params'),
+            ]
 
     user_selection = checkbox('Choose data to export', options)
 
