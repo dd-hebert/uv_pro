@@ -81,19 +81,72 @@ class ExponentialFit:
         """Exponential fit model: y = abs_f + (abs_0 - abs_f) * exp(-kobs * t)"""
         return abs_f + (abs_0 - abs_f) * np.exp(-kobs * t)
 
+    def _estimate_kobs(self, trace: pd.Series) -> float:
+        """Estimate initial kobs from the trace data."""
+        try:
+            # Method 1: Use time constant
+            abs_0 = trace.iloc[0]
+            abs_f = trace.iloc[-1]
+            target = abs_f + (abs_0 - abs_f) / np.e
+
+            closest_idx = np.argmin(np.abs(trace.values - target))
+            t_1e = trace.index[closest_idx]
+
+            if t_1e > 0:
+                return 1.0 / t_1e
+
+            # Method 2: Fallback - estimate from half-life
+            half_target = abs_f + (abs_0 - abs_f) * 0.5
+            half_idx = np.argmin(np.abs(trace.values - half_target))
+            t_half = trace.index[half_idx]
+
+            if t_half > 0:
+                return np.log(2) / t_half
+
+            # Method 3: Last resort - use time scale
+            return 1.0 / (trace.index[-1] - trace.index[0])
+
+        except:
+            return 0.02
+
     def _setup_params(self) -> Parameters:
         from lmfit import Parameters
         params = Parameters()
 
         if self.global_fit:
-            params.add('kobs', value=0.02, min=0)
+            kobs_estimates = []
+            for _, trace in self.traces.items():
+                kobs_estimates.append(self._estimate_kobs(trace))
+            initial_kobs = np.median(kobs_estimates)
+            params.add('kobs', value=initial_kobs, min=0, max=initial_kobs * 100)
 
         for i, (_, trace) in enumerate(self.traces.items()):
             key = f'_{i}'
-            params.add(f'abs_0{key}', value=trace.iloc[0], min=-4, max=4)
-            params.add(f'abs_f{key}', value=trace.iloc[-1], min=-4, max=4)
+
+            data_range = trace.max() - trace.min()
+            data_center = (trace.max() + trace.min()) / 2
+
+            params.add(
+                f'abs_0{key}',
+                value=trace.iloc[0],
+                min=data_center - 2 * data_range,
+                max=data_center + 2 * data_range
+            ) 
+            params.add(
+                f'abs_f{key}',
+                value=trace.iloc[-1],
+                min=data_center - 2 * data_range,
+                max=data_center + 2 * data_range
+            ) 
+
             if not self.global_fit:
-                params.add(f'kobs{key}', value=0.02, min=0)
+                initial_kobs = self._estimate_kobs(trace)
+                params.add(
+                    f'kobs{key}',
+                    value=initial_kobs,
+                    min=0,
+                    max=initial_kobs * 100
+                ) 
 
         return params
 
