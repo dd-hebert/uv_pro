@@ -107,4 +107,4 @@ class Config(ConfigParser):
 
 
 CONFIG = Config()
-PRIMARY_COLOR = CONFIG.get('Settings', 'primary_color', fallback='white')
+PRIMARY_COLOR = CONFIG.get('Settings', 'primary_color', fallback='magenta')
