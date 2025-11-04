@@ -1,7 +1,27 @@
 ![Banner logo](/docs/banner_logo1.png?raw=true "Banner Logo")
 =============================================================
 
-``uv_pro`` is a feature-rich command line tool for processing UV-Vis data files (.KD format) created from the Agilent 845x UV-Vis Chemstation software.
+``uv_pro`` is a feature-rich command line tool for processing UV-Vis data files (``.KD`` format) created from the Agilent 845x UV-Vis Chemstation software.
+
+Key Features
+------------
+✅ Parse ``.KD`` files and export as ``.csv``
+
+✅ UV-vis data processing (truncate and slice datasets, extract time traces)
+
+✅ Outlier detection tools
+
+✅ Interactive plotting with Matplotlib
+
+✅ Peak detection
+
+✅ Batch export of spectra to .csv files
+
+✅ Kinetic analysis (exponential fitting, initial rates)
+
+✅ Binary mixture fitting
+
+✅ Figure creation tools
 
 Contents
 --------
