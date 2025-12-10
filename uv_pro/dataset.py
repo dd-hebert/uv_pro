@@ -74,6 +74,7 @@ class Dataset:
         time_trace_window: tuple[int, int] = (300, 1060),
         time_trace_interval: int = 10,
         wavelengths: list | None = None,
+        target_cell: int = 1,
         view_only: bool = False,
     ) -> None:
         """
@@ -138,6 +139,9 @@ class Dataset:
             A list of specific wavelengths to get time traces for. These time traces are \
             independent of those created by :meth:`~uv_pro.dataset.Dataset.get_time_traces()`.
             The default is None.
+        target_cell : int, optional
+            The index of the cell/cuvette to process spectra for. Only applies to multi-cuvette data files.
+            The default is 1.
         view_only : bool, optional
             Indicate if data processing (cleaning and trimming) should be performed.
             Default is False (processing is performed).
@@ -162,7 +166,7 @@ class Dataset:
         self.fit_result = None
         self.is_processed = False
 
-        self._import_data()
+        self._import_data(f'SAMPLES_CELL_{target_cell}')
 
         if not view_only:
             self.process_data()
@@ -170,10 +174,15 @@ class Dataset:
     def __rich__(self):
         return ProcessingOutput(self)
 
-    def _import_data(self) -> None:
+    def _import_data(self, cell: str = 'SAMPLES_CELL_1') -> None:
         kd_file = KDFile(self.path)
-        self.raw_spectra = kd_file.spectra
-        self.spectra_times = kd_file.spectra_times
+
+        if cell not in kd_file.cells:
+            available = ', '.join(kd_file.cells)
+            raise KeyError(f'Cell {cell} not found. Available cells: {available}')
+
+        self.raw_spectra = kd_file.spectra[cell]
+        self.spectra_times = kd_file.spectra_times[cell]
         self.cycle_time = kd_file.cycle_time
 
     def process_data(self) -> None:

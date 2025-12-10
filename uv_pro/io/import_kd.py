@@ -8,6 +8,7 @@ and experimental parameters.
 """
 
 import struct
+import warnings
 from pathlib import Path
 
 import pandas as pd
@@ -19,6 +20,23 @@ class KDFile:
 
     Attributes
     ----------
+    spectra : :class:`pandas.DataFrame`
+        A MultiIndex DataFrame with UV-vis spectra from all cells/cuvettes.
+        Column levels are `'Cell'` and `'Time (s)'`; indexed by Wavelength (nm).
+    spectra_times : :class:`pandas.Series`
+        A MultiIndex Series with spectra capture times (s) for all cells/cuvettes.
+        Index levels `'Cell'` and `'idx'`.
+    cells : list[str]
+        A sorted list of all cell/cuvette identifiers (e.g., 'SAMPLES_CELL_1') found in the file.
+    is_multicell : bool
+        True if the file contains data for more than one cuvette.
+    spectra_cell_labels : :class:`pandas.Series`
+        The cell/cuvette identifier for each spectrum.
+    spectrum_bytes_length : int
+        The length (in bytes) of each spectrum based on the range
+        of wavelengths captured by the detector.
+    file_bytes : bytes
+        The bytes read from the .KD file.
     absorbance_data_header : dict
         The hex string header and spacing that precedes the absorbance data in
         the .KD file.
@@ -28,17 +46,9 @@ class KDFile:
     cycle_time_header : dict
         The hex string header and spacing that precedes the cycle time in
         the .KD file.
-    spectrum_bytes_length : int
-        The length (in bytes) of each spectrum based on the range
-        of wavelengths captured by the detector.
-    file_bytes : bytes
-        The bytes read from the .KD file.
-    spectra : :class:`pandas.DataFrame`
-        All of the raw spectra found in the .KD file.
-    spectra_times : :class:`pandas.Series`
-        The time values that each spectrum was captured.
-    cycle_time : int or None
-        The cycle time value (in seconds) for the experiment.
+    samples_cell_header : dict
+        The hex string header and spacing that precedes the cell/cuvette identifiers in
+        the .KD file.
     """
 
     absorbance_data_header = {
@@ -54,6 +64,10 @@ class KDFile:
         b'\x65\x00\x54\x00\x69\x00\x6d\x00'
         b'\x65\x00\x77\x00\x00\x00\x00\x00',
         'spacing': 24,
+    }
+    samples_cell_header = {
+        'header': b'\x52\x00\x65\x00\x67\x00\x4e\x00\x61\x00\x6d\x00\x65\x00\x00\x00\x0f\x00',
+        'spacing': 16,
     }
 
     def __init__(
@@ -78,11 +92,37 @@ class KDFile:
         """
         self.path = path
         self.wavelength_range = list(
-            range(spectrometer_range[0], spectrometer_range[1])
+            range(spectrometer_range[0], spectrometer_range[1] + 1)
         )
+
         self.spectrum_bytes_length = self._get_spectrum_bytes_length()
         self.file_bytes = self._read_binary()
-        self.spectra, self.spectra_times, self.cycle_time = self.parse_kd()
+
+        self._parse_kd()
+
+    @property
+    def spectra(self) -> pd.DataFrame:
+        """
+        Return a MultiIndex DataFrame containing all spectra for all cells.
+
+        Returns
+        -------
+        :class:`pandas.DataFrame`
+            MultiIndex DataFrame with column levels 'Cell' and 'Time (s)'. Index is Wavelength (nm).
+        """
+        return self._spectra
+
+    @property
+    def spectra_times(self) -> pd.Series:
+        """
+        Return a MultiIndex Series containing all capture times for all cells.
+
+        Returns
+        -------
+        :class:`pandas.Series`
+            MultiIndex Series with index levels 'Cell' and 'idx'.
+        """
+        return self._spectra_times
 
     def _get_spectrum_bytes_length(self) -> int:
         """8 hex chars per wavelength."""
@@ -97,28 +137,35 @@ class KDFile:
 
         return file_bytes
 
-    def parse_kd(self) -> tuple[pd.DataFrame, pd.Series, int]:
+    def _parse_kd(self) -> None:
         """
         Parse a .KD file and extract data.
-
-        Raises
-        ------
-        Exception
-            Raises an exception if no spectra can be found.
-
-        Returns
-        -------
-        spectra : :class:`pandas.DataFrame`
-            The raw spectra contained in the .KD file.
-        spectra_times : :class:`pandas.Series`
-            The time values that each spectrum was captured.
-        cycle_time : int
-            The cycle time (in seconds) for the UV-vis experiment.
         """
-        cycle_time = self._handle_cycletime()
-        spectra_times = self._handle_spectratimes()
+        cycle_time = self._handle_cycle_time()
+        spectra_times = self._handle_spectra_times()
         spectra = self._handle_spectra(spectra_times)
-        return spectra, spectra_times, cycle_time
+        spectra_cell_labels = self._handle_spectra_cell_labels()
+
+        self.cycle_time = cycle_time
+        self.spectra_cell_labels = spectra_cell_labels
+
+        self._spectra = spectra.copy()
+        self._spectra.columns = pd.MultiIndex.from_arrays(
+            [spectra_cell_labels, spectra_times], names=['Cell', 'Time (s)']
+        )
+        self._spectra_times = pd.Series(
+            spectra_times.to_numpy(),
+            index=pd.MultiIndex.from_arrays(
+                [spectra_cell_labels.to_numpy(), range(len(spectra_times))],
+                names=['Cell', 'idx'],
+            ),
+            name='Time (s)',
+        )
+
+        self.cells = sorted(spectra_cell_labels.unique().tolist())
+        self.is_multicell = len(self.cells) > 1
+
+        self._check_monotonic()
 
     def _handle_spectra(self, spectra_times: pd.Series) -> pd.DataFrame:
         def _spectra_dataframe(spectra: list, spectra_times: pd.Series) -> pd.DataFrame:
@@ -134,28 +181,40 @@ class KDFile:
 
         raise Exception('Error parsing file. No spectra found.')
 
-    def _handle_spectratimes(self) -> pd.Series:
+    def _handle_spectra_times(self) -> pd.Series:
         if spectra_times := self._extract_data(
-            KDFile.spectrum_time_header, self._parse_spectratimes
+            KDFile.spectrum_time_header, self._parse_spectra_times
         ):
             return pd.Series(spectra_times, name='Time (s)')
 
         raise Exception('Error parsing file. No spectra times found.')
 
-    def _handle_cycletime(self) -> int | None:
+    def _handle_cycle_time(self) -> int | None:
         try:
             return int(
-                self._extract_data(KDFile.cycle_time_header, self._parse_cycletime)[0]
+                self._extract_data(KDFile.cycle_time_header, self._parse_cycle_time)[0]
             )
         except TypeError:
             return None
 
-    def _extract_data(self, header: dict, parse_func: callable) -> list:
+    def _handle_spectra_cell_labels(self) -> pd.Series:
+        if spectra_cell_labels := self._extract_data(
+            KDFile.samples_cell_header, self._parse_spectra_cell_labels
+        ):
+            return spectra_cell_labels[0]  # Only one array per .KD file
+
+        raise Exception('Error parsing file. Samples cell(s) not found.')
+
+    def _extract_data(
+        self, header: dict, parse_func: callable, chunk_size: int | None = None
+    ) -> list:
         data_list = []
         position = 0
         data_header = header['header']
         spacing = header['spacing']
-        chunk = self.spectrum_bytes_length
+        chunk_size = (
+            chunk_size if chunk_size is not None else self.spectrum_bytes_length
+        )
 
         while True:
             header_idx = self.file_bytes.find(data_header, position)
@@ -164,7 +223,7 @@ class KDFile:
 
             data_idx = header_idx + spacing
             data_list.append(parse_func(data_idx))
-            position = data_idx + chunk
+            position = data_idx + chunk_size
 
         return data_list if data_list else None
 
@@ -176,8 +235,29 @@ class KDFile:
         ]
         return pd.Series(absorbance_values, index=self.wavelength_range)
 
-    def _parse_spectratimes(self, data_start: int) -> float:
+    def _parse_spectra_times(self, data_start: int) -> float:
         return float(struct.unpack_from('<d', self.file_bytes, data_start)[0])
 
-    def _parse_cycletime(self, data_start: int) -> int:
+    def _parse_cycle_time(self, data_start: int) -> int:
         return int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
+
+    def _parse_spectra_cell_labels(self, data_start: int) -> pd.Series:
+        data_end = self.file_bytes.find(b'\x07', data_start)
+        spectra_cell_labels_raw = self.file_bytes[data_start:data_end].split(b'\x0f')
+        spectra_cell_labels_cleaned = [
+            label.replace(b'\x00', b'').decode('utf8')
+            for label in spectra_cell_labels_raw[1:]
+        ]
+        return pd.Series(spectra_cell_labels_cleaned, name='Cell')
+
+    def _check_monotonic(self):
+        cells = []
+        for cell in self.cells:
+            if not self._spectra_times[cell].is_monotonic_increasing:
+                cells.append(cell)
+
+        if cells:
+            warnings.warn(
+                f'Spectra capture times are not monotonic for {", ".join(cells)}. File may be corrupted.',
+                stacklevel=3,
+            )

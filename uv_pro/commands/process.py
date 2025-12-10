@@ -34,6 +34,7 @@ HELP = {
                    Matplotlib colormap name. For a full description of colormaps see:
                    https://matplotlib.org/stable/tutorials/colors/colormaps.html.
                    Default is 'default'.""",
+    'cell': 'Specify which cell/cuvette to process spectra from (only revelant for multi-cuvette data).',
     'slice': 'Reduce the data down to a number of uniformly-spaced slices. Default: None (no slicing).',
     'slice-variable': """Reduce the data down to a number of nonuniformly-spaced slices.
                          Takes 2 args: coefficient & exponent. Default: None (no slicing).""",
@@ -128,6 +129,13 @@ ARGS = [
         default='default',
         metavar='NAME',
         help=HELP['colormap'],
+    ),
+    Argument(
+        '--cell',
+        action='store',
+        type=int,
+        default=1,
+        help=HELP['cell'],
     ),
     ArgGroup(
         MutuallyExclusiveGroup(
@@ -280,6 +288,7 @@ def process(args: argparse.Namespace) -> None:
             time_trace_window=args.time_trace_window,
             time_trace_interval=args.time_trace_interval,
             wavelengths=args.time_traces,
+            target_cell=args.cell,
         )
 
     print('', dataset, sep='\n')
