@@ -39,6 +39,8 @@ class KDFile:
         The time values that each spectrum was captured.
     cycle_time : int or None
         The cycle time value (in seconds) for the experiment.
+    samples_cell : :class:`pandas.Series` or None
+        The cell/cuvette identifier for each spectrum.
     """
 
     absorbance_data_header = {
@@ -86,7 +88,7 @@ class KDFile:
         )
         self.spectrum_bytes_length = self._get_spectrum_bytes_length()
         self.file_bytes = self._read_binary()
-        self.spectra, self.spectra_times, self.cycle_time = self.parse_kd()
+        self.spectra, self.spectra_times, self.cycle_time, self.samples_cell = self.parse_kd()
 
     def _get_spectrum_bytes_length(self) -> int:
         """8 hex chars per wavelength."""
@@ -101,7 +103,7 @@ class KDFile:
 
         return file_bytes
 
-    def parse_kd(self) -> tuple[pd.DataFrame, pd.Series, int]:
+    def parse_kd(self) -> tuple[pd.DataFrame, pd.Series, int, pd.Series | None]:
         """
         Parse a .KD file and extract data.
 
@@ -118,11 +120,14 @@ class KDFile:
             The time values that each spectrum was captured.
         cycle_time : int
             The cycle time (in seconds) for the UV-vis experiment.
+        samples_cell : :class:`pandas.Series` or None
+            The cell/cuvette identifier for each spectrum (for multi-cuvette files).
         """
         cycle_time = self._handle_cycletime()
         spectra_times = self._handle_spectratimes()
         spectra = self._handle_spectra(spectra_times)
-        return spectra, spectra_times, cycle_time
+        samples_cell = self._handle_samples_cell()
+        return spectra, spectra_times, cycle_time, samples_cell
 
     def _handle_spectra(self, spectra_times: pd.Series) -> pd.DataFrame:
         def _spectra_dataframe(spectra: list, spectra_times: pd.Series) -> pd.DataFrame:
