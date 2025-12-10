@@ -55,6 +55,10 @@ class KDFile:
         b'\x65\x00\x77\x00\x00\x00\x00\x00',
         'spacing': 24,
     }
+    samples_cell_header = {
+        'header': b'\x52\x00\x65\x00\x67\x00\x4e\x00\x61\x00\x6d\x00\x65\x00',
+        'spacing': 18,
+    }
 
     def __init__(
         self, path: Path, spectrometer_range: tuple[int, int] = (190, 1100)
