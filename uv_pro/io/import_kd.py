@@ -160,9 +160,24 @@ class KDFile:
             return None
 
     def _handle_samples_cell(self) -> pd.Series | None:
-        if samples_cell := self._extract_data(
-            KDFile.samples_cell_header, self._parse_samples_cell
-        ):
+        data_header = KDFile.samples_cell_header['header']
+        spacing = KDFile.samples_cell_header['spacing']
+
+        header_idx = self.file_bytes.find(data_header)
+        if header_idx == -1:
+            return None
+
+        samples_cell = []
+        position = header_idx + spacing
+
+        while True:
+            cell_name = self._parse_samples_cell(position)
+            if cell_name is None or not cell_name.startswith('SAMPLES_CELL'):
+                break
+            samples_cell.append(cell_name)
+            position += 30  # 2-byte prefix + 28-byte cell name (14 chars * 2)
+
+        if samples_cell:
             return pd.Series(samples_cell, name='Cell')
 
         return None
@@ -199,8 +214,10 @@ class KDFile:
     def _parse_cycletime(self, data_start: int) -> int:
         return int(struct.unpack_from('<d', self.file_bytes, data_start)[0])
 
-    def _parse_samples_cell(self, data_start: int) -> str:
-        length = self.file_bytes[data_start - 2]
-        data_end = data_start + length * 2
-        cell_name_bytes = self.file_bytes[data_start:data_end]
-        return cell_name_bytes.decode('utf-16-le').rstrip('\x00')
+    def _parse_samples_cell(self, data_start: int) -> str | None:
+        try:
+            data_end = data_start + 28  # 14 chars * 2 bytes per char
+            cell_name_bytes = self.file_bytes[data_start:data_end]
+            return cell_name_bytes.decode('utf-16-le').rstrip('\x00')
+        except (IndexError, UnicodeDecodeError):
+            return None
