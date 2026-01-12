@@ -8,6 +8,7 @@ and experimental parameters.
 """
 
 import struct
+import warnings
 from pathlib import Path
 
 import pandas as pd
