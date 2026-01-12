@@ -128,6 +128,12 @@ class KDFile:
         spectra_times = self._handle_spectratimes()
         spectra = self._handle_spectra(spectra_times)
         samples_cell = self._handle_samples_cell()
+
+        # Validate and fix corrupt timepoints
+        spectra, spectra_times, samples_cell = self._validate_and_fix_data(
+            spectra, spectra_times, samples_cell
+        )
+
         return spectra, spectra_times, cycle_time, samples_cell
 
     def _handle_spectra(self, spectra_times: pd.Series) -> pd.DataFrame:
@@ -151,6 +157,93 @@ class KDFile:
             return pd.Series(spectra_times, name='Time (s)')
 
         raise Exception('Error parsing file. No spectra times found.')
+
+    def _validate_and_fix_data(
+        self,
+        spectra: pd.DataFrame,
+        spectra_times: pd.Series,
+        samples_cell: pd.Series | None,
+    ) -> tuple[pd.DataFrame, pd.Series, pd.Series | None]:
+        """
+        Validate that time values are monotonically increasing within each cuvette.
+
+        If non-increasing time values are found (indicating file corruption),
+        issue a warning and remove the corrupt timepoints and their spectra.
+
+        Parameters
+        ----------
+        spectra : pd.DataFrame
+            The spectra data with time as columns.
+        spectra_times : pd.Series
+            The time values for each spectrum.
+        samples_cell : pd.Series or None
+            The cell/cuvette identifier for each spectrum.
+
+        Returns
+        -------
+        tuple[pd.DataFrame, pd.Series, pd.Series | None]
+            The validated/fixed spectra, times, and samples_cell data.
+        """
+        # Build a working dataframe by transposing spectra (rows become spectra, columns become wavelengths)
+        work_df = spectra.T.reset_index()
+        work_df.rename(columns={'Time (s)': 'Time_s'}, inplace=True)
+        cell_values = samples_cell if samples_cell is not None else pd.Series(['SAMPLES_CELL_1'] * len(work_df))
+        work_df.insert(0, 'sample', cell_values.values)
+
+        def find_valid_rows(group: pd.DataFrame) -> pd.DataFrame:
+            """Find rows where times are monotonically increasing."""
+            times = group['Time_s'].values
+            valid_mask = [True] * len(times)
+
+            # Find reset points where time decreases
+            for i in range(1, len(times)):
+                if times[i] < times[i - 1]:
+                    # Mark all previous times >= current time as invalid
+                    for j in range(i):
+                        if times[j] >= times[i]:
+                            valid_mask[j] = False
+
+            return group[valid_mask]
+
+        # Apply validation per cell group - get valid indices
+        valid_indices = work_df.groupby('sample', group_keys=False).apply(
+            find_valid_rows, include_groups=False
+        ).index
+
+        # Check if any data was removed
+        removed_count = len(work_df) - len(valid_indices)
+        if removed_count > 0:
+            removed_indices = set(work_df.index) - set(valid_indices)
+            removed_times = work_df.loc[list(removed_indices), 'Time_s'].tolist()
+
+            warnings.warn(
+                f"Potentially corrupted .KD file detected: {self.path}. "
+                f"Time values are not monotonically increasing.",
+                UserWarning
+            )
+            warnings.warn(
+                f"Removed {removed_count} corrupt timepoint(s) "
+                f"at indices {sorted(removed_indices)} with time values {removed_times}. "
+                f"These timepoints and their corresponding spectra have been excluded.",
+                UserWarning
+            )
+
+            # Filter work_df using valid indices
+            clean_df = work_df.loc[valid_indices]
+
+            # Rebuild the clean data
+            clean_spectra_times = pd.Series(clean_df['Time_s'].values, name='Time (s)')
+            clean_samples_cell = pd.Series(clean_df['sample'].values, name='Cell') if samples_cell is not None else None
+
+            # Rebuild spectra dataframe (transpose back)
+            wavelength_cols = [col for col in clean_df.columns if col not in ['sample', 'Time_s']]
+            clean_spectra = clean_df[wavelength_cols].T
+            clean_spectra.index = pd.Index(self.wavelength_range, name='Wavelength (nm)')
+            clean_spectra.columns = clean_spectra_times
+
+            return clean_spectra, clean_spectra_times, clean_samples_cell
+
+        return spectra, spectra_times, samples_cell
 
     def _handle_cycletime(self) -> int | None:
         try:
