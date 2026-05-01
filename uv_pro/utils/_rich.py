@@ -213,8 +213,12 @@ class ProcessingOutput:
                     )
 
                 table.add_row(
-                    'Slices ', bold_text(f'{len(dataset.processed_spectra.columns)}')
+                    'Slices', bold_text(f'{len(dataset.processed_spectra.columns)}')
                 )
+
+            table.add_row(
+                'Cuvette #', bold_text(f'{dataset.cell}')
+            )
 
             return table
 

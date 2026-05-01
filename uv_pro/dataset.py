@@ -160,6 +160,7 @@ class Dataset:
         self.low_signal_window = low_signal_window
         self.baseline_smoothness = baseline_smoothness
         self.baseline_tolerance = baseline_tolerance
+        self.cell = target_cell
 
         self.chosen_traces = None
         self.processed_traces = None
